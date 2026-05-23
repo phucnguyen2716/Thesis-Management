@@ -1,0 +1,56 @@
+import axios from 'axios';
+
+const api = axios.create({
+  baseURL: 'https://localhost:7134/api',
+});
+
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
+export const authService = {
+  login: (credentials) => api.post('/auth/login', credentials),
+  register: (data) => api.post('/auth/register', data),
+};
+
+export const thesisService = {
+  getAll: (params) => api.get('/thesis', { params }),
+  getById: (id) => api.get(`/thesis/${id}`),
+  create: (data) => api.post('/thesis', data),
+  update: (id, data) => api.put(`/thesis/${id}`, data),
+  delete: (id) => api.delete(`/thesis/${id}`),
+  submit: (id) => api.post(`/thesis/${id}/submit`),
+  assignAdvisor: (id, data) => api.post(`/thesis/${id}/assign-advisor`, data),
+  approve: (id) => api.post(`/thesis/${id}/approve`),
+  reject: (id, reason) => api.post(`/thesis/${id}/reject`, reason),
+  upload: (id, file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post(`/thesis/${id}/upload`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+  getStats: () => api.get('/thesis/stats'),
+  getReviews: (id) => api.get(`/thesis/${id}/reviews`),
+  addReview: (id, data) => api.post(`/thesis/${id}/reviews`, data),
+  getComments: (id) => api.get(`/thesis/${id}/comments`),
+  addComment: (id, data) => api.post(`/thesis/${id}/comments`, data),
+};
+
+export default api;
