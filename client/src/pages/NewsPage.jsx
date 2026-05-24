@@ -1,68 +1,20 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getSocialPosts } from '../utils/adminContentStore';
 
 const NewsPage = () => {
   const navigate = useNavigate();
   const [filter, setFilter] = useState('All');
+  const [allNewsItems, setAllNewsItems] = useState([]);
 
   const categories = ['All', 'Tin mới', 'Hướng dẫn', 'Tính năng', 'Báo chí'];
 
-  const allNewsItems = [
-    {
-      id: 1,
-      title: "Công bố danh sách các sáng kiến tiêu biểu học kỳ 1 năm 2024",
-      date: "20/10/2024",
-      category: "Tin mới",
-      badgeClass: "bg-primary text-on-primary",
-      image: "https://lh3.googleusercontent.com/aida-public/AB6AXuDVaKckFBO6OahgQhL5POM9HkyyecIPbbQpO1dWLvQHUSBcj49wyeR69ByLr8G1HshrXjAzidE5A-wOT6RA7V7eLvC33ch_y8-bNDvNRg1HwmmnaJTAcz8NBYG9tH7A-4q9Aydwy8_z9zEL6dgejrSFafcXOHrBluNSxzC-1l68EVFbA93qGEExIzjN4r7IEyBbD-vnEDCAtJDWdRszsVJdArxh12IA2eUzDBOvizUG5zZuFjD1jL69T8qDOK5VDX_pqXpNUf76mRsk",
-      desc: "Hội đồng chuyên môn đã hoàn tất việc chấm điểm và lựa chọn ra 10 sáng kiến xuất sắc nhất để triển khai thực tế trong môi trường học đường..."
-    },
-    {
-      id: 2,
-      title: "Hướng dẫn tra cứu và tham khảo kho dữ liệu sáng kiến học thuật",
-      date: "18/10/2024",
-      category: "Hướng dẫn",
-      badgeClass: "bg-blue-600 text-white",
-      image: "https://lh3.googleusercontent.com/aida-public/AB6AXuC9CBcdVbi_lVPZdj1fMXkDrm6UXNpgAQzAbT5BzIzcVc1wXGTHcmwvFTTaIEgcFm1wFyYIkxuYp8LKwSkizyelJ4bjIqymKLSgFfukFSODI8QlHCdYgYlzoIpXWPGJ6pwNFnkIc54kH5CFyy19WYTo0HdQ9cSVQ1CNsuV41pZn1z5hhO7krZslwN6YtBpL_fRpzCvXn5HpiOcH4ntw_v0VI8GftCgk9T6IiQz7ikPDYxY5Gr4t4CGGG3_-YsRIM4rMsyCMlTMvyufS",
-      desc: "Sinh viên có thể sử dụng công cụ tìm kiếm thông minh để truy cập hàng nghìn tài liệu nghiên cứu và sáng kiến qua các năm học..."
-    },
-    {
-      id: 3,
-      title: "Hệ thống AI Gemini hỗ trợ phân tích và tóm tắt sáng kiến",
-      date: "15/10/2024",
-      category: "Tính năng",
-      badgeClass: "bg-purple-600 text-white",
-      image: "https://lh3.googleusercontent.com/aida-public/AB6AXuANxGO4D6ojuZlYk7MEhtq_38tsfUs324mV9MOXepahz-7q_MfJXjqjvHbgLt27PAjQquIgxNbU4l8TFLxxTqokf9fiaJRq8mxeZIqQU-_fhU1ho_Omjv4xl_49kl_cJIIr3tyg5-3Lu3GYiLPM2N3psKIdMJtF-p6DcwYjflkXf24kayQ57904JAS0eyc8PMffw-nv4NNzDqKse0KbLJ4YWmW0Hqys7UoOYciK4A2BTM_k2g3B1Slq6NwqcMgwtqtuEWUyLaQ7lH_W",
-      desc: "Tích hợp trí tuệ nhân tạo Gemini giúp sinh viên nhanh chóng nắm bắt nội dung cốt lõi của các đề tài nghiên cứu phức tạp một cách trực quan."
-    },
-    {
-      id: 4,
-      title: "Sáng kiến 'Học máy trong giáo dục' xuất hiện trên báo GD&TĐ",
-      date: "12/10/2024",
-      category: "Báo chí",
-      badgeClass: "bg-teal-600 text-white",
-      image: "https://lh3.googleusercontent.com/aida-public/AB6AXuDNDlUX0ZxPtd9FFEvx2RuM_AJUf4MmXTm_fDHRIp4RA357uwWGW4cu7ET1A93aGbwTJ8rcmsH_P_jXgQij4gW-zrCc1_f8EGbw_lC8DxXe_dkF_Iqe9A-XHs2ASrlDKr9kBWZyl6LELtWERGbngkXMot1w8T3nqUHWQLB0VLwli7MP7lWHmuvFWUAkPuiQyMxGAAoYL_cTlaHgrIUM-xBzsSIG9p5wwm0ToTuZZ26Jju_-GhpX4FO8ceC_8tnDy0sO06U5ui1d2tEs",
-      desc: "Bài viết phân tích sâu về hiệu quả của ứng dụng công nghệ trong việc cá nhân hóa lộ trình học tập cho sinh viên UEF..."
-    },
-    {
-      id: 5,
-      title: "Kế hoạch tổ chức cuộc thi Sáng kiến UEF năm 2025",
-      date: "05/10/2024",
-      category: "Tin mới",
-      badgeClass: "bg-primary text-on-primary",
-      image: "https://lh3.googleusercontent.com/aida-public/AB6AXuANxGO4D6ojuZlYk7MEhtq_38tsfUs324mV9MOXepahz-7q_MfJXjqjvHbgLt27PAjQquIgxNbU4l8TFLxxTqokf9fiaJRq8mxeZIqQU-_fhU1ho_Omjv4xl_49kl_cJIIr3tyg5-3Lu3GYiLPM2N3psKIdMJtF-p6DcwYjflkXf24kayQ57904JAS0eyc8PMffw-nv4NNzDqKse0KbLJ4YWmW0Hqys7UoOYciK4A2BTM_k2g3B1Slq6NwqcMgwtqtuEWUyLaQ7lH_W",
-      desc: "Cuộc thi hứa hẹn mang đến nhiều đột phá với sự hỗ trợ từ các chuyên gia đầu ngành trong lĩnh vực AI và chuyển đổi số."
-    },
-    {
-      id: 6,
-      title: "UEF lọt top các trường đại học có nhiều sáng kiến số hóa",
-      date: "01/10/2024",
-      category: "Báo chí",
-      badgeClass: "bg-teal-600 text-white",
-      image: "https://lh3.googleusercontent.com/aida-public/AB6AXuDVaKckFBO6OahgQhL5POM9HkyyecIPbbQpO1dWLvQHUSBcj49wyeR69ByLr8G1HshrXjAzidE5A-wOT6RA7V7eLvC33ch_y8-bNDvNRg1HwmmnaJTAcz8NBYG9tH7A-4q9Aydwy8_z9zEL6dgejrSFafcXOHrBluNSxzC-1l68EVFbA93qGEExIzjN4r7IEyBbD-vnEDCAtJDWdRszsVJdArxh12IA2eUzDBOvizUG5zZuFjD1jL69T8qDOK5VDX_pqXpNUf76mRsk",
-      desc: "Tạp chí Khoa học & Công nghệ ghi nhận những nỗ lực của nhà trường trong việc xây dựng hệ sinh thái nghiên cứu mở."
-    }
-  ];
+  useEffect(() => {
+    const load = () => setAllNewsItems(getSocialPosts());
+    load();
+    window.addEventListener('admin-content-updated', load);
+    return () => window.removeEventListener('admin-content-updated', load);
+  }, []);
 
   const filteredNews = filter === 'All' 
     ? allNewsItems 
@@ -133,6 +85,10 @@ const NewsPage = () => {
             {filteredNews.map((news, idx) => (
               <div 
                 key={news.id} 
+                role="button"
+                tabIndex={0}
+                onClick={() => navigate(`/news/${news.id}`)}
+                onKeyDown={e => e.key === 'Enter' && navigate(`/news/${news.id}`)}
                 className="group cursor-pointer animate-fade-in"
                 style={{ animationDelay: `${idx * 100}ms` }}
               >

@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 using PlatformAdmin.Interfaces;
 using PlatformAdmin.Data;
 using PlatformAdmin.Services;
@@ -39,7 +39,17 @@ builder.Services.AddSwaggerGen(c =>
 
 // Database
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+{
+    var provider = builder.Configuration["Database:Provider"]?.Trim().ToLowerInvariant();
+    if (provider == "postgresql" || provider == "postgres")
+    {
+        options.UseNpgsql(builder.Configuration.GetConnectionString("PostgreSqlConnection"));
+    }
+    else
+    {
+        options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+    }
+});
 
 // Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

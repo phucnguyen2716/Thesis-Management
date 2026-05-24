@@ -8,9 +8,17 @@ const NAV_ITEMS = [
   { label: 'Kiểm đạo văn', icon: LECTURER_ICONS.plagiarism, path: '/lecturer/controller' },
   { label: 'Danh sách đồ án', icon: LECTURER_ICONS.theses, path: '/lecturer/theses' },
   { label: 'Báo cáo', icon: LECTURER_ICONS.reports, path: '/lecturer/reports' },
+  { label: 'Hồ sơ', icon: LECTURER_ICONS.profile, path: '/lecturer/profile' },
+  { label: 'Mini-game', icon: LECTURER_ICONS.miniGame, path: '/lecturer/games' },
 ];
 
-const BOTTOM_NAV = NAV_ITEMS;
+const BOTTOM_NAV = [
+  { label: 'Trang chủ', icon: LECTURER_ICONS.home, path: '/lecturer', short: 'Trang chủ' },
+  { label: 'Đạo văn', icon: LECTURER_ICONS.plagiarism, path: '/lecturer/controller', short: 'Đạo văn' },
+  { label: 'Mini-game', icon: LECTURER_ICONS.miniGame, path: '/lecturer/games', short: 'Game' },
+  { label: 'Hồ sơ', icon: LECTURER_ICONS.profile, path: '/lecturer/profile', short: 'Hồ sơ' },
+  { label: 'Báo cáo', icon: LECTURER_ICONS.reports, path: '/lecturer/reports', short: 'Báo cáo' },
+];
 
 const isPathActive = (pathname, path) => {
   if (path === '/lecturer') return pathname === '/lecturer' || pathname === '/lecturer/';
@@ -88,7 +96,7 @@ const LecturerLayout = () => {
             Portal sinh viên
           </button>
           <div className="flex items-center gap-2 py-1 pl-1 pr-3 bg-white/10 rounded-full border border-white/10">
-            <Link to="/lecturer/reports#lecturer-profile" className="flex items-center gap-2 hover:opacity-90">
+            <Link to="/lecturer/profile" className="flex items-center gap-2 hover:opacity-90">
               <div className="w-8 h-8 rounded-full overflow-hidden border border-white/30">
                 <img alt="Avatar" className="w-full h-full object-cover" src={avatarSrc} />
               </div>
@@ -248,7 +256,9 @@ const LecturerLayout = () => {
               >
                 {item.icon}
               </span>
-              <span className="text-[7px] uppercase tracking-wide font-bold">{item.label.split(' ')[0]}</span>
+              <span className="text-[7px] uppercase tracking-wide font-bold">
+                {item.short || item.label.split(' ')[0]}
+              </span>
               {active && <span className="absolute bottom-1 w-5 h-0.5 bg-teal-800 rounded-full" />}
             </Link>
           );

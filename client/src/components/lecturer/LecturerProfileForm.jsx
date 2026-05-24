@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { MAJORS } from '../../data/lecturerMockData';
 import { loadLecturerProfile, saveLecturerProfile } from '../../utils/lecturerProfile';
+import ProfileFileVault from '../profile/ProfileFileVault';
+import AvatarUpload from '../profile/AvatarUpload';
+import { PROFILE_PORTALS } from '../../utils/profileFileStorage';
 
 const LecturerProfileForm = ({ onSaved }) => {
   const [form, setForm] = useState(loadLecturerProfile);
@@ -63,21 +66,15 @@ const LecturerProfileForm = ({ onSaved }) => {
 
       <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-6">
         <div className="flex flex-col sm:flex-row gap-6 items-start">
-          <div className="flex flex-col items-center gap-3 shrink-0">
-            <div className="w-24 h-24 rounded-2xl overflow-hidden border-4 border-teal-100 shadow-md">
-              <img src={avatarSrc} alt="" className="w-full h-full object-cover" />
-            </div>
-            <label className="text-[11px] font-semibold text-slate-600 w-full">
-              URL ảnh đại diện
-              <input
-                type="url"
-                value={form.avatarUrl || ''}
-                onChange={e => set('avatarUrl', e.target.value)}
-                placeholder="https://..."
-                className="mt-1 w-full sm:w-48 px-3 py-2 rounded-lg border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-teal-800/20"
-              />
-            </label>
-          </div>
+          <AvatarUpload
+            theme="lecturer"
+            value={form.avatarUrl}
+            onChange={v => {
+              const next = { ...form, avatarUrl: v };
+              setForm(next);
+              saveLecturerProfile(next);
+            }}
+          />
 
           <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4 w-full min-w-0">
             <label className="text-[11px] font-semibold text-slate-600 sm:col-span-2">
@@ -215,6 +212,9 @@ const LecturerProfileForm = ({ onSaved }) => {
           </button>
         </div>
       </form>
+      <div className="px-4 pb-4 sm:px-6 sm:pb-6">
+        <ProfileFileVault portal={PROFILE_PORTALS.lecturer} theme="lecturer" />
+      </div>
     </section>
   );
 };

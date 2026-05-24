@@ -3,12 +3,21 @@ import { Link } from 'react-router-dom';
 import { SUBMISSIONS, STATUS_CONFIG } from '../../data/lecturerMockData';
 import PlagiarismAnalysisBento from '../../components/lecturer/PlagiarismAnalysisBento';
 import { LECTURER_ICONS } from '../../constants/lecturerIcons';
+import { getPlagiarismFlow } from '../../utils/adminContentStore';
 
 const LecturerControllerPage = () => {
   const [submissions, setSubmissions] = useState(SUBMISSIONS);
   const [selectedId, setSelectedId] = useState(SUBMISSIONS[0].id);
   const [filter, setFilter] = useState('all');
   const [zoom, setZoom] = useState(100);
+  const [flowConfig, setFlowConfig] = useState(null);
+
+  useEffect(() => {
+    const load = () => setFlowConfig(getPlagiarismFlow());
+    load();
+    window.addEventListener('admin-content-updated', load);
+    return () => window.removeEventListener('admin-content-updated', load);
+  }, []);
 
   const selected = useMemo(
     () => submissions.find(s => s.id === selectedId) || submissions[0],
@@ -69,6 +78,20 @@ const LecturerControllerPage = () => {
           Quét lại
         </button>
       </div>
+
+      {flowConfig?.enabled && (
+        <div className="mb-4 p-3 sm:p-4 rounded-xl bg-teal-50 border border-teal-200/80 text-xs text-teal-900">
+          <p className="font-bold mb-1">Quy trình kiểm tra (cấu hình Admin)</p>
+          <p className="text-teal-800/90 leading-relaxed">{flowConfig.policyText}</p>
+          <p className="mt-2 text-[10px] font-semibold uppercase tracking-wide text-teal-700">
+            Ngưỡng: trùng lặp xem xét ≥{flowConfig.thresholds.similarityReview}% · flagged ≥
+            {flowConfig.thresholds.similarityFlag}% · AI xem xét ≥{flowConfig.thresholds.aiReview}% · AI flagged ≥
+            {flowConfig.thresholds.aiFlag}%
+            {flowConfig.engines.bm25 && ' · BM25'}
+            {flowConfig.engines.elasticsearch && ' · ES'}
+          </p>
+        </div>
+      )}
 
       {/* Mobile / tablet: horizontal queue */}
       <div className="xl:hidden w-full mb-4 sm:mb-6">

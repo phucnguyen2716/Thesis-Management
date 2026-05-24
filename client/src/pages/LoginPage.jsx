@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Lock, Eye, EyeOff, Loader2, ChevronUp } from 'lucide-react';
+import { ensureAdminSeed, findUserByEmail, logLoginAttempt } from '../utils/adminStore';
 
 const LoginPage = () => {
   const [username, setUsername] = useState('');
@@ -26,18 +27,41 @@ const LoginPage = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
-    
+    setError('');
+    ensureAdminSeed();
+
+    const email = username.includes('@') ? username.trim() : `${username.trim()}@ethesis.edu.vn`;
+
     setTimeout(() => {
+      const matched = findUserByEmail(email);
+
+      if (!matched) {
+        logLoginAttempt({ email, role: '—', success: false, message: 'Email không tồn tại hoặc bị khóa' });
+        setError('Email không tồn tại hoặc tài khoản bị khóa.');
+        setLoading(false);
+        return;
+      }
+
+      logLoginAttempt({ email: matched.email, role: matched.role, success: true, message: 'Đăng nhập demo' });
       localStorage.setItem('token', 'mock-token');
-      localStorage.setItem('user', JSON.stringify({
-        fullName: 'Sinh viên Demo',
-        email: 'student@uef.edu.vn',
-        role: 'Student',
-        id: 1
-      }));
-      navigate('/');
+      localStorage.setItem(
+        'user',
+        JSON.stringify({
+          id: matched.id,
+          fullName: matched.fullName,
+          email: matched.email,
+          role: matched.role,
+          studentId: matched.studentId,
+          faculty: matched.department,
+        })
+      );
+
+      if (matched.role === 'Admin') navigate('/admin');
+      else if (matched.role === 'Advisor') navigate('/lecturer');
+      else navigate('/');
+
       setLoading(false);
-    }, 800);
+    }, 600);
   };
 
   const handleGoogleLogin = () => {
@@ -141,6 +165,10 @@ const LoginPage = () => {
               </button>
             </div>
 
+            {error && (
+              <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">{error}</p>
+            )}
+
             <button
               type="submit"
               disabled={loading}
@@ -148,6 +176,13 @@ const LoginPage = () => {
             >
               {loading ? <Loader2 className="animate-spin mx-auto" size={20} /> : (lang === 'EN' ? 'Sign In' : 'Đăng nhập')}
             </button>
+
+            <div className="mt-3 p-3 rounded-lg bg-slate-50 border border-slate-200 text-[11px] text-slate-600 leading-relaxed">
+              <p className="font-bold text-slate-700 mb-1">Tài khoản demo (nhập email):</p>
+              <p>admin@ethesis.edu.vn → Admin</p>
+              <p>advisor@ethesis.edu.vn → Giảng viên</p>
+              <p>student@ethesis.edu.vn → Sinh viên</p>
+            </div>
           </form>
         </div>
       </div>

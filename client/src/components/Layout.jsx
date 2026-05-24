@@ -36,14 +36,15 @@ const Layout = () => {
 
     if (user.role === 'Admin') {
       return [
-        ...baseItems,
-        { label: 'Quản lý hệ thống', icon: 'settings', path: '/admin/management' },
-        { label: 'Người dùng', icon: 'group', path: '/admin/users' },
+        { label: 'Admin Portal', icon: 'admin_panel_settings', path: '/admin' },
+        { label: 'Sinh viên', icon: 'school', path: '/admin/students' },
+        { label: 'Giảng viên', icon: 'co_present', path: '/admin/advisors' },
       ];
     }
 
     return [
       ...baseItems,
+      { label: 'Luyện đồ án', icon: 'edit_document', path: '/practice' },
       { label: 'Sáng kiến yêu thích', icon: 'bookmark', path: '/favorites' },
       { label: 'Hướng dẫn tra cứu', icon: 'menu_book', path: '/guidelines' },
     ];
@@ -64,17 +65,17 @@ const Layout = () => {
       );
     } else if (user.role === 'Admin') {
       items.push(
-        { label: 'Tra cứu', icon: 'search', path: '/lookup' },
-        { label: 'Quản lý', icon: 'settings', path: '/admin/management' }
+        { label: 'Admin', icon: 'admin_panel_settings', path: '/admin' },
+        { label: 'SV', icon: 'school', path: '/admin/students' }
       );
     } else {
       items.push(
-        { label: 'Tra cứu', icon: 'search', path: '/lookup' },
-        { label: 'Gemini AI', icon: 'auto_awesome', path: '/analysis' }
+        { label: 'Luyện đồ án', icon: 'edit_document', path: '/practice' },
+        { label: 'Tra cứu', icon: 'search', path: '/lookup' }
       );
     }
     
-    items.push({ label: 'Tài khoản', icon: 'person', path: '/profile' });
+    items.push({ label: 'Hồ sơ', icon: 'person', path: '/profile' });
     return items;
   };
 

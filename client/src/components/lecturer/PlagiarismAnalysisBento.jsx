@@ -1,6 +1,7 @@
 import React from 'react';
 import { LECTURER_ICONS } from '../../constants/lecturerIcons';
 import { STATUS_CONFIG } from '../../data/lecturerMockData';
+import { getPlagiarismThresholds } from '../../utils/adminContentStore';
 
 const ACCENT = '#115e59';
 const ACCENT_LIGHT = '#e6fffa';
@@ -94,6 +95,7 @@ const statusBadgeClass = status => {
 const PlagiarismAnalysisBento = ({ submission, zoom = 100, onZoomIn, onZoomOut }) => {
   const statusCfg = STATUS_CONFIG[submission.status] || STATUS_CONFIG.review;
   const cells = submission.heatmapGrid || [];
+  const thresholds = getPlagiarismThresholds();
 
   return (
     <div className="w-full grid grid-cols-1 xl:grid-cols-12 gap-4 sm:gap-5 lg:gap-6 [&>*]:min-w-0">
@@ -132,6 +134,9 @@ const PlagiarismAnalysisBento = ({ submission, zoom = 100, onZoomIn, onZoomOut }
                   AI Generated
                 </span>
                 <span className="text-base sm:text-xl font-semibold text-sky-600">{submission.aiPercent}%</span>
+                <span className="text-[9px] text-slate-400 block mt-0.5">
+                  Ngưỡng admin: {thresholds.aiReview}% / {thresholds.aiFlag}%
+                </span>
               </div>
               <div className="min-w-0">
                 <span className="text-[10px] sm:text-xs font-medium text-slate-500 block truncate">

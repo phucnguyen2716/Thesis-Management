@@ -2,18 +2,18 @@ import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Chess } from 'chess.js';
 import { Smile, Swords, Trophy, RotateCcw, X, Sliders, ChevronRight, Settings, Brain } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import WordChainModal from '../components/WordChainGame';
-import SolitaireGame from '../components/SolitaireGame';
-import TetrisGame from '../components/TetrisGame';
 import SoundMuteToggle from '../components/SoundMuteToggle';
+import StudentProfileForm from '../components/profile/StudentProfileForm';
+import StudentProfileGames from '../components/student/StudentProfileGames';
+import StudentActivityStats from '../components/student/StudentActivityStats';
+import StudentProfileSummaryCard from '../components/student/StudentProfileSummaryCard';
+import ProfileFileVault from '../components/profile/ProfileFileVault';
+import { PROFILE_PORTALS } from '../utils/profileFileStorage';
+import { loadStudentProfile } from '../utils/studentProfile';
 import { useGameMusic } from '../hooks/useGameMusic';
 import { GAME_OVERLAY_CLASS, GAME_PANEL_CLASS, useGameResponsive } from '../hooks/useGameResponsive';
 import {
   primeAudio,
-  gameOpenChess,
-  gameOpenWord,
-  gameOpenSolitaire,
-  gameOpenTetris,
   chessMove,
   chessCapture,
   chessCheck,
@@ -192,7 +192,7 @@ const DIFFICULTY_OPTIONS = [
 ];
 
 // ─── Chess Modal ──────────────────────────────────────────────────────────────
-const ChessModal = ({ onClose }) => {
+export const ChessModal = ({ onClose }) => {
   const { isMobile } = useGameResponsive();
   useGameMusic('chess');
 
@@ -627,224 +627,51 @@ const ChessModal = ({ onClose }) => {
   );
 };
 
-// ─── Activity Graph ───────────────────────────────────────────────────────────
-const ActivityGraph = ({ className }) => {
-  const [data] = useState(() =>
-    ['T1','T2','T3','T4','T5','T6','T7','T8','T9','T10','T11','T12'].map(m => ({
-      month: m,
-      count: Math.floor(Math.random() * 50) + 10,
-    }))
-  );
-  return (
-    <div className={`bg-white rounded-[2.5rem] p-6 border border-outline-variant shadow-sm flex flex-col justify-between ${className || ''}`}>
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <span className="w-1.5 h-6 bg-emerald-500 rounded-full"></span>
-          <h3 className="text-xl font-bold text-on-surface">Thống kê hoạt động</h3>
-        </div>
-        <select className="bg-surface-container px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest outline-none cursor-pointer">
-          <option>Năm 2026</option>
-          <option>Tháng này</option>
-          <option>Tuần này</option>
-        </select>
-      </div>
-      <div className="flex items-end gap-2.5 w-full flex-1 min-h-[8rem] max-h-[11rem] mb-5">
-        {data.map((d, i) => (
-          <div key={i} className="flex-1 flex flex-col items-center gap-2 group h-full">
-            <div className="w-full flex items-end justify-center h-full bg-surface-container rounded-t-lg">
-              <div
-                className="w-full bg-gradient-to-t from-emerald-600 to-emerald-400 group-hover:opacity-75 transition-all rounded-t-lg"
-                style={{ height: `${(d.count / 60) * 100}%` }}
-              />
-            </div>
-            <span className="text-[9px] font-black text-on-surface-variant uppercase">{d.month}</span>
-          </div>
-        ))}
-      </div>
-      <div className="mt-4 flex flex-wrap gap-3 pt-4 border-t border-outline-variant/30">
-        {[
-          { val: 342, label: 'Lượt truy cập', cls: 'bg-emerald-50 border-emerald-100 text-emerald-600' },
-          { val: 45,  label: 'Tài liệu tải',  cls: 'bg-blue-50 border-blue-100 text-blue-600' },
-          { val: 12,  label: 'Bình luận',      cls: 'bg-orange-50 border-orange-100 text-orange-600' },
-        ].map((s, i) => (
-          <div key={i} className={`flex-1 ${s.cls} p-3.5 rounded-2xl text-center border`}>
-            <div className="text-2xl font-black">{s.val}</div>
-            <div className="text-[9px] font-black uppercase tracking-widest opacity-60 mt-1">{s.label}</div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-// ─── Profile Page ─────────────────────────────────────────────────────────────
+// ─── Profile — lưới 2×2: trái | phải ───────────────────────────────────────
 const Profile = () => {
-  const user = JSON.parse(localStorage.getItem('user') || '{"role":"Student","fullName":"Người dùng Demo"}');
-  const [showGame, setShowGame] = useState(false);
-  const [showWordGame, setShowWordGame] = useState(false);
-  const [showSolitaire, setShowSolitaire] = useState(false);
-  const [showTetris, setShowTetris] = useState(false);
+  const [profile, setProfile] = useState(loadStudentProfile);
+  const user = JSON.parse(localStorage.getItem('user') || '{"role":"Student"}');
 
-  const openChess = () => {
-    primeAudio().then(() => startGameMusic('chess'));
-    gameOpenChess();
-    setShowGame(true);
-  };
-  const openWordGame = () => { primeAudio(); gameOpenWord(); setShowWordGame(true); };
-  const openSolitaire = () => { primeAudio(); gameOpenSolitaire(); setShowSolitaire(true); };
-  const openTetris = () => { primeAudio(); gameOpenTetris(); setShowTetris(true); };
-
-  const InfoRow = ({ icon, label, value }) => (
-    <div className="flex items-center gap-4 p-4 bg-white/50 hover:bg-white transition-colors rounded-2xl border border-transparent hover:border-outline-variant/50 shadow-sm">
-      <div className="w-11 h-11 rounded-xl bg-surface-container-high flex items-center justify-center text-primary shrink-0">
-        <span className="material-symbols-outlined">{icon}</span>
-      </div>
-      <div>
-        <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">{label}</p>
-        <p className="text-sm font-bold text-on-surface">{value || 'N/A'}</p>
-      </div>
-    </div>
-  );
+  useEffect(() => {
+    const refresh = () => setProfile(loadStudentProfile());
+    window.addEventListener('student-profile-updated', refresh);
+    window.addEventListener('storage', refresh);
+    return () => {
+      window.removeEventListener('student-profile-updated', refresh);
+      window.removeEventListener('storage', refresh);
+    };
+  }, []);
 
   return (
-    <div className="p-8 max-w-[1400px] mx-auto space-y-8">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-        <div>
-          <h1 className="text-4xl font-black text-on-surface tracking-tight">Hồ sơ cá nhân</h1>
-          <p className="text-on-surface-variant font-medium mt-2 text-sm">
-            Quản lý thông tin tài khoản và thống kê hoạt động khoa học trên UEF Portal.
-          </p>
-        </div>
-        <button className="shrink-0 px-8 py-3 bg-primary text-on-primary font-black rounded-xl hover:-translate-y-1 transition-all text-[11px] uppercase tracking-widest shadow-lg shadow-primary/20">
-          Chỉnh sửa hồ sơ
-        </button>
+    <div className="p-6 md:p-8 max-w-[1280px] mx-auto space-y-6">
+      <div>
+        <h1 className="text-2xl md:text-3xl font-black text-on-surface tracking-tight">Hồ sơ cá nhân</h1>
+        <p className="text-on-surface-variant text-sm mt-1">
+          Tóm tắt · chỉnh sửa · mini-game · thống kê · kho tài liệu (cuối trang)
+        </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
-        {/* ROW 1: Profile Details (left) & Info Card (right) */}
-        {/* Profile Card */}
-        <div className="lg:col-span-4 bg-white rounded-[2.5rem] flex flex-col items-center text-center p-6 border border-outline-variant shadow-sm relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-20 bg-gradient-to-br from-primary/20 to-transparent pointer-events-none" />
-          <div className="relative w-24 h-24 rounded-full border-[4px] border-white shadow-lg overflow-hidden mb-3 z-10">
-            <img
-              src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-              alt="Avatar"
-              className="w-full h-full object-cover"
-            />
-          </div>
-          <h2 className="text-xl font-black text-on-surface z-10">{user.fullName}</h2>
-          <div className="mt-1.5 px-4 py-1 bg-primary text-on-primary text-[9px] font-black rounded-full uppercase tracking-widest z-10">
-            {user.role}
-          </div>
-          <div className="mt-auto pt-4 border-t border-outline-variant/30 w-full space-y-2.5 z-10">
-            <div className="flex justify-between items-center px-3.5 py-2 bg-emerald-50 rounded-xl border border-emerald-100">
-              <span className="text-[9px] font-black text-emerald-800 uppercase tracking-widest">Trạng thái</span>
-              <span className="text-[9px] font-black text-emerald-600 flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse inline-block" />Online
-              </span>
-            </div>
-            <button className="w-full py-2 bg-red-50 border border-red-200 text-red-700 font-black rounded-xl hover:bg-red-100 transition-all text-[9px] uppercase tracking-widest flex items-center justify-center gap-2">
-              <span className="material-symbols-outlined text-sm">shield_person</span>
-              Đổi mật khẩu
-            </button>
-          </div>
+      {/* Hàng 1: thẻ tóm tắt = thẻ chi tiết (cùng chiều cao) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-6 items-stretch">
+        <div className="lg:col-span-4 xl:col-span-3 min-w-0 flex">
+          <StudentProfileSummaryCard profile={profile} user={user} />
         </div>
-
-        {/* Detailed Info Card */}
-        <div className="lg:col-span-8 bg-surface-container-lowest rounded-[2.5rem] p-8 border border-outline-variant shadow-sm flex flex-col">
-          <div className="flex items-center gap-3 mb-6">
-            <span className="w-1.5 h-6 bg-primary rounded-full" />
-            <h3 className="text-xl font-bold text-on-surface">Thông tin chi tiết</h3>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <InfoRow icon="mail"           label="Email Portal"    value={user.email || 'student@uef.edu.vn'} />
-            <InfoRow icon="badge"          label="Mã định danh"    value={user.id ? `UEF-${String(user.id).padStart(4,'0')}` : 'UEF-0192'} />
-            <InfoRow icon="corporate_fare" label="Khoa / Phòng ban" value="Khoa Công nghệ thông tin" />
-            <InfoRow icon="calendar_month" label="Ngày tham gia"   value="14 Tháng 5, 2024" />
-          </div>
+        <div className="lg:col-span-8 xl:col-span-9 min-w-0 flex">
+          <StudentProfileForm showHeader showVault={false} />
         </div>
-
-        {/* ROW 2: Mini-game Card (left) & Activity Graph (right) */}
-        {/* Mini-game Card */}
-        <div className="lg:col-span-4 bg-white rounded-[2.5rem] p-4 sm:p-6 border border-outline-variant shadow-sm flex flex-col">
-          <div className="flex items-center gap-2.5 sm:gap-3 mb-3 sm:mb-4">
-            <span className="material-symbols-outlined text-on-surface text-xl shrink-0">sports_esports</span>
-            <h3 className="text-base sm:text-lg font-bold text-on-surface">
-              Mini-game giải trí
-            </h3>
-          </div>
-          <div className="space-y-2.5">
-            <button
-              onClick={openChess}
-              className="w-full flex items-center justify-between p-3 bg-indigo-50 rounded-2xl hover:bg-indigo-100 border border-indigo-100 transition-all group"
-            >
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center text-white group-hover:scale-110 transition-transform">
-                  <span className="material-symbols-outlined text-lg">strategy</span>
-                </div>
-                <div className="text-left">
-                  <p className="text-xs font-bold text-indigo-900">Cờ Vua vs AI</p>
-                  <p className="text-[9px] text-indigo-600/80 font-medium mt-0.5">Đánh cờ với AI • 3 độ khó</p>
-                </div>
-              </div>
-              <span className="material-symbols-outlined text-indigo-400 group-hover:text-indigo-600 transition-colors text-lg">open_in_new</span>
-            </button>
-            <button
-              onClick={openWordGame}
-              className="w-full flex items-center justify-between p-3 bg-blue-50 rounded-2xl hover:bg-blue-100 border border-blue-100 transition-all group"
-            >
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white group-hover:scale-110 transition-transform">
-                  <span className="material-symbols-outlined text-lg">abc</span>
-                </div>
-                <div className="text-left">
-                  <p className="text-xs font-bold text-blue-900">Nối Chữ</p>
-                  <p className="text-[9px] text-blue-600/80 font-medium mt-0.5">Ghép từ học thuật • 20 cấp độ</p>
-                </div>
-              </div>
-              <span className="material-symbols-outlined text-blue-400 group-hover:text-blue-600 transition-colors text-lg">open_in_new</span>
-            </button>
-            <button
-              onClick={openSolitaire}
-              className="w-full flex items-center justify-between p-3 bg-emerald-50 rounded-2xl hover:bg-emerald-100 border border-emerald-100 transition-all group"
-            >
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-emerald-600 flex items-center justify-center text-white group-hover:scale-110 transition-transform">
-                  <span className="material-symbols-outlined text-lg">playing_cards</span>
-                </div>
-                <div className="text-left">
-                  <p className="text-xs font-bold text-emerald-900">Solitaire</p>
-                  <p className="text-[9px] text-emerald-600/80 font-medium mt-0.5">Klondike Card Game • Classic</p>
-                </div>
-              </div>
-              <span className="material-symbols-outlined text-emerald-400 group-hover:text-emerald-600 transition-colors text-lg">open_in_new</span>
-            </button>
-            <button
-              onClick={openTetris}
-              className="w-full flex items-center justify-between p-3 bg-purple-50 rounded-2xl hover:bg-purple-100 border border-purple-100 transition-all group"
-            >
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-purple-600 flex items-center justify-center text-white group-hover:scale-110 transition-transform">
-                  <span className="material-symbols-outlined text-lg">view_quilt</span>
-                </div>
-                <div className="text-left">
-                  <p className="text-xs font-bold text-purple-900">Tetris</p>
-                  <p className="text-[9px] text-purple-600/80 font-medium mt-0.5">Xếp khối • 10 cấp độ</p>
-                </div>
-              </div>
-              <span className="material-symbols-outlined text-purple-400 group-hover:text-purple-600 transition-colors text-lg">open_in_new</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Activity Graph */}
-        <ActivityGraph className="lg:col-span-8" />
       </div>
 
-      {showGame && <ChessModal onClose={() => setShowGame(false)} />}
-      {showWordGame && <WordChainModal onClose={() => setShowWordGame(false)} />}
-      {showSolitaire && <SolitaireGame onClose={() => setShowSolitaire(false)} />}
-      {showTetris && <TetrisGame onClose={() => setShowTetris(false)} />}
+      {/* Hàng 2: mini-game | thống kê */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-6 items-stretch">
+        <div className="lg:col-span-4 xl:col-span-3 min-w-0">
+          <StudentProfileGames vertical compact />
+        </div>
+        <div className="lg:col-span-8 xl:col-span-9 min-w-0">
+          <StudentActivityStats className="h-full min-h-[280px]" />
+        </div>
+      </div>
+
+      <ProfileFileVault portal={PROFILE_PORTALS.student} theme="student" />
     </div>
   );
 };

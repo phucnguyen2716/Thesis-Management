@@ -26,10 +26,24 @@ const LecturerDashboard = () => {
     },
     {
       title: 'Báo cáo thống kê',
-      desc: 'Biểu đồ đồ án & tạo hồ sơ giảng viên.',
+      desc: 'Biểu đồ thống kê đồ án theo ngành.',
       icon: LECTURER_ICONS.reports,
       path: '/lecturer/reports',
       accent: 'bg-cyan-700',
+    },
+    {
+      title: 'Hồ sơ giảng viên',
+      desc: 'Cập nhật thông tin và kho tài liệu.',
+      icon: LECTURER_ICONS.profile,
+      path: '/lecturer/profile',
+      accent: 'bg-teal-700',
+    },
+    {
+      title: 'Mini-game GV',
+      desc: 'Quiz đạo văn, chấm điểm nhanh, ghép thuật ngữ.',
+      icon: LECTURER_ICONS.miniGame,
+      path: '/lecturer/games',
+      accent: 'bg-violet-700',
     },
   ];
 
@@ -72,7 +86,7 @@ const LecturerDashboard = () => {
 
       <div>
         <h2 className="text-xs font-bold text-slate-700 uppercase tracking-widest mb-4">Chức năng</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {cards.map(c => (
             <Link
               key={c.path}

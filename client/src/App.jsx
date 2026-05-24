@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard';
 import ThesisList from './pages/ThesisList';
 import ThesisDetail from './pages/ThesisDetail';
 import Profile from './pages/Profile';
+import StudentGames from './pages/StudentGames';
 
 const ProtectedRoute = ({ children }) => {
   // Temporarily bypass authentication for preview
@@ -19,11 +20,20 @@ import NewsPage from './pages/NewsPage';
 import FavoritesPage from './pages/FavoritesPage';
 import GuidelinesPage from './pages/GuidelinesPage';
 import SupportPage from './pages/SupportPage';
+import ThesisPracticePage from './pages/ThesisPracticePage';
 import LecturerLayout from './components/LecturerLayout';
 import LecturerDashboard from './pages/lecturer/LecturerDashboard';
 import LecturerControllerPage from './pages/lecturer/LecturerControllerPage';
 import LecturerThesesPage from './pages/lecturer/LecturerThesesPage';
 import LecturerReportsPage from './pages/lecturer/LecturerReportsPage';
+import LecturerProfilePage from './pages/lecturer/LecturerProfilePage';
+import LecturerGamesPage from './pages/lecturer/LecturerGamesPage';
+import AdminLayout from './components/AdminLayout';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminUsersPage from './pages/admin/AdminUsersPage';
+import AdminLoginAuditPage from './pages/admin/AdminLoginAuditPage';
+import AdminSocialPage from './pages/admin/AdminSocialPage';
+import AdminPlagiarismFlowPage from './pages/admin/AdminPlagiarismFlowPage';
 
 function App() {
   return (
@@ -31,6 +41,23 @@ function App() {
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/letcturer" element={<Navigate to="/lecturer" replace />} />
+
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute>
+              <AdminLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<AdminDashboard />} />
+          <Route path="students" element={<AdminUsersPage fixedRole="Student" />} />
+          <Route path="advisors" element={<AdminUsersPage fixedRole="Advisor" />} />
+          <Route path="users" element={<AdminUsersPage />} />
+          <Route path="audit" element={<AdminLoginAuditPage />} />
+          <Route path="social" element={<AdminSocialPage />} />
+          <Route path="plagiarism" element={<AdminPlagiarismFlowPage />} />
+        </Route>
 
         <Route
           path="/lecturer"
@@ -44,6 +71,8 @@ function App() {
           <Route path="controller" element={<LecturerControllerPage />} />
           <Route path="theses" element={<LecturerThesesPage />} />
           <Route path="reports" element={<LecturerReportsPage />} />
+          <Route path="profile" element={<LecturerProfilePage />} />
+          <Route path="games" element={<LecturerGamesPage />} />
         </Route>
         
         <Route path="/" element={
@@ -60,8 +89,10 @@ function App() {
           <Route path="theses" element={<ThesisList />} />
           <Route path="theses/:id" element={<ThesisDetail />} />
           <Route path="profile" element={<Profile />} />
+          <Route path="games" element={<StudentGames />} />
           <Route path="favorites" element={<FavoritesPage />} />
           <Route path="support" element={<SupportPage />} />
+          <Route path="practice" element={<ThesisPracticePage />} />
         </Route>
       </Routes>
     </BrowserRouter>

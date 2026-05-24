@@ -1,36 +1,31 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getSocialPosts } from '../utils/adminContentStore';
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem('user') || '{"role": "Student"}');
+  const [newsItems, setNewsItems] = useState([]);
 
-  const newsItems = [
-    {
-      title: "Công bố danh sách các sáng kiến tiêu biểu học kỳ 1 năm 2024",
-      date: "20/10/2024",
-      badge: "Tin mới",
-      badgeClass: "bg-primary text-on-primary",
-      image: "https://lh3.googleusercontent.com/aida-public/AB6AXuDVaKckFBO6OahgQhL5POM9HkyyecIPbbQpO1dWLvQHUSBcj49wyeR69ByLr8G1HshrXjAzidE5A-wOT6RA7V7eLvC33ch_y8-bNDvNRg1HwmmnaJTAcz8NBYG9tH7A-4q9Aydwy8_z9zEL6dgejrSFafcXOHrBluNSxzC-1l68EVFbA93qGEExIzjN4r7IEyBbD-vnEDCAtJDWdRszsVJdArxh12IA2eUzDBOvizUG5zZuFjD1jL69T8qDOK5VDX_pqXpNUf76mRsk",
-      desc: "Hội đồng chuyên môn đã hoàn tất việc chấm điểm và lựa chọn ra 10 sáng kiến xuất sắc nhất để triển khai thực tế..."
-    },
-    {
-      title: "Hướng dẫn tra cứu và tham khảo kho dữ liệu sáng kiến học thuật",
-      date: "18/10/2024",
-      badge: "Hướng dẫn",
-      badgeClass: "bg-secondary-container text-on-secondary-container",
-      image: "https://lh3.googleusercontent.com/aida-public/AB6AXuC9CBcdVbi_lVPZdj1fMXkDrm6UXNpgAQzAbT5BzIzcVc1wXGTHcmwvFTTaIEgcFm1wFyYIkxuYp8LKwSkizyelJ4bjIqymKLSgFfukFSODI8QlHCdYgYlzoIpXWPGJ6pwNFnkIc54kH5CFyy19WYTo0HdQ9cSVQ1CNsuV41pZn1z5hhO7krZslwN6YtBpL_fRpzCvXn5HpiOcH4ntw_v0VI8GftCgk9T6IiQz7ikPDYxY5Gr4t4CGGG3_-YsRIM4rMsyCMlTMvyufS",
-      desc: "Sinh viên có thể sử dụng công cụ tìm kiếm thông minh để truy cập hàng nghìn tài liệu nghiên cứu và sáng kiến qua các năm..."
-    },
-    {
-      title: "Hệ thống AI Gemini hỗ trợ phân tích và tóm tắt sáng kiến",
-      date: "15/10/2024",
-      badge: "Tính năng",
-      badgeClass: "bg-surface-container-high text-on-surface",
-      image: "https://lh3.googleusercontent.com/aida-public/AB6AXuANxGO4D6ojuZlYk7MEhtq_38tsfUs324mV9MOXepahz-7q_MfJXjqjvHbgLt27PAjQquIgxNbU4l8TFLxxTqokf9fiaJRq8mxeZIqQU-_fhU1ho_Omjv4xl_49kl_cJIIr3tyg5-3Lu3GYiLPM2N3psKIdMJtF-p6DcwYjflkXf24kayQ57904JAS0eyc8PMffw-nv4NNzDqKse0KbLJ4YWmW0Hqys7UoOYciK4A2BTM_k2g3B1Slq6NwqcMgwtqtuEWUyLaQ7lH_W",
-      desc: "Tích hợp trí tuệ nhân tạo Gemini giúp sinh viên nhanh chóng nắm bắt nội dung cốt lõi của các đề tài nghiên cứu phức tạp..."
-    }
-  ];
+  useEffect(() => {
+    const load = () =>
+      setNewsItems(
+        getSocialPosts()
+          .slice(0, 3)
+          .map(p => ({
+            id: p.id,
+            title: p.title,
+            date: p.date,
+            badge: p.category,
+            badgeClass: p.badgeClass || 'bg-primary text-on-primary',
+            image: p.image,
+            desc: p.desc,
+          }))
+      );
+    load();
+    window.addEventListener('admin-content-updated', load);
+    return () => window.removeEventListener('admin-content-updated', load);
+  }, []);
 
   return (
     <div className="flex flex-col">
@@ -165,10 +160,10 @@ const Dashboard = () => {
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {newsItems.map((news, idx) => (
+          {newsItems.map(news => (
             <div 
-              key={idx} 
-              onClick={() => navigate(`/news/${idx + 1}`)}
+              key={news.id} 
+              onClick={() => navigate(`/news/${news.id}`)}
               className="bg-surface-container-lowest rounded-[1.5rem] overflow-hidden border border-outline-variant group hover:shadow-[0_20px_50px_rgba(0,0,0,0.05)] transition-all duration-500 cursor-pointer flex flex-col"
             >
               <div className="h-40 overflow-hidden relative">

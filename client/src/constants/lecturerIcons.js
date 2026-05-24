@@ -15,4 +15,6 @@ export const LECTURER_ICONS = {
   recheck: 'sync_saved_locally',
   queue: 'inbox_customize',
   ranking: 'social_leaderboard',
+  miniGame: 'sports_esports',
+  profile: 'badge',
 };
