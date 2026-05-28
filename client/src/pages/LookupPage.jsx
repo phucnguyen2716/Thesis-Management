@@ -52,7 +52,7 @@ const LookupPage = () => {
         <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-500/10 rounded-full blur-[100px]"></div>
       </div>
 
-      <div className="relative z-10 p-8 md:p-12 lg:p-16 max-w-[1400px] mx-auto animate-fade-in">
+      <div className="relative z-10 py-4 md:py-6 max-w-[1400px] mx-auto animate-fade-in">
         {/* Page Header - Artistic Style */}
         <header className="text-center mb-16">
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/5 rounded-full text-primary font-black text-[10px] uppercase tracking-widest mb-6 border border-primary/10">
@@ -168,7 +168,10 @@ const LookupPage = () => {
                     <span className="text-[8px] font-black text-primary uppercase tracking-widest">{r.department}</span>
                   </div>
 
-                  <h2 className="text-lg font-black text-on-surface mb-4 tracking-tight group-hover:text-primary transition-colors leading-snug line-clamp-2 min-h-[56px] cursor-pointer">
+                  <h2
+                    onClick={() => navigate(`/theses/${r.id}`, { state: r })}
+                    className="text-lg font-black text-on-surface mb-4 tracking-tight group-hover:text-primary transition-colors leading-snug line-clamp-2 min-h-[56px] cursor-pointer"
+                  >
                     {r.title}
                   </h2>
 
@@ -202,7 +205,10 @@ const LookupPage = () => {
                     </div>
                     
                     <div className="flex items-center justify-between pt-6 border-t border-outline-variant/10">
-                      <button className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2 group-hover:gap-3 transition-all">
+                      <button
+                        onClick={() => navigate(`/theses/${r.id}`, { state: r })}
+                        className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2 group-hover:gap-3 transition-all hover:underline"
+                      >
                         Chi tiết <span className="material-symbols-outlined text-sm">east</span>
                       </button>
                       <span className="text-[10px] font-black text-on-surface-variant opacity-40 uppercase tracking-widest">{r.year}</span>

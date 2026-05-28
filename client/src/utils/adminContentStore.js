@@ -45,7 +45,7 @@ const DEFAULT_SOCIAL = [
   },
 ];
 
-export const SOCIAL_CATEGORIES = ['Tin mới', 'Hướng dẫn', 'Tính năng', 'Báo chí'];
+export const SOCIAL_CATEGORIES = ['Tin mới', 'Hướng dẫn', 'Tính năng', 'Báo chí', 'Sự kiện'];
 export const SOCIAL_CHANNELS = ['portal', 'facebook', 'linkedin', 'zalo'];
 
 const DEFAULT_PLAGIARISM_FLOW = {
@@ -127,6 +127,8 @@ export const createSocialPost = payload => {
     badgeClass: payload.badgeClass || 'bg-primary text-on-primary',
     image: payload.image || '',
     desc: payload.desc || '',
+    content: payload.content || '',
+    sourceLink: payload.sourceLink || '',   // link gốc từ đề xuất giảng viên
     published: payload.published !== false,
     channels: payload.channels || ['portal'],
     createdAt: Date.now(),

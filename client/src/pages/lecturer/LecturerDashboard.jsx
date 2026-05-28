@@ -11,13 +11,6 @@ const LecturerDashboard = () => {
 
   const cards = [
     {
-      title: 'Kiểm đạo văn',
-      desc: 'Similarity, heatmap AI và so khớp song song.',
-      icon: LECTURER_ICONS.plagiarism,
-      path: '/lecturer/controller',
-      accent: 'bg-teal-900',
-    },
-    {
       title: 'Danh sách đồ án',
       desc: 'Xem bài nộp và mở phân tích chi tiết.',
       icon: LECTURER_ICONS.theses,
@@ -39,11 +32,11 @@ const LecturerDashboard = () => {
       accent: 'bg-teal-700',
     },
     {
-      title: 'Mini-game GV',
-      desc: 'Quiz đạo văn, chấm điểm nhanh, ghép thuật ngữ.',
-      icon: LECTURER_ICONS.miniGame,
-      path: '/lecturer/games',
-      accent: 'bg-violet-700',
+      title: 'Thư viện tham khảo',
+      desc: 'Kho sách tham khảo, tài liệu nhiều chuyên ngành khác nhau.',
+      icon: LECTURER_ICONS.library,
+      path: '/lecturer/library',
+      accent: 'bg-indigo-700',
     },
   ];
 

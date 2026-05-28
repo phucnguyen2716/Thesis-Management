@@ -5,17 +5,18 @@ import { loadLecturerProfile } from '../utils/lecturerProfile';
 
 const NAV_ITEMS = [
   { label: 'Trang chủ', icon: LECTURER_ICONS.home, path: '/lecturer' },
-  { label: 'Kiểm đạo văn', icon: LECTURER_ICONS.plagiarism, path: '/lecturer/controller' },
   { label: 'Danh sách đồ án', icon: LECTURER_ICONS.theses, path: '/lecturer/theses' },
+  { label: 'Đề xuất sự kiện', icon: 'campaign', path: '/lecturer/propose-event' },
   { label: 'Báo cáo', icon: LECTURER_ICONS.reports, path: '/lecturer/reports' },
   { label: 'Hồ sơ', icon: LECTURER_ICONS.profile, path: '/lecturer/profile' },
-  { label: 'Mini-game', icon: LECTURER_ICONS.miniGame, path: '/lecturer/games' },
+  { label: 'Thư viện', icon: LECTURER_ICONS.library, path: '/lecturer/library' },
 ];
 
 const BOTTOM_NAV = [
   { label: 'Trang chủ', icon: LECTURER_ICONS.home, path: '/lecturer', short: 'Trang chủ' },
-  { label: 'Đạo văn', icon: LECTURER_ICONS.plagiarism, path: '/lecturer/controller', short: 'Đạo văn' },
-  { label: 'Mini-game', icon: LECTURER_ICONS.miniGame, path: '/lecturer/games', short: 'Game' },
+  { label: 'Đồ án', icon: LECTURER_ICONS.theses, path: '/lecturer/theses', short: 'Đồ án' },
+  { label: 'Sự kiện', icon: 'campaign', path: '/lecturer/propose-event', short: 'Sự kiện' },
+  { label: 'Thư viện', icon: LECTURER_ICONS.library, path: '/lecturer/library', short: 'Thư viện' },
   { label: 'Hồ sơ', icon: LECTURER_ICONS.profile, path: '/lecturer/profile', short: 'Hồ sơ' },
   { label: 'Báo cáo', icon: LECTURER_ICONS.reports, path: '/lecturer/reports', short: 'Báo cáo' },
 ];
