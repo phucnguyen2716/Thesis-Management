@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { SUBMISSIONS, STATUS_CONFIG } from '../../data/lecturerMockData';
 import PlagiarismAnalysisBento from '../../components/lecturer/PlagiarismAnalysisBento';
 import { LECTURER_ICONS } from '../../constants/lecturerIcons';
@@ -88,7 +88,7 @@ const AISummaryCard = ({ selected }) => {
             </div>
           </div>
           <span className="px-3 py-1 bg-teal-500/10 border border-teal-500/20 text-teal-300 rounded-full text-[10px] font-black tracking-widest uppercase">
-            Active
+            Đang hoạt động
           </span>
         </div>
 
@@ -151,9 +151,19 @@ const AISummaryCard = ({ selected }) => {
 };
 
 const LecturerControllerPage = () => {
+  const { id: paramId } = useParams();
   const [submissions, setSubmissions] = useState(SUBMISSIONS);
-  const [selectedId, setSelectedId] = useState(SUBMISSIONS[0].id);
+  const [selectedId, setSelectedId] = useState(
+    SUBMISSIONS.find(s => s.id === paramId)?.id ?? SUBMISSIONS[0].id
+  );
   const [filter, setFilter] = useState('all');
+
+  // Sync selectedId when navigating via URL (e.g., direct link)
+  useEffect(() => {
+    if (paramId && SUBMISSIONS.find(s => s.id === paramId)) {
+      setSelectedId(paramId);
+    }
+  }, [paramId]);
   const [zoom, setZoom] = useState(100);
   const [flowConfig, setFlowConfig] = useState(null);
 
@@ -217,7 +227,7 @@ const LecturerControllerPage = () => {
           <p className="text-[10px] font-bold text-teal-700 uppercase tracking-[0.2em] mb-1">
             Phân tích & Đánh giá đồ án
           </p>
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Thesis Analysis & Evaluation</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Phân tích & Đánh giá Đề tài</h1>
           <p className="text-xs text-slate-500 mt-1 break-words">
             <Link to="/lecturer" className="text-teal-800 hover:underline font-medium">
               Trang chủ GV

@@ -9,40 +9,40 @@ const PODIUM_META = [
     place: 1,
     label: 'Vô địch',
     medal: 'emoji_events',
-    podiumH: 'h-28 sm:h-36 md:h-44',
+    podiumH: 'h-16 sm:h-28 md:h-44',
     card: 'bg-gradient-to-b from-amber-50 via-white to-amber-50/30 border-amber-300/60 shadow-[0_12px_40px_-12px_rgba(245,158,11,0.45)]',
     ring: 'ring-2 ring-amber-400/80',
     badge: 'bg-gradient-to-r from-amber-500 to-yellow-500 text-amber-950',
     score: 'text-amber-700',
     bar: 'from-amber-400 to-yellow-300',
-    order: 'order-2 md:order-2',
-    z: 'z-20 md:-mt-6',
+    order: 'order-2',
+    z: 'z-20 -mt-3 sm:-mt-6',
   },
   {
     place: 2,
     label: 'Á quân',
     medal: 'military_tech',
-    podiumH: 'h-20 sm:h-28 md:h-32',
+    podiumH: 'h-10 sm:h-20 md:h-32',
     card: 'bg-gradient-to-b from-slate-100 via-white to-slate-50 border-slate-300/70 shadow-lg',
     ring: 'ring-2 ring-slate-300',
     badge: 'bg-gradient-to-r from-slate-400 to-slate-500 text-white',
     score: 'text-slate-700',
     bar: 'from-slate-300 to-slate-400',
-    order: 'order-1 md:order-1',
-    z: 'z-10 md:mt-4',
+    order: 'order-1',
+    z: 'z-10 mt-3 sm:mt-4',
   },
   {
     place: 3,
     label: 'Hạng 3',
     medal: 'workspace_premium',
-    podiumH: 'h-16 sm:h-24 md:h-28',
+    podiumH: 'h-8 sm:h-16 md:h-28',
     card: 'bg-gradient-to-b from-orange-50 via-white to-amber-50/20 border-orange-200/80 shadow-md',
     ring: 'ring-2 ring-orange-300/70',
     badge: 'bg-gradient-to-r from-orange-600 to-amber-700 text-white',
     score: 'text-orange-800',
     bar: 'from-orange-400 to-amber-600',
-    order: 'order-3 md:order-3',
-    z: 'z-10 md:mt-6',
+    order: 'order-3',
+    z: 'z-10 mt-4 sm:mt-6',
   },
 ];
 
@@ -58,7 +58,7 @@ const ScoreRing = ({ score, max = 100, className = '' }) => {
   const pct = Math.min(100, (score / max) * 100);
   const deg = pct * 3.6;
   return (
-    <div className={`relative w-14 h-14 shrink-0 ${className}`}>
+    <div className={`relative w-12 h-12 sm:w-14 sm:h-14 shrink-0 ${className}`}>
       <div
         className="absolute inset-0 rounded-full opacity-30"
         style={{
@@ -66,7 +66,7 @@ const ScoreRing = ({ score, max = 100, className = '' }) => {
         }}
       />
       <div className="absolute inset-1 rounded-full bg-white flex items-center justify-center shadow-inner">
-        <span className="text-sm font-black text-teal-900">{score}</span>
+        <span className="text-xs sm:text-sm font-black text-teal-900">{score}</span>
       </div>
     </div>
   );
@@ -77,54 +77,56 @@ const PodiumCard = ({ item, meta, maxScore }) => {
   const barPct = maxScore > 0 ? (item.exemplaryScore / maxScore) * 100 : 0;
 
   return (
-    <div className={`flex flex-col items-center min-w-0 w-full max-w-[280px] mx-auto ${meta.order} ${meta.z}`}>
+    <div className={`flex flex-col items-center min-w-0 w-full ${meta.order} ${meta.z}`}>
       <article
-        className={`relative w-full rounded-2xl border p-4 sm:p-5 ${meta.card} ${meta.ring} transition-transform hover:scale-[1.02] duration-300`}
+        className={`relative w-full rounded-2xl border p-2 sm:p-5 ${meta.card} ${meta.ring} transition-transform hover:scale-[1.02] duration-300`}
       >
         {meta.place === 1 && (
-          <span className="absolute -top-3 left-1/2 -translate-x-1/2 flex items-center gap-1 px-3 py-1 rounded-full bg-gradient-to-r from-amber-400 to-yellow-300 text-amber-950 text-[10px] font-black uppercase tracking-wider shadow-lg animate-pulse">
-            <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>
+          <span className="absolute -top-3 left-1/2 -translate-x-1/2 flex items-center gap-0.5 sm:gap-1 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full bg-gradient-to-r from-amber-400 to-yellow-300 text-amber-950 text-[8px] sm:text-[10px] font-black uppercase tracking-wider shadow-lg animate-pulse whitespace-nowrap">
+            <span className="material-symbols-outlined" style={{ fontSize: '11px', fontVariationSettings: "'FILL' 1" }}>
               crown
             </span>
             Tiêu biểu
           </span>
         )}
-        <div className="flex items-start justify-between gap-2 mt-1">
+        {/* Badge hạng — mobile chỉ hiện icon, sm+ hiện text */}
+        <div className="flex items-start justify-between gap-1 mt-1">
           <span
-            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase ${meta.badge}`}
+            className={`inline-flex items-center gap-0.5 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-[8px] sm:text-[10px] font-black uppercase ${meta.badge}`}
           >
-            <span className="material-symbols-outlined text-base" style={{ fontVariationSettings: "'FILL' 1" }}>
+            <span className="material-symbols-outlined" style={{ fontSize: '13px', fontVariationSettings: "'FILL' 1" }}>
               {meta.medal}
             </span>
-            {meta.label}
+            <span className="hidden xs:inline sm:inline">{meta.label}</span>
           </span>
-          <ScoreRing score={item.exemplaryScore} />
+          {/* ScoreRing: ẩn ở mobile, hiện từ sm+ */}
+          <ScoreRing score={item.exemplaryScore} className="hidden sm:flex" />
         </div>
-        <h3 className="text-sm sm:text-base font-bold text-slate-900 mt-3 line-clamp-2 leading-snug min-h-[2.5rem]">
+        <h3 className="text-[10px] sm:text-sm font-bold text-slate-900 mt-1.5 line-clamp-2 leading-snug">
           {item.title}
         </h3>
-        <p className="text-xs text-slate-600 mt-1 truncate font-medium">{item.student}</p>
-        <p className="text-[10px] font-bold text-teal-800 mt-1 uppercase tracking-wide">{major?.short}</p>
-        <div className="mt-3 h-1.5 rounded-full bg-slate-200/80 overflow-hidden">
+        <p className="text-[9px] text-slate-600 mt-0.5 truncate font-medium">{item.student}</p>
+        <p className="text-[8px] sm:text-[9px] font-bold text-teal-800 mt-0.5 uppercase tracking-wide">{major?.short}</p>
+        <div className="mt-1.5 h-1 sm:h-1.5 rounded-full bg-slate-200/80 overflow-hidden">
           <div
             className={`h-full rounded-full bg-gradient-to-r ${meta.bar} transition-all duration-700`}
             style={{ width: `${barPct}%` }}
           />
         </div>
-        <p className={`text-3xl font-black mt-2 tabular-nums ${meta.score}`}>{item.exemplaryScore}</p>
-        <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-widest">điểm tiêu biểu</p>
+        <p className={`text-xl sm:text-3xl font-black mt-1 tabular-nums ${meta.score}`}>{item.exemplaryScore}</p>
+        <p className="text-[8px] sm:text-[9px] text-slate-400 font-semibold uppercase tracking-widest">điểm tb</p>
         <Link
-          to="/lecturer/controller"
-          className="mt-3 flex items-center justify-center gap-1 w-full py-2 rounded-xl bg-teal-900/90 hover:bg-teal-950 text-white text-xs font-bold transition-colors"
+          to={`/lecturer/controller/${item.id}`}
+          className="mt-1.5 flex items-center justify-center gap-0.5 w-full py-1 sm:py-1.5 rounded-xl bg-teal-900/90 hover:bg-teal-950 text-white text-[9px] sm:text-[10px] font-bold transition-colors"
         >
           Xem chi tiết
-          <span className="material-symbols-outlined text-sm">arrow_forward</span>
+          <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>arrow_forward</span>
         </Link>
       </article>
       <div
         className={`w-full mt-2 rounded-t-xl bg-gradient-to-t ${meta.bar} opacity-90 ${meta.podiumH} flex items-end justify-center pb-2`}
       >
-        <span className="text-4xl sm:text-5xl font-black text-white/90 drop-shadow-md">{meta.place}</span>
+        <span className="text-2xl sm:text-4xl font-black text-white/90 drop-shadow-md">{meta.place}</span>
       </div>
     </div>
   );
@@ -153,8 +155,9 @@ const RankListItem = ({ item, index, maxScore, majorFilter }) => {
         className="absolute inset-y-0 left-0 bg-teal-500/10 pointer-events-none transition-all duration-500"
         style={{ width: `${barWidth}%` }}
       />
-      <div className="relative flex flex-col sm:flex-row sm:items-center gap-3 p-4 min-w-0">
-        <div className="flex items-center gap-3 min-w-0 flex-1">
+      <div className="relative flex flex-col gap-3 p-4 min-w-0">
+        {/* Top row: icon + title info */}
+        <div className="flex items-center gap-3 min-w-0">
           <div className="relative shrink-0">
             {index < 3 ? (
               <span
@@ -194,38 +197,41 @@ const RankListItem = ({ item, index, maxScore, majorFilter }) => {
             <p className="text-xs text-slate-500 mt-0.5">
               {item.student} · <span className="font-semibold text-teal-800">{major?.short}</span>
             </p>
-            <div className="flex flex-wrap gap-2 mt-2">
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700">
-                Trùng {item.similarity}%
-              </span>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-sky-50 text-sky-700">
-                AI {item.aiPercent}%
-              </span>
-              {item.grade != null && (
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-teal-50 text-teal-800">
-                  GV {item.grade}/10
-                </span>
-              )}
-            </div>
           </div>
         </div>
-        <div className="flex items-center gap-4 sm:shrink-0 pl-14 sm:pl-0">
-          <div className="text-right">
-            <p className="text-2xl font-black text-teal-900 tabular-nums">{item.exemplaryScore}</p>
-            <div className="w-20 h-1 rounded-full bg-slate-200 mt-1 ml-auto overflow-hidden">
-              <div
-                className="h-full bg-gradient-to-r from-teal-600 to-cyan-500 rounded-full"
-                style={{ width: `${barWidth}%` }}
-              />
-            </div>
+        {/* Bottom row: tags + score + link */}
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex flex-wrap gap-2">
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700">
+              Trùng {item.similarity}%
+            </span>
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-sky-50 text-sky-700">
+              AI {item.aiPercent}%
+            </span>
+            {item.grade != null && (
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-teal-50 text-teal-800">
+                GV {item.grade}/10
+              </span>
+            )}
           </div>
-          <Link
-            to="/lecturer/controller"
-            className="p-2 rounded-xl bg-teal-900 text-white hover:bg-teal-950 transition-colors"
-            title="Xem phân tích"
-          >
-            <span className="material-symbols-outlined text-lg">visibility</span>
-          </Link>
+          <div className="flex items-center gap-3 shrink-0 ml-auto">
+            <div className="text-right">
+              <p className="text-2xl font-black text-teal-900 tabular-nums">{item.exemplaryScore}</p>
+              <div className="w-20 h-1 rounded-full bg-slate-200 mt-1 ml-auto overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-teal-600 to-cyan-500 rounded-full"
+                  style={{ width: `${barWidth}%` }}
+                />
+              </div>
+            </div>
+            <Link
+              to={`/lecturer/controller/${item.id}`}
+              className="p-2 rounded-xl bg-teal-900 text-white hover:bg-teal-950 transition-colors"
+              title="Xem phân tích"
+            >
+              <span className="material-symbols-outlined text-lg">visibility</span>
+            </Link>
+          </div>
         </div>
       </div>
     </li>
@@ -315,11 +321,11 @@ const MajorThesisRanking = () => {
 
       {/* Podium Top 3 */}
       {top3.length > 0 && (
-        <div className="relative px-4 sm:px-8 pt-8 pb-4 bg-gradient-to-b from-slate-100/80 to-white">
+        <div className="relative px-2 sm:px-8 pt-8 pb-4 bg-gradient-to-b from-slate-100/80 to-white overflow-hidden">
           <p className="text-center text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-6">
             — Bục vinh quang —
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-4 items-end max-w-4xl mx-auto">
+          <div className="grid grid-cols-3 gap-1.5 sm:gap-4 items-end max-w-4xl mx-auto">
             {podiumSlots.map(item => {
               const actualRank = top3.indexOf(item);
               const meta = PODIUM_META[actualRank];

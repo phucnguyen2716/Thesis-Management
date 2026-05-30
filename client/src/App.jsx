@@ -73,6 +73,7 @@ function App() {
         >
           <Route index element={<LecturerDashboard />} />
           <Route path="controller" element={<LecturerControllerPage />} />
+          <Route path="controller/:id" element={<LecturerControllerPage />} />
           <Route path="theses" element={<LecturerThesesPage />} />
           <Route path="reports" element={<LecturerReportsPage />} />
           <Route path="profile" element={<LecturerProfilePage />} />

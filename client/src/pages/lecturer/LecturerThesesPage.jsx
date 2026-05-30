@@ -79,13 +79,13 @@ const LecturerThesesPage = () => {
                     {s.similarity}%
                   </td>
                   <td className="p-4">
-                    <span className={`text-[9px] font-bold px-2 py-1 rounded-full ${cfg.bg} ${cfg.text}`}>
+                    <span className={`text-[9px] font-bold px-2 py-1 rounded-full whitespace-nowrap ${cfg.bg} ${cfg.text}`}>
                       {cfg.label}
                     </span>
                   </td>
                   <td className="p-4">
                     <Link
-                      to="/lecturer/controller"
+                      to={`/lecturer/controller/${s.id}`}
                       className="text-teal-800 text-xs font-bold uppercase hover:underline"
                     >
                       Phân tích →

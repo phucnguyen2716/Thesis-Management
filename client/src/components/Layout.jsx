@@ -14,22 +14,23 @@ const Layout = () => {
   });
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const [expandedThesisType, setExpandedThesisType] = useState(null);
   const [chatMessage, setChatMessage] = useState('');
   const [messages, setMessages] = useState([
-    { id: 1, text: "Xin chào! Tôi có thể hỗ trợ gì cho bạn về hệ thống sáng kiến?", sender: "system", time: "10:00" }
+    { id: 1, text: "Xin chào! Tôi có thể hỗ trợ gì cho bạn về hệ thống đề tài?", sender: "system", time: "10:00" }
   ]);
 
   const getNavItems = () => {
     const baseItems = [
       { label: 'Trang chủ', icon: 'home', path: '/' },
-      { label: 'Tra cứu sáng kiến', icon: 'search', path: '/lookup' },
+      { label: 'Tra cứu đề tài', icon: 'search', path: '/lookup' },
     ];
 
     if (user.role === 'Advisor') {
       return [
         ...baseItems,
         { label: 'Portal giảng viên', icon: 'supervisor_account', path: '/lecturer' },
-        { label: 'Chấm điểm sáng kiến', icon: 'fact_check', path: '/theses' },
+        { label: 'Chấm điểm đề tài', icon: 'fact_check', path: '/theses' },
         { label: 'Lịch hội đồng', icon: 'calendar_month', path: '/schedule' },
       ];
     }
@@ -45,7 +46,7 @@ const Layout = () => {
     return [
       ...baseItems,
       { label: 'Luyện đồ án', icon: 'edit_document', path: '/practice' },
-      { label: 'Sáng kiến yêu thích', icon: 'bookmark', path: '/favorites' },
+      { label: 'Đề tài yêu thích', icon: 'bookmark', path: '/favorites' },
       { label: 'Hướng dẫn tra cứu', icon: 'menu_book', path: '/guidelines' },
     ];
   };
@@ -71,7 +72,7 @@ const Layout = () => {
     } else {
       items.push(
         { label: 'Luyện đồ án', icon: 'edit_document', path: '/practice' },
-        { label: 'Tra cứu', icon: 'search', path: '/lookup' }
+        { label: 'Đề tài', icon: 'search', path: '/lookup' }
       );
     }
     
@@ -114,7 +115,7 @@ const Layout = () => {
   return (
     <div className="flex flex-col min-h-screen bg-background font-sans text-on-background relative pb-16 md:pb-0">
       {/* TopAppBar - Not Sticky/Fixed (does not scroll with page) */}
-      <header className="flex justify-between items-center h-[72px] px-4 md:px-10 w-full bg-primary shadow-[0_4px_20px_rgba(140,0,14,0.15)] border-b border-white/10 relative z-50">
+      <header className="sticky top-0 flex justify-between items-center h-[72px] px-4 md:px-10 w-full bg-primary shadow-[0_4px_20px_rgba(140,0,14,0.15)] border-b border-white/10 relative z-50">
         <div className="flex items-center gap-3 md:gap-6">
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -128,7 +129,7 @@ const Layout = () => {
             </div>
             <div className="flex flex-col">
               <span className="text-base md:text-xl font-extrabold text-on-primary tracking-tight leading-none uppercase">UEF Portal</span>
-              <span className="text-[8px] md:text-[9px] font-black text-on-primary/60 uppercase tracking-[0.2em] mt-1 md:mt-1.5">Hệ thống Sáng kiến</span>
+              <span className="text-[8px] md:text-[9px] font-black text-on-primary/60 uppercase tracking-[0.2em] mt-1 md:mt-1.5">Hệ thống Đề tài</span>
             </div>
           </div>
         </div>
@@ -178,7 +179,7 @@ const Layout = () => {
                   </div>
                   <div className="max-h-[320px] overflow-y-auto">
                     {[
-                      { title: 'Sáng kiến mới', desc: 'Nguyễn Văn A vừa nộp sáng kiến AI Chatbot', time: '10 phút trước', icon: 'description', color: 'text-blue-600', bg: 'bg-blue-50' },
+                      { title: 'Đề tài mới', desc: 'Nguyễn Văn A vừa nộp đề tài AI Chatbot', time: '10 phút trước', icon: 'description', color: 'text-blue-600', bg: 'bg-blue-50' },
                       { title: 'Lịch bảo trì', desc: 'Bảo trì máy chủ UEF Portal lúc 00:00.', time: '2 giờ trước', icon: 'settings', color: 'text-orange-600', bg: 'bg-orange-50' },
                       { title: 'Đánh giá hoàn tất', desc: 'Đồ án của bạn đã được Giảng viên chấm điểm.', time: '1 ngày trước', icon: 'fact_check', color: 'text-emerald-600', bg: 'bg-emerald-50' },
                     ].map((n, i) => (
@@ -238,7 +239,7 @@ const Layout = () => {
                 </div>
                 <div className="max-h-[240px] overflow-y-auto">
                   {[
-                    { title: 'Sáng kiến mới', time: '10 phút trước' },
+                    { title: 'Đề tài mới', time: '10 phút trước' },
                     { title: 'Lịch bảo trì hệ thống', time: '2 giờ trước' },
                     { title: 'Đánh giá hoàn tất', time: '1 ngày trước' }
                   ].map((n, i) => (
@@ -268,7 +269,7 @@ const Layout = () => {
         {/* Backdrop overlay for mobile drawer */}
         {isSidebarOpen && (
           <div 
-            className="md:hidden fixed top-[72px] bottom-16 inset-x-0 bg-black/50 z-40 backdrop-blur-sm transition-opacity duration-300"
+            className="md:hidden fixed inset-0 top-[72px] bottom-16 bg-black/50 z-40 backdrop-blur-sm transition-opacity duration-300"
             onClick={() => setIsSidebarOpen(false)}
           />
         )}
@@ -306,6 +307,166 @@ const Layout = () => {
               </nav>
             </div>
 
+            {/* Thesis Type Section - Student only */}
+            {user.role !== 'Advisor' && user.role !== 'Admin' && (
+              <div className="px-6 pb-4">
+                <h2 className="text-[10px] font-black text-on-surface-variant uppercase tracking-[0.3em] mb-3 px-2">Loại đề tài</h2>
+                <div className="space-y-2">
+                  {[
+                    {
+                      key: 'do-an',
+                      label: 'Đồ án',
+                      icon: 'engineering',
+                      desc: 'Thực hành & Ứng dụng',
+                      badge: 'Theo môn học',
+                      directNav: '/lookup?type=do-an', // ← filters live on the page, not sidebar
+                      activeBg: 'bg-blue-50 border-blue-200 shadow-blue-100',
+                      activeText: 'text-blue-700',
+                      iconActiveBg: 'bg-blue-500',
+                      iconIdleBg: 'bg-blue-100',
+                      iconActiveColor: 'text-white',
+                      iconIdleColor: 'text-blue-500',
+                      badgeCls: 'bg-blue-100 text-blue-600',
+                      subItems: [],
+                    },
+                    {
+                      key: 'khoa-luan',
+                      label: 'Khóa luận (Tốt nghiệp)',
+                      icon: 'school',
+                      desc: 'Nghiên cứu chuyên sâu',
+                      badge: '5 chuyên ngành',
+                      activeBg: 'bg-violet-50 border-violet-200 shadow-violet-100',
+                      activeText: 'text-violet-700',
+                      iconActiveBg: 'bg-violet-500',
+                      iconIdleBg: 'bg-violet-100',
+                      iconActiveColor: 'text-white',
+                      iconIdleColor: 'text-violet-500',
+                      badgeCls: 'bg-violet-100 text-violet-600',
+                      subAccentBorder: 'border-violet-400',
+                      subHoverBg: 'hover:bg-violet-50',
+                      subHoverText: 'hover:text-violet-700',
+                      subItems: [
+                        { label: 'Công nghệ phần mềm', sublabel: 'Software Engineering', filter: 'software-engineering' },
+                        { label: 'Mạng máy tính', sublabel: 'Computer Networks', filter: 'computer-networks' },
+                        { label: 'An toàn không gian mạng', sublabel: 'Cybersecurity', filter: 'cybersecurity' },
+                        { label: 'Trí tuệ nhân tạo', sublabel: 'AI', filter: 'ai' },
+                        { label: 'Hệ thống thông tin', sublabel: 'Information Systems', filter: 'information-systems' },
+                      ],
+                    },
+                    {
+                      key: 'chuyen-de',
+                      label: 'Chuyên đề',
+                      icon: 'lightbulb',
+                      desc: 'Chủ đề chuyên biệt',
+                      badge: '5 chuyên ngành',
+                      activeBg: 'bg-amber-50 border-amber-200 shadow-amber-100',
+                      activeText: 'text-amber-700',
+                      iconActiveBg: 'bg-amber-500',
+                      iconIdleBg: 'bg-amber-100',
+                      iconActiveColor: 'text-white',
+                      iconIdleColor: 'text-amber-500',
+                      badgeCls: 'bg-amber-100 text-amber-600',
+                      subAccentBorder: 'border-amber-400',
+                      subHoverBg: 'hover:bg-amber-50',
+                      subHoverText: 'hover:text-amber-700',
+                      subItems: [
+                        { label: 'Công nghệ phần mềm', sublabel: 'Software Engineering', filter: 'software-engineering' },
+                        { label: 'Mạng máy tính', sublabel: 'Computer Networks', filter: 'computer-networks' },
+                        { label: 'An toàn không gian mạng', sublabel: 'Cybersecurity', filter: 'cybersecurity' },
+                        { label: 'Trí tuệ nhân tạo', sublabel: 'AI', filter: 'ai' },
+                        { label: 'Hệ thống thông tin', sublabel: 'Information Systems', filter: 'information-systems' },
+                      ],
+                    },
+                  ].map((type) => {
+                    const isExp = expandedThesisType === type.key;
+                    const isDirectNavActive = type.directNav && location.pathname + location.search === type.directNav;
+                    return (
+                      <div key={type.key}>
+                        {/* Type button */}
+                        <button
+                          onClick={() => {
+                            if (type.directNav) {
+                              navigate(type.directNav);
+                              window.innerWidth < 768 && setIsSidebarOpen(false);
+                            } else {
+                              setExpandedThesisType(isExp ? null : type.key);
+                            }
+                          }}
+                          className={`w-full flex items-center gap-3 px-3 py-3 rounded-2xl border transition-all duration-200 font-bold group ${
+                            isDirectNavActive || isExp
+                              ? `${type.activeBg} shadow-md`
+                              : 'border-transparent hover:bg-surface-container-low'
+                          }`}
+                        >
+                          {/* Colored icon badge */}
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-all duration-200 ${
+                            isDirectNavActive || isExp ? type.iconActiveBg : type.iconIdleBg
+                          }`}>
+                            <span className={`material-symbols-outlined text-xl transition-colors ${
+                              isDirectNavActive || isExp ? type.iconActiveColor : type.iconIdleColor
+                            }`}>{type.icon}</span>
+                          </div>
+
+                          {/* Label + description */}
+                          <div className="flex-1 text-left min-w-0 pr-1">
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              <p className={`text-[11px] font-black uppercase tracking-wide leading-tight transition-colors ${
+                                isDirectNavActive || isExp ? type.activeText : 'text-on-surface-variant group-hover:text-on-surface'
+                              }`}>{type.label}</p>
+                              <span className={`text-[7px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded-full whitespace-nowrap shrink-0 ${type.badgeCls}`}>
+                                {type.badge}
+                              </span>
+                            </div>
+                            <p className="text-[9px] font-medium text-on-surface-variant opacity-50 mt-1 leading-none">{type.desc}</p>
+                          </div>
+
+                          {/* Action icon only */}
+                          <div className="shrink-0 flex items-center justify-center">
+                            {type.directNav ? (
+                              <span className="material-symbols-outlined text-sm opacity-40 group-hover:opacity-80 transition-opacity">east</span>
+                            ) : (
+                              <span className={`material-symbols-outlined text-sm opacity-40 transition-transform duration-300 ${isExp ? 'rotate-180' : ''}`}>
+                                expand_more
+                              </span>
+                            )}
+                          </div>
+                        </button>
+
+                        {/* Sub-items dropdown (only for non-directNav types) */}
+                        {!type.directNav && isExp && type.subItems.length > 0 && (
+                          <div className="ml-3 mt-1.5 mb-1 space-y-1 pl-1">
+                            {type.subItems.map((sub) => (
+                              <button
+                                key={sub.filter}
+                                onClick={() => {
+                                  navigate(`/lookup?type=${type.key}&filter=${sub.filter}`);
+                                  window.innerWidth < 768 && setIsSidebarOpen(false);
+                                }}
+                                className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl transition-all text-left border-l-2 border-outline-variant ${type.subHoverBg} ${type.subHoverText} group/sub`}
+                              >
+                                {sub.icon && (
+                                  <span className={`material-symbols-outlined text-[16px] opacity-40 group-hover/sub:opacity-80 transition-opacity ${type.iconIdleColor}`}>
+                                    {sub.icon}
+                                  </span>
+                                )}
+                                <div className="flex-1 min-w-0">
+                                  <span className="text-[11px] font-bold text-on-surface-variant block leading-tight">{sub.label}</span>
+                                  {sub.sublabel && (
+                                    <span className="text-[9px] font-medium opacity-40 block mt-0.5">{sub.sublabel}</span>
+                                  )}
+                                </div>
+                                <span className="material-symbols-outlined text-sm opacity-0 group-hover/sub:opacity-40 transition-opacity">chevron_right</span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             <div className="p-6 mt-auto">
               <div className="bg-surface-container p-6 rounded-[2rem] border border-outline-variant relative overflow-hidden group">
                 <span className="material-symbols-outlined absolute -right-4 -bottom-4 text-8xl opacity-5 group-hover:scale-110 transition-transform">info</span>
@@ -315,7 +476,7 @@ const Layout = () => {
                 <p className="text-[10px] font-medium leading-relaxed opacity-70">
                   {user.role === 'Advisor'
                     ? 'Chấm điểm, kiểm tra đạo văn và báo cáo BM25 — liên hệ phòng QLKH khi cần.'
-                    : 'Mọi thắc mắc về sáng kiến, vui lòng liên hệ phòng Quản lý Khoa học.'}
+                    : 'Mọi thắc mắc về đề tài, vui lòng liên hệ phòng Quản lý Khoa học.'}
                 </p>
                 <button
                   onClick={() => {
@@ -345,7 +506,7 @@ const Layout = () => {
                 </div>
                 <span className="text-sm font-black text-on-surface uppercase tracking-widest">UEF Portal</span>
               </div>
-              <p className="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest opacity-60">Hệ thống Quản lý Sáng kiến Học thuật</p>
+              <p className="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest opacity-60">Hệ thống Quản lý Đề tài Học thuật</p>
               <p className="text-[10px] text-on-surface-variant mt-2 font-medium">© {new Date().getFullYear()} University of Economics and Finance. All rights reserved.</p>
             </div>
             <div className="flex flex-wrap justify-center gap-8 mt-4 md:mt-0">
