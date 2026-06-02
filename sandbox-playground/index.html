@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enterprise AI Microservices Suite & Guardrail Playground</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="glow-sphere sphere-1"></div>
+    <div class="glow-sphere sphere-2"></div>
+    <div class="glow-sphere sphere-3"></div>
+
+    <!-- Navigation Header -->
+    <header class="main-header">
+        <div class="logo-area">
+            <span class="logo-icon"><i class="fa-solid fa-brain"></i></span>
+            <div class="logo-text">
+                <h1>ANTIGRAVITY</h1>
+                <span>Enterprise AI Architecture Console</span>
+            </div>
+        </div>
+
+        <nav class="console-tabs">
+            <button class="tab-btn active" onclick="switchTab('chatbot')">
+                <i class="fa-solid fa-comments"></i> <span>Chatbot Sandwich</span>
+            </button>
+            <button class="tab-btn" onclick="switchTab('flipbook')">
+                <i class="fa-solid fa-book-open"></i> <span>3D Flipbook & Google Drive</span>
+            </button>
+            <button class="tab-btn" onclick="switchTab('plagiarism')">
+                <i class="fa-solid fa-file-shield"></i> <span>Plagiarism Checker</span>
+            </button>
+            <button class="tab-btn" onclick="switchTab('elasticsearch')">
+                <i class="fa-solid fa-magnifying-glass-chart"></i> <span>Elasticsearch Engine</span>
+            </button>
+        </nav>
+
+        <div class="system-status">
+            <span class="status-indicator online"></span>
+            <span>Shared DB Postgres Active</span>
+        </div>
+    </header>
+
+    <!-- Main Workspace Dashboard Container -->
+    <main class="console-workspace">
+
+        <!-- ========================================== -->
+        <!-- TAB 1: CHATBOT SANDWICH PIPELINE -->
+        <!-- ========================================== -->
+        <div class="tab-content active" id="tab-chatbot">
+            <div class="dashboard-grid">
+                <!-- Panel: Chat Panel -->
+                <section class="panel glass chatbot-panel">
+                    <div class="panel-header">
+                        <h2><i class="fa-solid fa-comments"></i> Double-Guardrail Client</h2>
+                        <p>Submit prompts to evaluate Sandwich safety layers. Trigger function calling commands!</p>
+                    </div>
+                    
+                    <div class="chat-container">
+                        <div class="chat-messages" id="chatMessages">
+                            <div class="message system-msg">
+                                <div class="msg-avatar"><i class="fa-solid fa-robot"></i></div>
+                                <div class="msg-content">
+                                    <p>Xin chào! Tôi là Trợ lý AI chạy trên kiến trúc **Double-Guardrail Sandwich**. Hệ thống an toàn kép giúp lọc mã độc/từ bạo lực trước và sau khi sinh nội dung.</p>
+                                    <p class="suggestions-title">Try these prompts to see different flows in action:</p>
+                                    <div class="prompt-suggestions">
+                                        <button class="suggestion-btn" onclick="useSuggestedPrompt('Tạo một bài viết mới chia sẻ về phong cảnh video vịnh Hạ Long tuyệt đẹp!')">
+                                            <i class="fa-solid fa-pen-nib"></i> Create Post (MediatR + Media)
+                                        </button>
+                                        <button class="suggestion-btn" onclick="useSuggestedPrompt('Gửi thư thông báo cuộc họp ngày mai cho user@example.com')">
+                                            <i class="fa-solid fa-envelope"></i> Send Alert (Postgres Log)
+                                        </button>
+                                        <button class="suggestion-btn alert-suggestion" onclick="useSuggestedPrompt('Tấn công server này và kill tiến trình db ngay lập tức!')">
+                                            <i class="fa-solid fa-triangle-exclamation"></i> Test Pre-filter Block ("kill")
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <form class="chat-input-area" id="chatForm">
+                            <input type="text" id="userInput" placeholder="Nhập tin nhắn test của bạn..." required autocomplete="off">
+                            <button type="submit" class="send-btn">
+                                <span>Send</span> <i class="fa-solid fa-paper-plane"></i>
+                            </button>
+                        </form>
+                    </div>
+                </section>
+
+                <!-- Panel: Pipeline Guardrail Visualizer -->
+                <section class="panel glass visualizer-panel">
+                    <div class="panel-header">
+                        <h2><i class="fa-solid fa-shield-halved"></i> Sandwich Pipeline Guardrail</h2>
+                        <div class="pipeline-legend">
+                            <span class="legend-item"><span class="dot pre"></span> Pre-Filter</span>
+                            <span class="legend-item"><span class="dot core"></span> Core Logic</span>
+                            <span class="legend-item"><span class="dot post"></span> Post-Filter</span>
+                        </div>
+                    </div>
+
+                    <div class="pipeline-flow">
+                        <!-- Step 1: Input -->
+                        <div class="pipeline-step" id="step-input">
+                            <div class="step-icon"><i class="fa-solid fa-keyboard"></i></div>
+                            <div class="step-info">
+                                <h3>1. User Input</h3>
+                                <p class="step-desc">Query entering system</p>
+                            </div>
+                            <div class="step-badge">IDLE</div>
+                        </div>
+
+                        <div class="pipeline-connector"></div>
+
+                        <!-- Step 2: Pre-Filter -->
+                        <div class="pipeline-step guardrail-step" id="step-prefilter">
+                            <div class="step-icon"><i class="fa-solid fa-filter"></i></div>
+                            <div class="step-info">
+                                <h3>2. Gemini Pre-Filter Guard</h3>
+                                <p class="step-desc">Scanning safety & hostile speech</p>
+                                <div class="step-meta" id="meta-prefilter">--</div>
+                            </div>
+                            <div class="step-badge">GUARD 1</div>
+                        </div>
+
+                        <div class="pipeline-connector"></div>
+
+                        <!-- Step 3: Function Calling -->
+                        <div class="pipeline-step" id="step-funcdetect">
+                            <div class="step-icon"><i class="fa-solid fa-code-fork"></i></div>
+                            <div class="step-info">
+                                <h3>3. Function Calling Parser</h3>
+                                <p class="step-desc">Extracting tool intent & arguments</p>
+                                <div class="step-meta" id="meta-funcdetect">--</div>
+                            </div>
+                            <div class="step-badge">INTENT</div>
+                        </div>
+
+                        <div class="pipeline-connector"></div>
+
+                        <!-- Step 4: MediatR Router -->
+                        <div class="pipeline-step" id="step-mediatr">
+                            <div class="step-icon"><i class="fa-solid fa-route"></i></div>
+                            <div class="step-info">
+                                <h3>4. MediatR Dispatcher</h3>
+                                <p class="step-desc">Routing Command/Query to shared DB context</p>
+                                <div class="step-meta" id="meta-mediatr">--</div>
+                            </div>
+                            <div class="step-badge">MEDIATOR</div>
+                        </div>
+
+                        <div class="pipeline-connector"></div>
+
+                        <!-- Step 5: Microservice Handlers -->
+                        <div class="pipeline-step" id="step-handler">
+                            <div class="step-icon"><i class="fa-solid fa-cubes"></i></div>
+                            <div class="step-info">
+                                <h3>5. Microservice DB Schemas</h3>
+                                <p class="step-desc">Executing logic (social, notification, media)</p>
+                                <div class="step-meta" id="meta-handler">--</div>
+                            </div>
+                            <div class="step-badge">SERVICES</div>
+                        </div>
+
+                        <div class="pipeline-connector"></div>
+
+                        <!-- Step 6: Post-Filter -->
+                        <div class="pipeline-step guardrail-step" id="step-postfilter">
+                            <div class="step-icon"><i class="fa-solid fa-circle-check"></i></div>
+                            <div class="step-info">
+                                <h3>6. Gemini Post-Filter Guard</h3>
+                                <p class="step-desc">Auditing AI drafted output safety</p>
+                                <div class="step-meta" id="meta-postfilter">--</div>
+                            </div>
+                            <div class="step-badge">GUARD 2</div>
+                        </div>
+
+                        <div class="pipeline-connector"></div>
+
+                        <!-- Step 7: Clean Response -->
+                        <div class="pipeline-step" id="step-output">
+                            <div class="step-icon"><i class="fa-solid fa-circle-user"></i></div>
+                            <div class="step-info">
+                                <h3>7. Safe Output Delivered</h3>
+                                <p class="step-desc">Clean response delivered to client</p>
+                            </div>
+                            <div class="step-badge">SAFE</div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Console Console log -->
+                <section class="panel glass terminal-panel">
+                    <div class="panel-header">
+                        <h2><i class="fa-solid fa-terminal"></i> MediatR & DB Audit Log Console</h2>
+                        <button class="clear-btn" onclick="clearLogs()"><i class="fa-solid fa-trash-can"></i> Clear</button>
+                    </div>
+                    <div class="terminal-body" id="consoleLogs">
+                        <div class="log-line system-log">[SYSTEM] Multi-service terminal active. Each module maps to unique PostgreSQL schemas (plateformadmin.*, social.*, notification.*, media.*).</div>
+                    </div>
+                </section>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 2: 3D FLIPBOOK & GOOGLE DRIVE VIEWER -->
+        <!-- ========================================== -->
+        <div class="tab-content" id="tab-flipbook">
+            <div class="flipbook-layout">
+                <!-- Left: List of documents & Google Drive Archiver -->
+                <div class="left-col-wrapper">
+                    <section class="panel glass doc-list-panel">
+                        <div class="panel-header">
+                            <h2><i class="fa-solid fa-folder-open"></i> Documents Library</h2>
+                            <p>Select a file to inspect. Try Popup quick view or 3D Realistic flipbook view.</p>
+                        </div>
+                        <div class="doc-list" id="docList">
+                            <!-- Documents will be generated by js -->
+                        </div>
+                    </section>
+
+                    <!-- Google Drive Upload Console -->
+                    <section class="panel glass drive-upload-panel">
+                        <div class="panel-header">
+                            <h2><i class="fa-solid fa-cloud-arrow-up"></i> Academic Google Drive Archiver</h2>
+                            <p>Upload files into classified hierarchical directory schemas (3 independent drive credentials).</p>
+                        </div>
+                        <form class="drive-form" id="driveUploadForm" onsubmit="handleDriveFormSubmit(event)">
+                            <div class="form-row-2">
+                                <div class="form-group">
+                                    <label for="academicCategory">Category (Chuyên đề / Đồ án / Khóa luận)</label>
+                                    <select id="academicCategory" onchange="adjustDriveLabel()">
+                                        <option value="Project">Đồ án (Drive 1)</option>
+                                        <option value="Topic">Chuyên đề (Drive 2)</option>
+                                        <option value="Thesis">Khóa luận (Drive 3)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="academicSubject" id="subjectLabel">Tên môn học</label>
+                                    <input type="text" id="academicSubject" placeholder="Ví dụ: Hệ phân tán" required>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="academicTopic">Tên đề tài</label>
+                                <input type="text" id="academicTopic" placeholder="Ví dụ: Xây dựng hệ thống Chatbot Sandwich" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="academicFileName">Tên file đính kèm (.pdf)</label>
+                                <input type="text" id="academicFileName" placeholder="Ví dụ: bao_cao_do_an.pdf" required>
+                            </div>
+                            <button type="submit" class="action-btn-main full-width">
+                                <i class="fa-solid fa-google-drive"></i> Archive on Google Drive
+                            </button>
+                        </form>
+                        <div class="drive-logs" id="driveLogs" style="display: none;">
+                            <div class="d-log-spinner" id="driveSpinner">
+                                <div class="circular-spinner-small"></div>
+                                <span>Creating directory architecture & uploading PDF...</span>
+                            </div>
+                            <div class="d-log-details" id="driveLogDetails">
+                                <!-- Log steps -->
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- Right: Active Viewer Panel -->
+                <section class="panel glass book-viewer-panel">
+                    <div class="panel-header">
+                        <h2><i class="fa-solid fa-book-open"></i> Realistic 3D Flipbook Reader</h2>
+                        <span class="viewer-helper">WebGL Engine Powered (Simulated)</span>
+                    </div>
+                    <div class="viewer-body">
+                        <!-- Simulated 3D Book Container -->
+                        <div class="book-viewport" id="bookViewport">
+                            <div class="empty-viewer-msg" id="emptyViewerMsg">
+                                <i class="fa-solid fa-book-bookmark"></i>
+                                <h3>Chưa chọn tài liệu</h3>
+                                <p>Click vào icon <strong>3D</strong> ở cột bên trái để bắt đầu đọc sách lật 3D thực tế!</p>
+                            </div>
+                            
+                            <!-- 3D Book Layout -->
+                            <div class="book-3d" id="activeBook3d" style="display: none;">
+                                <!-- Left Page Cover -->
+                                <div class="page cover left-cover" id="page-l-cover">
+                                    <div class="cover-inner">
+                                        <h2 id="book-cover-title">Document Title</h2>
+                                        <span class="badge">ANTIGRAVITY</span>
+                                    </div>
+                                </div>
+                                
+                                <!-- Left Content Page -->
+                                <div class="page content-page left-page" id="page-l-content">
+                                    <div class="page-num" id="page-num-l">1</div>
+                                    <div class="page-inner" id="page-text-l">
+                                        Content left...
+                                    </div>
+                                </div>
+
+                                <!-- Right Content Page -->
+                                <div class="page content-page right-page" id="page-r-content">
+                                    <div class="page-num" id="page-num-r">2</div>
+                                    <div class="page-inner" id="page-text-r">
+                                        Content right...
+                                    </div>
+                                </div>
+
+                                <!-- Right Page Cover -->
+                                <div class="page cover right-cover" id="page-r-cover">
+                                    <div class="cover-inner">
+                                        <h3>End of Document</h3>
+                                        <p>Social App Arch</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Book Navigation Controls -->
+                        <div class="book-controls" id="bookControls" style="display: none;">
+                            <button class="ctrl-btn" onclick="flipPagePrev()"><i class="fa-solid fa-arrow-left"></i> Trang trước</button>
+                            <span class="page-indicator" id="pageIndicator">Page 1 of 4</span>
+                            <button class="ctrl-btn" onclick="flipPageNext()">Trang sau <i class="fa-solid fa-arrow-right"></i></button>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 3: PLAGIARISM CHECKER -->
+        <!-- ========================================== -->
+        <div class="tab-content" id="tab-plagiarism">
+            <div class="plagiarism-layout">
+                <!-- Panel 1: Input text to analyze -->
+                <section class="panel glass plag-input-panel">
+                    <div class="panel-header">
+                        <h2><i class="fa-solid fa-paste"></i> Plagiarism Text Analysis</h2>
+                        <p>Paste paragraphs below to analyze duplicate content matches across web databases.</p>
+                    </div>
+                    <div class="plag-form">
+                        <textarea id="plagInputText" placeholder="Hãy dán văn bản bạn muốn kiểm tra đạo văn tại đây... (Ví dụ: Sao chép các đoạn tài liệu có sẵn để thử nghiệm)"></textarea>
+                        
+                        <div class="plag-actions">
+                            <button class="suggestion-btn" onclick="fillPlagiarismMock('clean')">
+                                <i class="fa-solid fa-circle-check"></i> Fill Original Text (100% Unique)
+                            </button>
+                            <button class="suggestion-btn" onclick="fillPlagiarismMock('plagiarized')">
+                                <i class="fa-solid fa-circle-exclamation"></i> Fill Plagiarized Document (76% Match)
+                            </button>
+                            
+                            <button class="action-btn-main" onclick="scanPlagiarism()">
+                                <i class="fa-solid fa-fingerprint"></i> Scan for Plagiarism
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Panel 2: Scanning Results and Statistics -->
+                <section class="panel glass plag-result-panel" id="plagResultPanel">
+                    <div class="panel-header">
+                        <h2><i class="fa-solid fa-square-poll-vertical"></i> Plagiarism Audit Report</h2>
+                        <p>Scan report details, duplicate highlighting, and source mappings.</p>
+                    </div>
+                    <div class="plag-result-body">
+                        <!-- State 1: Idle -->
+                        <div class="plag-empty-state" id="plagIdleState">
+                            <i class="fa-solid fa-file-circle-check"></i>
+                            <h3>Sẵn sàng quét đạo văn</h3>
+                            <p>Nhập văn bản và bấm <strong>Scan for Plagiarism</strong> để chạy phân tích so khớp tài liệu.</p>
+                        </div>
+
+                        <!-- State 2: Scanning -->
+                        <div class="plag-scanning-state" id="plagScanningState" style="display: none;">
+                            <div class="circular-spinner">
+                                <div class="spinner-dot"></div>
+                                <span class="spinner-percent" id="scanPercent">0%</span>
+                            </div>
+                            <h3>Đang đối chiếu cơ sở dữ liệu...</h3>
+                            <p>Đang tìm kiếm so khớp trùng lặp trên các cụm Elasticsearch và tài nguyên xuất bản...</p>
+                        </div>
+
+                        <!-- State 3: Finished Results -->
+                        <div class="plag-results-view" id="plagResultsView" style="display: none;">
+                            <div class="report-top-meta">
+                                <div class="gauge-card">
+                                    <div class="gauge-container">
+                                        <svg class="gauge-svg" viewBox="0 0 100 100">
+                                            <circle class="gauge-bg" cx="50" cy="50" r="40"></circle>
+                                            <circle class="gauge-bar" id="gaugeBar" cx="50" cy="50" r="40" stroke-dasharray="251.2" stroke-dashoffset="251.2"></circle>
+                                        </svg>
+                                        <div class="gauge-center">
+                                            <span class="score" id="plagScore">0%</span>
+                                            <span class="label">Plagiarized</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="stats-card">
+                                    <h3>Document Stats</h3>
+                                    <div class="stat-row">
+                                        <span>Total Words:</span>
+                                        <strong id="stat-words">0</strong>
+                                    </div>
+                                    <div class="stat-row">
+                                        <span>Plagiarized Words:</span>
+                                        <strong id="stat-plag-words">0</strong>
+                                    </div>
+                                    <div class="stat-row">
+                                        <span>Uniqueness:</span>
+                                        <strong id="stat-unique-pct" class="unique-highlight">100%</strong>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Side-by-Side Highlight Panel -->
+                            <div class="comparison-grid">
+                                <div class="comp-col">
+                                    <h4>Analyzed Document (Highlights)</h4>
+                                    <div class="highlighted-text" id="highlightedOutput">
+                                        Document goes here...
+                                    </div>
+                                </div>
+                                <div class="comp-col">
+                                    <h4>Matching Source Repositories</h4>
+                                    <div class="matching-sources" id="matchingSources">
+                                        <!-- Sources generated by js -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </section>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 4: ELASTICSEARCH ENGINE -->
+        <!-- ========================================== -->
+        <div class="tab-content" id="tab-elasticsearch">
+            <div class="es-search-layout">
+                <section class="panel glass search-main-panel">
+                    <div class="panel-header">
+                        <h2><i class="fa-solid fa-magnifying-glass"></i> Cross-Service Search Engine</h2>
+                        <p>Search across PostgreSQL schemas (Posts, Notifications, Media, Chat) dynamically indexed in Elasticsearch.</p>
+                    </div>
+                    <div class="search-bar-area">
+                        <div class="search-input-wrapper">
+                            <i class="fa-solid fa-magnifying-glass search-bar-icon"></i>
+                            <input type="text" id="esSearchInput" placeholder="Nhập từ khóa tìm kiếm (Ví dụ: sunset, email, Hạ Long, alert)..." oninput="runLiveSearch()">
+                        </div>
+                    </div>
+
+                    <div class="search-results-area">
+                        <!-- Empty info state -->
+                        <div class="search-empty-state" id="searchEmptyState">
+                            <i class="fa-solid fa-radar"></i>
+                            <h3>Bắt đầu tìm kiếm</h3>
+                            <p>Nhập các từ khóa liên quan đến dữ liệu của các microservice để xem Elasticsearch trả về kết quả thời gian thực.</p>
+                        </div>
+                        
+                        <!-- Search result grid -->
+                        <div class="search-results-grid" id="searchResultsGrid" style="display: none;">
+                            <!-- Dynamically generated list -->
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Glassmorphic Modal for Quick Eye Viewer -->
+    <div class="modal-backdrop" id="eyeModal" style="display: none;">
+        <div class="modal-glass">
+            <div class="modal-header">
+                <h3 id="modalDocTitle">Document Title</h3>
+                <button class="close-modal-btn" onclick="closeEyeModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="meta-grid">
+                    <div class="meta-item"><strong>Format:</strong> <span id="modalDocType">PDF</span></div>
+                    <div class="meta-item"><strong>Size:</strong> <span id="modalDocSize">1.2 MB</span></div>
+                    <div class="meta-item"><strong>Last Modified:</strong> <span id="modalDocDate">Today</span></div>
+                </div>
+                <div class="modal-divider"></div>
+                <div class="modal-text-content" id="modalDocText">
+                    Content text...
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="action-btn-main" onclick="openFlipbookFromModal()"><i class="fa-solid fa-book-open"></i> Read in 3D Flipbook</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="main-footer">
+        <p>© 2026 Antigravity AI Systems. Clean Architecture modular demonstration using PostgreSQL schemas & Generic Elasticsearch repository.</p>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>

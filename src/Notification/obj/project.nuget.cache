@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "IyioTxy2Kdo=",
+  "dgSpecHash": "uWlxLnNh7go=",
   "success": true,
-  "projectFilePath": "C:\\Users\\nguye\\Desktop\\Thesis Management\\src\\Notification\\Notification.csproj",
+  "projectFilePath": "C:\\Users\\nguye\\Desktop\\Thesis-Management\\src\\Notification\\Notification.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\nguye\\.nuget\\packages\\microsoft.aspnetcore.openapi\\8.0.25\\microsoft.aspnetcore.openapi.8.0.25.nupkg.sha512",
     "C:\\Users\\nguye\\.nuget\\packages\\microsoft.extensions.apidescription.server\\6.0.5\\microsoft.extensions.apidescription.server.6.0.5.nupkg.sha512",

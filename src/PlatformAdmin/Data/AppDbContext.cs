@@ -1,4 +1,4 @@
-﻿using PlatformAdmin.Entities;
+using PlatformAdmin.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace PlatformAdmin.Data;
@@ -14,6 +14,7 @@ public class AppDbContext : DbContext
     public DbSet<ThesisComment> ThesisComments => Set<ThesisComment>();
     public DbSet<Committee> Committees => Set<Committee>();
     public DbSet<CommitteeMember> CommitteeMembers => Set<CommitteeMember>();
+    public DbSet<ChatHistoryModel> ChatHistory => Set<ChatHistoryModel>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

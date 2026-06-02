@@ -1,4 +1,4 @@
-﻿using PlatformAdmin.DTOs.Auth;
+using PlatformAdmin.DTOs.Auth;
 using PlatformAdmin.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
@@ -42,4 +42,23 @@ public class AuthController : ControllerBase
             return BadRequest(new { message = ex.Message });
         }
     }
+
+    [HttpPost("google-login")]
+    public async Task<ActionResult<LoginResponse>> GoogleLogin([FromBody] GoogleLoginRequest request)
+    {
+        try
+        {
+            var response = await _authService.LoginWithGoogleAsync(request.Token);
+            return Ok(response);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(new { message = ex.Message });
+        }
+    }
+}
+
+public class GoogleLoginRequest
+{
+    public string Token { get; set; } = string.Empty;
 }

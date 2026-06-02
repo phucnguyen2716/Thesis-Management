@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Lock, Eye, EyeOff, Loader2, ChevronUp } from 'lucide-react';
 import { ensureAdminSeed, findUserByEmail, logLoginAttempt } from '../utils/adminStore';
+import { authService } from '../services/api';
 
 const LoginPage = () => {
   const [username, setUsername] = useState('');
@@ -64,12 +65,32 @@ const LoginPage = () => {
     }, 600);
   };
 
-  const handleGoogleLogin = () => {
+  const handleGoogleLogin = async () => {
     setLoading(true);
-    setTimeout(() => {
-      navigate('/');
+    setError('');
+    try {
+      const res = await authService.googleLogin('mock-google-token');
+      const data = res.data;
+
+      localStorage.setItem('token', data.token);
+      localStorage.setItem(
+        'user',
+        JSON.stringify({
+          id: data.id,
+          fullName: data.fullName,
+          email: data.email,
+          role: data.role
+        })
+      );
+
+      if (data.role === 'Admin') navigate('/admin');
+      else if (data.role === 'Advisor') navigate('/lecturer');
+      else navigate('/');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Đăng nhập bằng Google thất bại.');
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   const languages = [

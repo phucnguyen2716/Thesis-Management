@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'https://localhost:7134/api',
+  baseURL: 'http://localhost:7134/api',
 });
 
 api.interceptors.request.use((config) => {
@@ -27,6 +27,7 @@ api.interceptors.response.use(
 export const authService = {
   login: (credentials) => api.post('/auth/login', credentials),
   register: (data) => api.post('/auth/register', data),
+  googleLogin: (token) => api.post('/auth/google-login', { token }),
 };
 
 export const thesisService = {
@@ -51,6 +52,10 @@ export const thesisService = {
   addReview: (id, data) => api.post(`/thesis/${id}/reviews`, data),
   getComments: (id) => api.get(`/thesis/${id}/comments`),
   addComment: (id, data) => api.post(`/thesis/${id}/comments`, data),
+};
+
+export const chatbotService = {
+  chat: (prompt) => api.post('/chatbot/chat', { prompt }),
 };
 
 export default api;

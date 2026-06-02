@@ -487,11 +487,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\nguye\\Desktop\\Thesis Management\\src\\Notification\\Notification.csproj",
+      "projectUniqueName": "C:\\Users\\nguye\\Desktop\\Thesis-Management\\src\\Notification\\Notification.csproj",
       "projectName": "Notification",
-      "projectPath": "C:\\Users\\nguye\\Desktop\\Thesis Management\\src\\Notification\\Notification.csproj",
+      "projectPath": "C:\\Users\\nguye\\Desktop\\Thesis-Management\\src\\Notification\\Notification.csproj",
       "packagesPath": "C:\\Users\\nguye\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\nguye\\Desktop\\Thesis Management\\src\\Notification\\obj\\",
+      "outputPath": "C:\\Users\\nguye\\Desktop\\Thesis-Management\\src\\Notification\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\nguye\\AppData\\Roaming\\NuGet\\NuGet.Config"
@@ -551,7 +551,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.419/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Users\\nguye\\.gemini\\antigravity\\scratch\\dotnet\\sdk\\8.0.421/PortableRuntimeIdentifierGraph.json"
       }
     }
   }

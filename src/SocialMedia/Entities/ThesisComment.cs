@@ -1,4 +1,6 @@
-﻿namespace SocialMedia.Entities;
+using PlatformAdmin.Entities;
+
+namespace SocialMedia.Entities;
 
 public class ThesisComment
 {

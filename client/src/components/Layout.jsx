@@ -1,10 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
+import { chatbotService } from '../services/api';
 
 const Layout = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem('user') || '{"role": "Student", "fullName": "Người dùng Demo"}');
+
+  const [lang, setLang] = useState(() => localStorage.getItem('lang') || 'vi');
+
+  useEffect(() => {
+    const handleLangChange = () => {
+      setLang(localStorage.getItem('lang') || 'vi');
+    };
+    window.addEventListener('language-changed', handleLangChange);
+    return () => window.removeEventListener('language-changed', handleLangChange);
+  }, []);
+
+  const toggleLanguage = () => {
+    const newLang = lang === 'vi' ? 'en' : 'vi';
+    localStorage.setItem('lang', newLang);
+    window.dispatchEvent(new Event('language-changed'));
+  };
+
   const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
     try {
       return typeof window !== 'undefined' ? window.innerWidth >= 768 : true;
@@ -17,37 +35,51 @@ const Layout = () => {
   const [expandedThesisType, setExpandedThesisType] = useState(null);
   const [chatMessage, setChatMessage] = useState('');
   const [messages, setMessages] = useState([
-    { id: 1, text: "Xin chào! Tôi có thể hỗ trợ gì cho bạn về hệ thống đề tài?", sender: "system", time: "10:00" }
+    { id: 1, text: lang === 'vi' ? "Xin chào! Tôi có thể hỗ trợ gì cho bạn về hệ thống đề tài?" : "Hello! How can I assist you with the academic thesis system?", sender: "system", time: "10:00" }
   ]);
+
+  useEffect(() => {
+    setMessages(prev => prev.map(msg => {
+      if (msg.id === 1) {
+        return {
+          ...msg,
+          text: lang === 'vi' 
+            ? "Xin chào! Tôi có thể hỗ trợ gì cho bạn về hệ thống đề tài?"
+            : "Hello! How can I assist you with the academic thesis system?"
+        };
+      }
+      return msg;
+    }));
+  }, [lang]);
 
   const getNavItems = () => {
     const baseItems = [
-      { label: 'Trang chủ', icon: 'home', path: '/' },
-      { label: 'Tra cứu đề tài', icon: 'search', path: '/lookup' },
+      { label: lang === 'vi' ? 'Trang chủ' : 'Home', icon: 'home', path: '/' },
+      { label: lang === 'vi' ? 'Tra cứu đề tài' : 'Thesis Search', icon: 'search', path: '/lookup' },
     ];
 
     if (user.role === 'Advisor') {
       return [
         ...baseItems,
-        { label: 'Portal giảng viên', icon: 'supervisor_account', path: '/lecturer' },
-        { label: 'Chấm điểm đề tài', icon: 'fact_check', path: '/theses' },
-        { label: 'Lịch hội đồng', icon: 'calendar_month', path: '/schedule' },
+        { label: lang === 'vi' ? 'Portal giảng viên' : 'Advisor Portal', icon: 'supervisor_account', path: '/lecturer' },
+        { label: lang === 'vi' ? 'Chấm điểm đề tài' : 'Thesis Grading', icon: 'fact_check', path: '/theses' },
+        { label: lang === 'vi' ? 'Lịch hội đồng' : 'Committee Schedule', icon: 'calendar_month', path: '/schedule' },
       ];
     }
 
     if (user.role === 'Admin') {
       return [
-        { label: 'Admin Portal', icon: 'admin_panel_settings', path: '/admin' },
-        { label: 'Sinh viên', icon: 'school', path: '/admin/students' },
-        { label: 'Giảng viên', icon: 'co_present', path: '/admin/advisors' },
+        { label: lang === 'vi' ? 'Admin Portal' : 'Admin Portal', icon: 'admin_panel_settings', path: '/admin' },
+        { label: lang === 'vi' ? 'Sinh viên' : 'Students', icon: 'school', path: '/admin/students' },
+        { label: lang === 'vi' ? 'Giảng viên' : 'Advisors', icon: 'co_present', path: '/admin/advisors' },
       ];
     }
 
     return [
       ...baseItems,
-      { label: 'Luyện đồ án', icon: 'edit_document', path: '/practice' },
-      { label: 'Đề tài yêu thích', icon: 'bookmark', path: '/favorites' },
-      { label: 'Hướng dẫn tra cứu', icon: 'menu_book', path: '/guidelines' },
+      { label: lang === 'vi' ? 'Luyện đồ án' : 'Thesis Practice', icon: 'edit_document', path: '/practice' },
+      { label: lang === 'vi' ? 'Đề tài yêu thích' : 'Favorite Theses', icon: 'bookmark', path: '/favorites' },
+      { label: lang === 'vi' ? 'Hướng dẫn tra cứu' : 'Search Guidelines', icon: 'menu_book', path: '/guidelines' },
     ];
   };
 
@@ -55,28 +87,28 @@ const Layout = () => {
 
   const getBottomNavItems = () => {
     const items = [
-      { label: 'Trang chủ', icon: 'home', path: '/' },
+      { label: lang === 'vi' ? 'Trang chủ' : 'Home', icon: 'home', path: '/' },
     ];
     
     if (user.role === 'Advisor') {
       items.push(
-        { label: 'Giảng viên', icon: 'supervisor_account', path: '/lecturer' },
-        { label: 'Chấm điểm', icon: 'fact_check', path: '/theses' },
-        { label: 'Lịch học', icon: 'calendar_month', path: '/schedule' }
+        { label: lang === 'vi' ? 'Giảng viên' : 'Advisor', icon: 'supervisor_account', path: '/lecturer' },
+        { label: lang === 'vi' ? 'Chấm điểm' : 'Grading', icon: 'fact_check', path: '/theses' },
+        { label: lang === 'vi' ? 'Lịch học' : 'Schedule', icon: 'calendar_month', path: '/schedule' }
       );
     } else if (user.role === 'Admin') {
       items.push(
         { label: 'Admin', icon: 'admin_panel_settings', path: '/admin' },
-        { label: 'SV', icon: 'school', path: '/admin/students' }
+        { label: lang === 'vi' ? 'SV' : 'Students', icon: 'school', path: '/admin/students' }
       );
     } else {
       items.push(
-        { label: 'Luyện đồ án', icon: 'edit_document', path: '/practice' },
-        { label: 'Đề tài', icon: 'search', path: '/lookup' }
+        { label: lang === 'vi' ? 'Luyện đồ án' : 'Practice', icon: 'edit_document', path: '/practice' },
+        { label: lang === 'vi' ? 'Đề tài' : 'Search', icon: 'search', path: '/lookup' }
       );
     }
     
-    items.push({ label: 'Hồ sơ', icon: 'person', path: '/profile' });
+    items.push({ label: lang === 'vi' ? 'Hồ sơ' : 'Profile', icon: 'person', path: '/profile' });
     return items;
   };
 
@@ -88,28 +120,44 @@ const Layout = () => {
     navigate('/login');
   };
 
-  const handleSendMessage = (e) => {
+  const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!chatMessage.trim()) return;
 
+    const userPrompt = chatMessage;
     const newMessage = {
       id: Date.now(),
-      text: chatMessage,
+      text: userPrompt,
       sender: "user",
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
 
-    setMessages([...messages, newMessage]);
+    setMessages(prev => [...prev, newMessage]);
     setChatMessage('');
 
-    setTimeout(() => {
-      setMessages(prev => [...prev, {
-        id: Date.now() + 1,
-        text: "Cảm ơn bạn đã nhắn tin. Chúng tôi sẽ phản hồi sớm nhất có thể!",
-        sender: "system",
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      }]);
-    }, 1000);
+    // Pre-insert a "thinking" bubble
+    const thinkingId = Date.now() + 1;
+    setMessages(prev => [...prev, {
+      id: thinkingId,
+      text: lang === 'vi' ? "Đang kết nối AI..." : "Connecting to AI...",
+      sender: "system",
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    }]);
+
+    try {
+      const res = await chatbotService.chat(userPrompt);
+      const data = res.data;
+
+      setMessages(prev => prev.map(m => m.id === thinkingId ? {
+        ...m,
+        text: data.message || (lang === 'vi' ? "Không thể tải phản hồi." : "Failed to load response.")
+      } : m));
+    } catch (err) {
+      setMessages(prev => prev.map(m => m.id === thinkingId ? {
+        ...m,
+        text: lang === 'vi' ? "Không thể kết nối đến máy chủ AI. Vui lòng thử lại!" : "Unable to connect to the AI server. Please try again!"
+      } : m));
+    }
   };
 
   return (
@@ -123,13 +171,13 @@ const Layout = () => {
           >
             {isSidebarOpen ? 'menu_open' : 'menu'}
           </button>
-          <div className="flex items-center gap-2 md:gap-3">
-            <div className="w-8 h-8 md:w-10 md:h-10 bg-white rounded-xl flex items-center justify-center shadow-lg">
+          <div className="flex items-center gap-1.5 md:gap-3">
+            <div className="hidden sm:flex w-8 h-8 md:w-10 md:h-10 bg-white rounded-xl items-center justify-center shadow-lg">
               <span className="material-symbols-outlined text-primary text-xl md:text-2xl font-bold">school</span>
             </div>
             <div className="flex flex-col">
-              <span className="text-base md:text-xl font-extrabold text-on-primary tracking-tight leading-none uppercase">UEF Portal</span>
-              <span className="text-[8px] md:text-[9px] font-black text-on-primary/60 uppercase tracking-[0.2em] mt-1 md:mt-1.5">Hệ thống Đề tài</span>
+              <span className="text-sm sm:text-base md:text-xl font-extrabold text-on-primary tracking-tight leading-none uppercase">UEF Portal</span>
+              <span className="hidden md:block text-[8px] md:text-[9px] font-black text-on-primary/60 uppercase tracking-[0.2em] mt-1 md:mt-1.5">{lang === 'vi' ? 'Hệ thống Đề tài' : 'Thesis Portal'}</span>
             </div>
           </div>
         </div>
@@ -201,19 +249,35 @@ const Layout = () => {
                 </div>
               )}
             </div>
-            <span className="w-[1px] h-6 bg-white/10 mx-2"></span>
+            <button
+              onClick={toggleLanguage}
+              className="flex items-center gap-2 px-3.5 py-2.5 bg-white/10 hover:bg-white/20 text-on-primary rounded-xl border border-white/10 transition-all font-black text-[11px] uppercase tracking-widest shadow-sm active:scale-95"
+              title={lang === 'vi' ? 'Switch to English' : 'Chuyển sang Tiếng Việt'}
+            >
+              <span className="material-symbols-outlined text-base">translate</span>
+              <span>{lang === 'vi' ? '🇻🇳 VI' : '🇺🇸 EN'}</span>
+            </button>
+            <span className="w-[1px] h-6 bg-white/10 mx-1"></span>
             <button
               onClick={handleLogout}
               className="flex items-center gap-2 px-5 py-2.5 bg-white/15 hover:bg-white text-on-primary hover:text-primary rounded-xl transition-all font-black text-[11px] uppercase tracking-widest shadow-sm"
             >
               <span className="material-symbols-outlined text-lg">logout</span>
-              Đăng xuất
+              {lang === 'vi' ? 'Đăng xuất' : 'Log Out'}
             </button>
           </div>
         </div>
 
         {/* Mobile Header Icons */}
-        <div className="lg:hidden flex items-center gap-3">
+        <div className="lg:hidden flex items-center gap-1.5">
+          <button
+            onClick={toggleLanguage}
+            className="flex items-center gap-0.5 px-2 py-1 bg-white/10 hover:bg-white/20 text-on-primary rounded-lg border border-white/10 transition-all font-black text-[9px] uppercase tracking-widest shadow-sm active:scale-95"
+            title={lang === 'vi' ? 'Switch to English' : 'Chuyển sang Tiếng Việt'}
+          >
+            <span className="material-symbols-outlined text-xs">translate</span>
+            <span>{lang === 'vi' ? 'VI' : 'EN'}</span>
+          </button>
           <button 
             onClick={() => navigate('/analysis')}
             title="Gemini AI"
@@ -471,12 +535,12 @@ const Layout = () => {
               <div className="bg-surface-container p-6 rounded-[2rem] border border-outline-variant relative overflow-hidden group">
                 <span className="material-symbols-outlined absolute -right-4 -bottom-4 text-8xl opacity-5 group-hover:scale-110 transition-transform">info</span>
                 <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest mb-3">
-                  {user.role === 'Advisor' ? 'Hỗ trợ giảng viên' : 'Hỗ trợ sinh viên'}
+                  {user.role === 'Advisor' ? (lang === 'vi' ? 'Hỗ trợ giảng viên' : 'Advisor Support') : (lang === 'vi' ? 'Hỗ trợ sinh viên' : 'Student Support')}
                 </p>
                 <p className="text-[10px] font-medium leading-relaxed opacity-70">
                   {user.role === 'Advisor'
-                    ? 'Chấm điểm, kiểm tra đạo văn và báo cáo BM25 — liên hệ phòng QLKH khi cần.'
-                    : 'Mọi thắc mắc về đề tài, vui lòng liên hệ phòng Quản lý Khoa học.'}
+                    ? (lang === 'vi' ? 'Chấm điểm, kiểm tra đạo văn và báo cáo BM25 — liên hệ phòng QLKH khi cần.' : 'Grading, plagiarism checker, and BM25 reports — contact QLKH department when needed.')
+                    : (lang === 'vi' ? 'Mọi thắc mắc về đề tài, vui lòng liên hệ phòng Quản lý Khoa học.' : 'For all questions regarding thesis topics, please contact the Office of Science Management.')}
                 </p>
                 <button
                   onClick={() => {
@@ -485,7 +549,7 @@ const Layout = () => {
                   }}
                   className="mt-4 w-full py-2.5 bg-on-surface text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:opacity-90 transition-all shadow-sm"
                 >
-                  Liên hệ ngay
+                  {lang === 'vi' ? 'Liên hệ ngay' : 'Contact Now'}
                 </button>
               </div>
             </div>
@@ -571,9 +635,9 @@ const Layout = () => {
                 <span className="material-symbols-outlined">support_agent</span>
               </div>
               <div className="flex flex-col">
-                <span className="text-xs md:text-sm font-bold leading-tight">Hỗ trợ UEF</span>
+                <span className="text-xs md:text-sm font-bold leading-tight">{lang === 'vi' ? 'Hỗ trợ UEF' : 'UEF Support'}</span>
                 <span className="text-[9px] md:text-[10px] font-medium opacity-70 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 bg-green-400 rounded-full"></span> Trực tuyến
+                  <span className="w-1.5 h-1.5 bg-green-400 rounded-full"></span> {lang === 'vi' ? 'Trực tuyến' : 'Online'}
                 </span>
               </div>
             </div>
@@ -590,7 +654,7 @@ const Layout = () => {
                   }`}>
                   {msg.text}
                   <div className={`text-[8px] md:text-[9px] mt-1 opacity-60 ${msg.sender === 'user' ? 'text-right' : 'text-left'}`}>
-                    {msg.time}
+                     {msg.time}
                   </div>
                 </div>
               </div>
@@ -602,7 +666,7 @@ const Layout = () => {
             <button type="button" className="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors">add_circle</button>
             <input
               type="text"
-              placeholder="Nhập tin nhắn..."
+              placeholder={lang === 'vi' ? "Nhập tin nhắn..." : "Type a message..."}
               className="flex-1 bg-surface-container-low px-3 py-2 md:px-4 md:py-3 rounded-xl text-xs md:text-sm font-medium outline-none border border-transparent focus:border-primary/20 focus:bg-white transition-all"
               value={chatMessage}
               onChange={(e) => setChatMessage(e.target.value)}

@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "c:\\Users\\nguye\\Desktop\\Thesis Management\\src\\PlatformAdmin\\PlatformAdmin.csproj": {}
+    "C:\\Users\\nguye\\Desktop\\Thesis-Management\\src\\PlatformAdmin\\PlatformAdmin.csproj": {}
   },
   "projects": {
-    "c:\\Users\\nguye\\Desktop\\Thesis Management\\src\\PlatformAdmin\\PlatformAdmin.csproj": {
+    "C:\\Users\\nguye\\Desktop\\Thesis-Management\\src\\BuildingBlocks\\SharedContracts\\SharedContracts.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "c:\\Users\\nguye\\Desktop\\Thesis Management\\src\\PlatformAdmin\\PlatformAdmin.csproj",
-        "projectName": "PlatformAdmin",
-        "projectPath": "c:\\Users\\nguye\\Desktop\\Thesis Management\\src\\PlatformAdmin\\PlatformAdmin.csproj",
+        "projectUniqueName": "C:\\Users\\nguye\\Desktop\\Thesis-Management\\src\\BuildingBlocks\\SharedContracts\\SharedContracts.csproj",
+        "projectName": "SharedContracts",
+        "projectPath": "C:\\Users\\nguye\\Desktop\\Thesis-Management\\src\\BuildingBlocks\\SharedContracts\\SharedContracts.csproj",
         "packagesPath": "C:\\Users\\nguye\\.nuget\\packages\\",
-        "outputPath": "c:\\Users\\nguye\\Desktop\\Thesis Management\\src\\PlatformAdmin\\obj\\",
+        "outputPath": "C:\\Users\\nguye\\Desktop\\Thesis-Management\\src\\BuildingBlocks\\SharedContracts\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\nguye\\AppData\\Roaming\\NuGet\\NuGet.Config"
@@ -43,9 +43,97 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "dependencies": {
+            "Microsoft.Extensions.Configuration.Abstractions": {
+              "target": "Package",
+              "version": "[8.0.0, )"
+            },
+            "Microsoft.Extensions.Configuration.Binder": {
+              "target": "Package",
+              "version": "[8.0.0, )"
+            },
+            "Microsoft.Extensions.DependencyInjection.Abstractions": {
+              "target": "Package",
+              "version": "[8.0.0, )"
+            },
+            "Microsoft.Extensions.Logging.Abstractions": {
+              "target": "Package",
+              "version": "[8.0.0, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Users\\nguye\\.gemini\\antigravity\\scratch\\dotnet\\sdk\\8.0.421/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "C:\\Users\\nguye\\Desktop\\Thesis-Management\\src\\PlatformAdmin\\PlatformAdmin.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\nguye\\Desktop\\Thesis-Management\\src\\PlatformAdmin\\PlatformAdmin.csproj",
+        "projectName": "PlatformAdmin",
+        "projectPath": "C:\\Users\\nguye\\Desktop\\Thesis-Management\\src\\PlatformAdmin\\PlatformAdmin.csproj",
+        "packagesPath": "C:\\Users\\nguye\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\nguye\\Desktop\\Thesis-Management\\src\\PlatformAdmin\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\nguye\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {
+              "C:\\Users\\nguye\\Desktop\\Thesis-Management\\src\\BuildingBlocks\\SharedContracts\\SharedContracts.csproj": {
+                "projectPath": "C:\\Users\\nguye\\Desktop\\Thesis-Management\\src\\BuildingBlocks\\SharedContracts\\SharedContracts.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        }
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "dependencies": {
             "BCrypt.Net-Next": {
               "target": "Package",
               "version": "[4.2.1, )"
+            },
+            "Google.Apis.Auth": {
+              "target": "Package",
+              "version": "[1.68.0, )"
+            },
+            "Microsoft.AspNetCore.Authentication.Google": {
+              "target": "Package",
+              "version": "[8.0.0, )"
             },
             "Microsoft.AspNetCore.Authentication.JwtBearer": {
               "target": "Package",
@@ -93,7 +181,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.419/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Users\\nguye\\.gemini\\antigravity\\scratch\\dotnet\\sdk\\8.0.421/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

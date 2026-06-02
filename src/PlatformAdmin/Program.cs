@@ -6,6 +6,9 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using BuildingBlocks.SharedContracts;
+using BuildingBlocks.SharedContracts.ShellScope;
+using PlatformAdmin.Entities;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -73,6 +76,11 @@ builder.Services.AddScoped<IThesisService, ThesisService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
 builder.Services.AddScoped<ICommentService, CommentService>();
 
+// Chatbot Double-Guardrail and ShellScope DI registrations
+builder.Services.AddSingleton(typeof(IElasticSearchRepository<>), typeof(ElasticSearchRepository<>));
+builder.Services.AddSingleton<IShellScopeFactory, ShellScopeFactory>();
+builder.Services.AddHttpClient<IGeminiService, GeminiService>();
+
 // CORS
 builder.Services.AddCors(options =>
 {
@@ -93,7 +101,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection();
 app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
