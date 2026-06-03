@@ -48,6 +48,10 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     {
         options.UseNpgsql(builder.Configuration.GetConnectionString("PostgreSqlConnection"));
     }
+    else if (provider == "sqlite")
+    {
+        options.UseSqlite(builder.Configuration.GetConnectionString("SqliteConnection"));
+    }
     else
     {
         options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
@@ -114,6 +118,21 @@ app.UseStaticFiles(new StaticFileOptions
     FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(uploadPath),
     RequestPath = "/uploads"
 });
+
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var context = services.GetRequiredService<AppDbContext>();
+        context.Database.EnsureCreated();
+        Console.WriteLine("Database initialized and seeded successfully.");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"An error occurred seeding the DB: {ex.Message}");
+    }
+}
 
 app.MapControllers();
 

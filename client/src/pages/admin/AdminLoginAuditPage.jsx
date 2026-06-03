@@ -6,8 +6,10 @@ const AdminLoginAuditPage = () => {
   const [filter, setFilter] = useState('all');
 
   useEffect(() => {
-    ensureAdminSeed();
-    const load = () => setLogs(getLoginAudit());
+    const load = async () => {
+      const data = await getLoginAudit();
+      setLogs(data);
+    };
     load();
     window.addEventListener('admin-store-updated', load);
     return () => window.removeEventListener('admin-store-updated', load);

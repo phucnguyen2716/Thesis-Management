@@ -29,40 +29,34 @@ const LoginPage = () => {
     e.preventDefault();
     setLoading(true);
     setError('');
-    ensureAdminSeed();
 
     const email = username.includes('@') ? username.trim() : `${username.trim()}@ethesis.edu.vn`;
 
-    setTimeout(() => {
-      const matched = findUserByEmail(email);
+    try {
+      const res = await authService.login({ email, password });
+      const data = res.data;
 
-      if (!matched) {
-        logLoginAttempt({ email, role: '—', success: false, message: 'Email không tồn tại hoặc bị khóa' });
-        setError('Email không tồn tại hoặc tài khoản bị khóa.');
-        setLoading(false);
-        return;
-      }
-
-      logLoginAttempt({ email: matched.email, role: matched.role, success: true, message: 'Đăng nhập demo' });
-      localStorage.setItem('token', 'mock-token');
+      localStorage.setItem('token', data.token);
       localStorage.setItem(
         'user',
         JSON.stringify({
-          id: matched.id,
-          fullName: matched.fullName,
-          email: matched.email,
-          role: matched.role,
-          studentId: matched.studentId,
-          faculty: matched.department,
+          id: data.userId,
+          fullName: data.fullName,
+          email: data.email,
+          role: data.role,
+          studentId: data.role === 'Student' ? 'SV' + String(data.userId).padStart(3, '0') : null,
+          faculty: 'Computer Science',
         })
       );
 
-      if (matched.role === 'Admin') navigate('/admin');
-      else if (matched.role === 'Advisor') navigate('/lecturer');
+      if (data.role === 'Admin') navigate('/admin');
+      else if (data.role === 'Advisor') navigate('/lecturer');
       else navigate('/');
-
+    } catch (err) {
+      setError(err.response?.data?.message || 'Email hoặc mật khẩu không chính xác.');
+    } finally {
       setLoading(false);
-    }, 600);
+    }
   };
 
   const handleGoogleLogin = async () => {

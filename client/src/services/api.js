@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost:7134/api',
+  baseURL: 'http://localhost:5145/api',
 });
 
 api.interceptors.request.use((config) => {
@@ -56,6 +56,19 @@ export const thesisService = {
 
 export const chatbotService = {
   chat: (prompt) => api.post('/chatbot/chat', { prompt }),
+};
+
+export const plagiarismService = {
+  check: (thesisId) => api.post(`/plagiarism/check/${thesisId}`),
+  seed: () => api.post('/plagiarism/seed'),
+};
+
+export const adminService = {
+  getUsers: () => api.get('/admin/users'),
+  createUser: (data) => api.post('/admin/users', data),
+  updateUser: (id, data) => api.put(`/admin/users/${id}`, data),
+  deleteUser: (id) => api.delete(`/admin/users/${id}`),
+  getAuditLogs: () => api.get('/admin/audit-logs'),
 };
 
 export default api;

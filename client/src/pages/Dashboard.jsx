@@ -112,14 +112,14 @@ const Dashboard = () => {
           <div className="flex flex-col sm:flex-row gap-4 sm:gap-5 w-full sm:w-auto">
             <button 
               onClick={() => navigate('/lookup')}
-              className="px-6 py-3.5 sm:px-12 sm:py-5 bg-white text-primary rounded-xl sm:rounded-2xl font-black hover:bg-surface-container-low transition-all shadow-[0_20px_50px_rgba(255,255,255,0.15)] active:scale-95 uppercase tracking-wider sm:tracking-widest text-xs sm:text-sm flex items-center justify-center gap-2 sm:gap-3 w-full sm:w-auto"
+              className="px-6 py-3.5 sm:px-12 sm:py-5 bg-white text-primary rounded-xl sm:rounded-2xl font-black hover:bg-surface-container-low transition-all shadow-[0_20px_50px_rgba(255,255,255,0.15)] active:scale-95 uppercase tracking-wider sm:tracking-widest text-xs sm:text-sm flex items-center justify-center gap-2 sm:gap-3 w-full sm:w-auto whitespace-nowrap"
             >
               {t.heroBtnSearch}
               <span className="material-symbols-outlined">search</span>
             </button>
             <button 
               onClick={() => navigate('/guidelines')}
-              className="px-6 py-3.5 sm:px-12 sm:py-5 border-2 border-white/30 text-white rounded-xl sm:rounded-2xl font-black hover:bg-white/10 transition-all backdrop-blur-sm active:scale-95 uppercase tracking-wider sm:tracking-widest text-xs sm:text-sm text-center w-full sm:w-auto"
+              className="px-6 py-3.5 sm:px-12 sm:py-5 border-2 border-white/30 text-white rounded-xl sm:rounded-2xl font-black hover:bg-white/10 transition-all backdrop-blur-sm active:scale-95 uppercase tracking-wider sm:tracking-widest text-xs sm:text-sm text-center w-full sm:w-auto whitespace-nowrap"
             >
               {t.heroBtnGuide}
             </button>

@@ -32,9 +32,11 @@ const AdminUsersPage = ({ fixedRole }) => {
   const isAdvisor = tab === 'Advisor';
   const pageTitle = isStudent ? 'Quản lý sinh viên' : isAdvisor ? 'Quản lý giảng viên' : 'Quản lý admin';
 
-  const load = () => setUsers(getAdminUsers());
+  const load = async () => {
+    const data = await getAdminUsers();
+    setUsers(data);
+  };
   useEffect(() => {
-    ensureAdminSeed();
     load();
     window.addEventListener('admin-store-updated', load);
     return () => window.removeEventListener('admin-store-updated', load);
@@ -80,21 +82,21 @@ const AdminUsersPage = ({ fixedRole }) => {
     setModal({ mode: 'edit', id: user.id });
   };
 
-  const handleSave = e => {
+  const handleSave = async e => {
     e.preventDefault();
     if (!form.fullName?.trim() || !form.email?.trim()) return;
     if (modal.mode === 'create') {
-      createAdminUser({ ...form, role: tab });
+      await createAdminUser({ ...form, role: tab });
     } else {
-      updateAdminUser(modal.id, form);
+      await updateAdminUser(modal.id, form);
     }
     setModal(null);
     load();
   };
 
-  const handleDelete = id => {
+  const handleDelete = async id => {
     if (!window.confirm('Xóa người dùng này?')) return;
-    deleteAdminUser(id);
+    await deleteAdminUser(id);
     load();
   };
 

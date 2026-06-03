@@ -1,4 +1,4 @@
-﻿namespace PlatformAdmin.Entities;
+namespace PlatformAdmin.Entities;
 
 public class User
 {
@@ -10,6 +10,7 @@ public class User
     public string? StudentId { get; set; }
     public string? Department { get; set; }
     public bool IsActive { get; set; } = true;
+    public string? Phone { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public ICollection<Thesis> Theses { get; set; } = new List<Thesis>();

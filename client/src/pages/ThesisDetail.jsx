@@ -135,15 +135,7 @@ const ThesisDetail = () => {
 
   useEffect(() => {
     if (!thesis) {
-      // 1. Search in our combined mocks first
-      const foundMock = combinedMocks.find(item => item.id.toString() === id.toString());
-      if (foundMock) {
-        setThesis(foundMock);
-        setLoading(false);
-      } else {
-        // 2. Fetch from real database API
-        fetchRealThesis();
-      }
+      fetchRealThesis();
     }
   }, [id, thesis]);
 
@@ -167,11 +159,18 @@ const ThesisDetail = () => {
           latestScore: res.data.latestScore || null
         });
       } else {
-        setError("Không tìm thấy thông tin sáng kiến.");
+        const foundMock = combinedMocks.find(item => item.id.toString() === id.toString());
+        if (foundMock) setThesis(foundMock);
+        else setError("Không tìm thấy thông tin sáng kiến.");
       }
     } catch (err) {
       console.error(err);
-      setError("Không thể tải thông tin chi tiết từ hệ thống.");
+      const foundMock = combinedMocks.find(item => item.id.toString() === id.toString());
+      if (foundMock) {
+        setThesis(foundMock);
+      } else {
+        setError("Không thể tải thông tin chi tiết từ hệ thống.");
+      }
     } finally {
       setLoading(false);
     }

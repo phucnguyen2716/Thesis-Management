@@ -4,6 +4,7 @@ import { SUBMISSIONS, STATUS_CONFIG } from '../../data/lecturerMockData';
 import PlagiarismAnalysisBento from '../../components/lecturer/PlagiarismAnalysisBento';
 import { LECTURER_ICONS } from '../../constants/lecturerIcons';
 import { getPlagiarismFlow } from '../../utils/adminContentStore';
+import { plagiarismService } from '../../services/api';
 
 const AISummaryCard = ({ selected }) => {
   const summaryData = useMemo(() => {
@@ -201,10 +202,36 @@ const LecturerControllerPage = () => {
     );
   };
 
-  const runRecheck = () => {
-    setSubmissions(prev =>
-      prev.map(s => (s.id === selected.id ? { ...s, checkedAgo: 'Vừa xong' } : s))
-    );
+  const runRecheck = async () => {
+    console.log("Starting Swagger API plagiarism scan using Elasticsearch generic repository...");
+    const numericId = selected.id === 'sub-001' ? 1 
+      : selected.id === 'sub-002' ? 2 
+      : selected.id === 'sub-003' ? 3 
+      : 1;
+
+    try {
+      const response = await plagiarismService.check(numericId);
+      const report = response.data;
+      
+      setSubmissions(prev =>
+        prev.map(s => 
+          s.id === selected.id 
+            ? { 
+                ...s, 
+                similarity: report.similarityPercentage, 
+                checkedAgo: 'Vừa xong (API Swagger + ES)',
+                status: report.similarityPercentage > 40 ? 'flagged' : report.similarityPercentage > 20 ? 'review' : 'acceptable'
+              } 
+            : s
+        )
+      );
+      alert(`Đã hoàn thành phân tích đạo văn bằng API Swagger (Elasticsearch generic search)!\nTỷ lệ trùng lặp quét được: ${report.similarityPercentage}%`);
+    } catch (err) {
+      console.error("Failed to run plagiarism check via API:", err);
+      setSubmissions(prev =>
+        prev.map(s => (s.id === selected.id ? { ...s, checkedAgo: 'Vừa xong (Mô phỏng)' } : s))
+      );
+    }
   };
 
   const generateAiFeedback = () => {

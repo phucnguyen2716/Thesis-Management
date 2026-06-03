@@ -27,7 +27,28 @@ public class AuthService : IAuthService
     {
         var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == request.Email && u.IsActive);
         if (user is null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
+        {
+            _db.AuditLogs.Add(new AuditLog
+            {
+                Email = request.Email,
+                Role = user?.Role ?? "—",
+                Success = false,
+                Message = "Sai email hoặc mật khẩu hoặc tài khoản bị khóa",
+                UserAgent = "WebPortal"
+            });
+            await _db.SaveChangesAsync();
             throw new UnauthorizedAccessException("Invalid email or password.");
+        }
+
+        _db.AuditLogs.Add(new AuditLog
+        {
+            Email = user.Email,
+            Role = user.Role,
+            Success = true,
+            Message = "Đăng nhập mật khẩu thành công",
+            UserAgent = "WebPortal"
+        });
+        await _db.SaveChangesAsync();
 
         var token = GenerateJwt(user);
         var refresh = GenerateRefreshToken();

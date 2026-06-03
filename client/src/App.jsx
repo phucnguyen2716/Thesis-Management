@@ -9,7 +9,10 @@ import Profile from './pages/Profile';
 import StudentGames from './pages/StudentGames';
 
 const ProtectedRoute = ({ children }) => {
-  // Temporarily bypass authentication for preview
+  const token = localStorage.getItem('token');
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
   return children;
 };
 
