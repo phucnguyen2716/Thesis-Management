@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
@@ -9,6 +11,7 @@ using PlatformAdmin.Data;
 using PlatformAdmin.Entities;
 using PlatformAdmin.Attributes;
 using BuildingBlocks.SharedContracts;
+using RabbitMQ.Client;
 
 namespace PlatformAdmin.Controllers
 {
@@ -40,107 +43,84 @@ namespace PlatformAdmin.Controllers
         /// Perform dynamic plagiarism check on a specific thesis submission using the generic Elasticsearch Repository.
         /// </summary>
         [HttpPost("check/{thesisId}")]
-        [ApiResponse(typeof(PlagiarismReport), StatusCodes.Status200OK)]
+        [ApiResponse(typeof(object), StatusCodes.Status202Accepted)]
         [ApiResponse(StatusCodes.Status404NotFound)]
+        [ApiResponse(StatusCodes.Status503ServiceUnavailable)]
         public async Task<IActionResult> CheckPlagiarism(int thesisId)
         {
-            // First, make sure mock documents are seeded in the index
-            await SeedMockIndicesAsync();
-
-            var thesis = await _db.Theses
-                .Include(t => t.Student)
-                .FirstOrDefaultAsync(t => t.Id == thesisId);
-
+            var thesis = await _db.Theses.FirstOrDefaultAsync(t => t.Id == thesisId);
             if (thesis == null) return NotFound(new { message = "Thesis not found" });
 
-            string title = thesis.Title;
-            string abstractText = thesis.Description ?? "Đề tài ứng dụng PhoBERT tiếng Việt để phân tích dữ liệu mạng xã hội UEF.";
-            string fullContent = abstractText + " Mô hình xử lý ngôn ngữ tự nhiên PhoBERT tiếng Việt đạt độ chính xác cao. Dữ liệu mạng xã hội dồi dào từ Facebook và TikTok.";
+            // Set state to UnderReview
+            thesis.Status = "UnderReview";
+            thesis.UpdatedAt = DateTime.UtcNow;
+            await _db.SaveChangesAsync();
 
-            // Split content into individual sentences (chunks) to match phucnguyen2716/Check-plagarism algorithm
-            var chunks = fullContent.Split(new[] { '.', '!', '?' }, StringSplitOptions.RemoveEmptyEntries)
-                .Select(s => s.Trim())
-                .Where(s => s.Length > 10)
-                .ToList();
+            // Clear any old reports for this thesis to start clean
+            var oldReports = _db.PlagiarismReports.Where(r => r.ThesisId == thesisId);
+            _db.PlagiarismReports.RemoveRange(oldReports);
+            await _db.SaveChangesAsync();
 
-            if (!chunks.Any())
+            try
             {
-                chunks.Add(fullContent);
+                var factory = new ConnectionFactory() { HostName = "localhost" };
+                using var connection = factory.CreateConnection();
+                using var channel = connection.CreateModel();
+                channel.QueueDeclare(queue: "thesis-plagiarism-queue",
+                                     durable: true,
+                                     exclusive: false,
+                                     autoDelete: false,
+                                     arguments: null);
+
+                var messageObj = new { ThesisId = thesisId };
+                var messageBody = JsonSerializer.Serialize(messageObj);
+                var body = Encoding.UTF8.GetBytes(messageBody);
+
+                var properties = channel.CreateBasicProperties();
+                properties.Persistent = true;
+
+                channel.BasicPublish(exchange: string.Empty,
+                                     routingKey: "thesis-plagiarism-queue",
+                                     basicProperties: properties,
+                                     body: body);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"RabbitMQ publishing failed: {ex.Message}");
+                return StatusCode(StatusCodes.Status503ServiceUnavailable, new { message = "RabbitMQ connection failed. Please ensure RabbitMQ is running." });
             }
 
-            var matches = new List<PlagiarismMatchDetail>();
-            var matchedSources = new Dictionary<string, PlagiarismSourceDetail>();
+            return Accepted(new { queued = true, message = "Plagiarism scan has been queued." });
+        }
 
-            int matchingChunksCount = 0;
+        /// <summary>
+        /// Get the status of an asynchronous plagiarism check and the report if completed.
+        /// </summary>
+        [HttpGet("status/{thesisId}")]
+        [ApiResponse(typeof(object), StatusCodes.Status200OK)]
+        [ApiResponse(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetStatus(int thesisId)
+        {
+            var thesis = await _db.Theses.FirstOrDefaultAsync(t => t.Id == thesisId);
+            if (thesis == null) return NotFound(new { message = "Thesis not found" });
 
-            foreach (var chunk in chunks)
+            var latestReport = await _db.PlagiarismReports
+                .Where(r => r.ThesisId == thesisId)
+                .OrderByDescending(r => r.CheckedAt)
+                .FirstOrDefaultAsync();
+
+            if (latestReport != null)
             {
-                // Query generic Elasticsearch repository using our reflection-based SearchAsync
-                var searchResults = await _esRepo.SearchAsync(
-                    query: chunk,
-                    indexName: "plagiarism_index",
-                    fields: new[] { "Title", "Abstract", "Content" },
-                    limit: 3
-                );
-
-                var bestMatch = searchResults.FirstOrDefault(r => r.Score > 3.0);
-                if (bestMatch != null && bestMatch.Payload != null)
-                {
-                    matchingChunksCount++;
-                    matches.Add(new PlagiarismMatchDetail
-                    {
-                        Text = chunk,
-                        SourceTitle = bestMatch.Payload.Title,
-                        SourceStudent = bestMatch.Payload.StudentName,
-                        SimilarityScore = Math.Min(100.0, Math.Round(bestMatch.Score * 20.0, 1))
-                    });
-
-                    if (!matchedSources.ContainsKey(bestMatch.Payload.Id))
-                    {
-                        matchedSources[bestMatch.Payload.Id] = new PlagiarismSourceDetail
-                        {
-                            Id = bestMatch.Payload.Id,
-                            Title = bestMatch.Payload.Title,
-                            StudentName = bestMatch.Payload.StudentName,
-                            Major = bestMatch.Payload.Major,
-                            MatchingPercentage = 0.0
-                        };
-                    }
-                }
+                var report = JsonSerializer.Deserialize<PlagiarismReport>(latestReport.ReportJson);
+                return Ok(new { status = "Completed", report = report });
             }
 
-            // Calculate similarity percentage based on matching chunks
-            double similarityPercentage = chunks.Any() 
-                ? Math.Round(((double)matchingChunksCount / chunks.Count) * 100.0, 1) 
-                : 0.0;
-
-            // Make sure the similarity doesn't look empty for the demo
-            if (similarityPercentage < 10.0)
+            if (thesis.Status == "UnderReview")
             {
-                // Assign a beautiful realistic score for demo
-                similarityPercentage = title.ToLower().Contains("phobert") ? 45.0 
-                    : title.ToLower().Contains("blockchain") ? 28.0 
-                    : 12.0;
+                return Ok(new { status = "Pending" });
             }
 
-            // Distribute matching percentages to source documents
-            foreach (var source in matchedSources.Values)
-            {
-                source.MatchingPercentage = similarityPercentage;
-            }
-
-            var report = new PlagiarismReport
-            {
-                ThesisId = thesisId,
-                Title = title,
-                StudentName = thesis?.Student?.FullName ?? "Sinh viên Khảo sát",
-                SimilarityPercentage = similarityPercentage,
-                CheckedAt = DateTime.UtcNow,
-                Sources = matchedSources.Values.ToList(),
-                Matches = matches
-            };
-
-            return Ok(report);
+            return Ok(new { status = "NotStarted" });
         }
 
         private async Task SeedMockIndicesAsync()

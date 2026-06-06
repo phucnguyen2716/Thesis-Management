@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("PlatformAdmin")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1427fa220c1fae621cd23a92874a5a41f4fd4b65")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+5b28a9554683d13e3c15ca00a249b81658ff2b2a")]
 [assembly: System.Reflection.AssemblyProductAttribute("PlatformAdmin")]
 [assembly: System.Reflection.AssemblyTitleAttribute("PlatformAdmin")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

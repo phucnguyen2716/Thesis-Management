@@ -17,10 +17,17 @@ public class AppDbContext : DbContext
     public DbSet<ChatHistoryModel> ChatHistory => Set<ChatHistoryModel>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<SocialPost> SocialPosts => Set<SocialPost>();
+    public DbSet<PlagiarismReportEntity> PlagiarismReports => Set<PlagiarismReportEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<PlagiarismReportEntity>()
+            .HasOne(r => r.Thesis)
+            .WithMany()
+            .HasForeignKey(r => r.ThesisId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<Thesis>()
             .HasOne(t => t.Student)

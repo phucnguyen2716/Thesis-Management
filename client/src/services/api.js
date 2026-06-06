@@ -61,6 +61,7 @@ export const chatbotService = {
 
 export const plagiarismService = {
   check: (thesisId) => api.post(`/plagiarism/check/${thesisId}`),
+  getStatus: (thesisId) => api.get(`/plagiarism/status/${thesisId}`),
   seed: () => api.post('/plagiarism/seed'),
 };
 

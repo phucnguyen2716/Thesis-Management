@@ -86,6 +86,7 @@ builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddSingleton(typeof(IElasticSearchRepository<>), typeof(ElasticSearchRepository<>));
 builder.Services.AddSingleton<IShellScopeFactory, ShellScopeFactory>();
 builder.Services.AddHttpClient<IGeminiService, GeminiService>();
+builder.Services.AddHostedService<PlagiarismQueueConsumer>();
 
 // CORS
 builder.Services.AddCors(options =>
@@ -135,15 +136,49 @@ using (var scope = app.Services.CreateScope())
             if (provider == "postgresql" || provider == "postgres")
             {
                 context.Database.ExecuteSqlRaw("ALTER TABLE \"ChatHistory\" ADD COLUMN IF NOT EXISTS \"UserId\" INTEGER;");
+                context.Database.ExecuteSqlRaw(@"
+                    CREATE TABLE IF NOT EXISTS ""PlagiarismReports"" (
+                        ""Id"" SERIAL PRIMARY KEY,
+                        ""ThesisId"" INTEGER NOT NULL REFERENCES ""Theses""(""Id"") ON DELETE CASCADE,
+                        ""SimilarityPercentage"" DOUBLE PRECISION NOT NULL,
+                        ""ReportJson"" TEXT NOT NULL,
+                        ""CheckedAt"" TIMESTAMP WITHOUT TIME ZONE NOT NULL
+                    );");
+            }
+            else if (provider == "sqlite")
+            {
+                context.Database.ExecuteSqlRaw(@"
+                    CREATE TABLE IF NOT EXISTS ""PlagiarismReports"" (
+                        ""Id"" INTEGER PRIMARY KEY AUTOINCREMENT,
+                        ""ThesisId"" INTEGER NOT NULL REFERENCES ""Theses""(""Id"") ON DELETE CASCADE,
+                        ""SimilarityPercentage"" REAL NOT NULL,
+                        ""ReportJson"" TEXT NOT NULL,
+                        ""CheckedAt"" TEXT NOT NULL
+                    );");
             }
             else
             {
-                context.Database.ExecuteSqlRaw("ALTER TABLE \"ChatHistory\" ADD COLUMN \"UserId\" INTEGER;");
+                try
+                {
+                    context.Database.ExecuteSqlRaw("ALTER TABLE ChatHistory ADD UserId INT;");
+                }
+                catch { }
+                context.Database.ExecuteSqlRaw(@"
+                    IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='PlagiarismReports' AND xtype='U')
+                    BEGIN
+                        CREATE TABLE PlagiarismReports (
+                            Id INT IDENTITY(1,1) PRIMARY KEY,
+                            ThesisId INT NOT NULL FOREIGN KEY REFERENCES Theses(Id) ON DELETE CASCADE,
+                            SimilarityPercentage FLOAT NOT NULL,
+                            ReportJson NVARCHAR(MAX) NOT NULL,
+                            CheckedAt DATETIME NOT NULL
+                        );
+                    END");
             }
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            // Column may already exist, safe to ignore
+            Console.WriteLine($"Could not manually verify PlagiarismReports table or columns: {ex.Message}");
         }
 
         Console.WriteLine("Database initialized and seeded successfully.");

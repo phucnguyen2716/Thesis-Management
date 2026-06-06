@@ -203,34 +203,73 @@ const LecturerControllerPage = () => {
   };
 
   const runRecheck = async () => {
-    console.log("Starting Swagger API plagiarism scan using Elasticsearch generic repository...");
+    console.log("Starting Swagger API plagiarism scan using RabbitMQ background queue...");
     const numericId = selected.id === 'sub-001' ? 1 
       : selected.id === 'sub-002' ? 2 
       : selected.id === 'sub-003' ? 3 
       : 1;
 
     try {
+      setSubmissions(prev =>
+        prev.map(s => s.id === selected.id ? { ...s, checkedAgo: 'Đang gửi hàng đợi...' } : s)
+      );
+      
       const response = await plagiarismService.check(numericId);
-      const report = response.data;
       
       setSubmissions(prev =>
-        prev.map(s => 
-          s.id === selected.id 
-            ? { 
-                ...s, 
-                similarity: report.similarityPercentage, 
-                checkedAgo: 'Vừa xong (API Swagger + ES)',
-                status: report.similarityPercentage > 40 ? 'flagged' : report.similarityPercentage > 20 ? 'review' : 'acceptable'
-              } 
-            : s
-        )
+        prev.map(s => s.id === selected.id ? { ...s, checkedAgo: 'Đang xếp hàng (RabbitMQ)...' } : s)
       );
-      alert(`Đã hoàn thành phân tích đạo văn bằng API Swagger (Elasticsearch generic search)!\nTỷ lệ trùng lặp quét được: ${report.similarityPercentage}%`);
+
+      let pollAttempts = 0;
+      const maxAttempts = 20; // up to 30 seconds
+      const intervalId = setInterval(async () => {
+        pollAttempts++;
+        try {
+          const statusRes = await plagiarismService.getStatus(numericId);
+          const statusData = statusRes.data;
+
+          if (statusData.status === 'Completed') {
+            clearInterval(intervalId);
+            const report = statusData.report;
+            setSubmissions(prev =>
+              prev.map(s => 
+                s.id === selected.id 
+                  ? { 
+                      ...s, 
+                      similarity: report.similarityPercentage, 
+                      checkedAgo: 'Vừa xong (RabbitMQ + ES)',
+                      status: report.similarityPercentage > 40 ? 'flagged' : report.similarityPercentage > 20 ? 'review' : 'acceptable'
+                    } 
+                  : s
+              )
+            );
+            alert(`Đã hoàn thành phân tích đạo văn bằng RabbitMQ Queue!\nTỷ lệ trùng lặp quét được: ${report.similarityPercentage}%`);
+          } else if (statusData.status === 'Pending') {
+            setSubmissions(prev =>
+              prev.map(s => s.id === selected.id ? { ...s, checkedAgo: `Đang quét (RabbitMQ)... (${pollAttempts}s)` } : s)
+            );
+          } else if (pollAttempts >= maxAttempts) {
+            clearInterval(intervalId);
+            setSubmissions(prev =>
+              prev.map(s => s.id === selected.id ? { ...s, checkedAgo: 'Hết thời gian chờ RabbitMQ' } : s)
+            );
+            alert("Hết thời gian chờ phản hồi từ background consumer của RabbitMQ.");
+          }
+        } catch (pollErr) {
+          console.error("Error polling plagiarism status:", pollErr);
+          clearInterval(intervalId);
+          setSubmissions(prev =>
+            prev.map(s => s.id === selected.id ? { ...s, checkedAgo: 'Lỗi kiểm tra status' } : s)
+          );
+        }
+      }, 1500);
+
     } catch (err) {
       console.error("Failed to run plagiarism check via API:", err);
       setSubmissions(prev =>
-        prev.map(s => (s.id === selected.id ? { ...s, checkedAgo: 'Vừa xong (Mô phỏng)' } : s))
+        prev.map(s => (s.id === selected.id ? { ...s, checkedAgo: 'Không kết nối được RabbitMQ' } : s))
       );
+      alert("Không thể khởi chạy quy trình hàng đợi. Hãy đảm bảo RabbitMQ và server Backend đang hoạt động.");
     }
   };
 
