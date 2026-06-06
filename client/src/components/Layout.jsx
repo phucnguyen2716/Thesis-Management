@@ -52,6 +52,66 @@ const Layout = () => {
     }));
   }, [lang]);
 
+  const formatTime = (dateStr) => {
+    try {
+      return new Date(dateStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } catch {
+      return "10:00";
+    }
+  };
+
+  const fetchChatHistory = async () => {
+    try {
+      const res = await chatbotService.getHistory();
+      const historyData = res.data || [];
+      const sortedHistory = [...historyData].reverse();
+      
+      const loadedMessages = [
+        { 
+          id: 1, 
+          text: lang === 'vi' 
+            ? "Xin chào! Tôi có thể hỗ trợ gì cho bạn về hệ thống đề tài?" 
+            : "Hello! How can I assist you with the academic thesis system?", 
+          sender: "system", 
+          time: "10:00" 
+        }
+      ];
+      
+      sortedHistory.forEach(item => {
+        if (item.prompt) {
+          loadedMessages.push({
+            id: `${item.id}-prompt`,
+            text: item.prompt,
+            sender: "user",
+            time: formatTime(item.createdAt)
+          });
+        }
+        if (item.message) {
+          loadedMessages.push({
+            id: `${item.id}-msg`,
+            text: item.message,
+            sender: "system",
+            time: formatTime(item.createdAt)
+          });
+        }
+      });
+      
+      setMessages(loadedMessages);
+    } catch (err) {
+      console.error("Failed to load chat history", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchChatHistory();
+  }, []);
+
+  useEffect(() => {
+    if (isChatOpen) {
+      fetchChatHistory();
+    }
+  }, [isChatOpen]);
+
   const getNavItems = () => {
     const baseItems = [
       { label: lang === 'vi' ? 'Trang chủ' : 'Home', icon: 'home', path: '/' },
@@ -158,6 +218,179 @@ const Layout = () => {
         text: lang === 'vi' ? "Không thể kết nối đến máy chủ AI. Vui lòng thử lại!" : "Unable to connect to the AI server. Please try again!"
       } : m));
     }
+  };
+
+  const renderMessageText = (text, sender) => {
+    if (!text) return null;
+
+    // Regex to match either [THESIS_CARD:id=...|title=...|student=...] OR standard markdown [Label](url)
+    const tokenRegex = /(\[THESIS_CARD:id=[^|]+\|title=[^|]+\|student=[^\]]+\]|\[[^\]]+\]\([^)]+\))/g;
+    const parts = text.split(tokenRegex);
+
+    const linkClass = sender === 'user'
+      ? "underline font-black text-yellow-300 hover:text-yellow-100 transition-colors"
+      : "underline font-black text-primary hover:text-[#8C000E] transition-colors";
+
+    return parts.map((part, index) => {
+      if (!part) return null;
+
+      // 1. Check if it's a THESIS_CARD
+      if (part.startsWith('[THESIS_CARD:')) {
+        const cardRegex = /\[THESIS_CARD:id=([^|]+)\|title=([^|]+)\|student=([^\]]+)\]/;
+        const match = cardRegex.exec(part);
+        if (match) {
+          const cardId = match[1];
+          const cardTitle = match[2];
+          const cardStudent = match[3];
+
+          return (
+            <div 
+              key={`card-${cardId}-${index}`} 
+              className="my-3 flex gap-2.5 sm:gap-3.5 p-2.5 sm:p-3.5 bg-white rounded-2xl border border-outline-variant shadow-sm hover:shadow-md transition-all group max-w-full text-on-surface"
+            >
+              {/* Left: Beautiful CSS book cover (vertical rectangle) */}
+              <div className="w-[60px] h-[85px] shrink-0 rounded-lg bg-gradient-to-br from-[#A30010] to-[#60000A] p-1.5 flex flex-col justify-between text-white relative shadow-sm border border-[#A30010]/20 overflow-hidden select-none">
+                {/* Book spine shadow */}
+                <div className="absolute top-0 left-0 bottom-0 w-1 bg-gradient-to-r from-black/30 to-transparent" />
+                {/* Gold trim lines */}
+                <div className="absolute inset-1 border border-yellow-500/20 rounded-md pointer-events-none" />
+                
+                <div className="flex justify-between items-start z-10">
+                  <span className="text-[7px] font-black tracking-widest text-yellow-400 opacity-80 uppercase leading-none">UEF</span>
+                  <span className="material-symbols-outlined text-[10px] text-yellow-400">school</span>
+                </div>
+                
+                <div className="flex flex-col items-center justify-center flex-1 my-1 z-10 text-center">
+                  <span className="text-[8px] font-black text-yellow-400 leading-none">ID</span>
+                  <span className="text-[12px] font-black leading-none mt-0.5 tracking-tight text-white">{cardId}</span>
+                </div>
+                
+                <div className="text-center z-10">
+                  <p className="text-[5px] font-black uppercase tracking-[0.1em] text-yellow-500/80 leading-none">Thesis</p>
+                </div>
+              </div>
+
+              {/* Right: Details & Nav links */}
+              <div className="flex-1 min-w-0 flex flex-col justify-between">
+                <div>
+                  <h4 className="text-[11px] md:text-[12px] font-extrabold text-on-surface line-clamp-2 leading-tight group-hover:text-primary transition-colors" title={cardTitle}>
+                    {cardTitle}
+                  </h4>
+                  <div className="flex items-center gap-1.5 mt-1.5 text-on-surface-variant/70">
+                    <span className="material-symbols-outlined text-[12px] shrink-0">person</span>
+                    <span className="text-[9.5px] md:text-[10px] font-bold truncate">{cardStudent}</span>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-1.5 mt-2 pt-2 border-t border-black/5">
+                  <Link 
+                    to={`/theses/${cardId}`} 
+                    onClick={() => setIsChatOpen(false)}
+                    className="flex items-center gap-1.5 text-[9.5px] font-black uppercase tracking-wider text-primary hover:text-[#8C000E] hover:underline transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-[12px] shrink-0">info</span>
+                    Chi tiết đề tài
+                  </Link>
+                  <Link 
+                    to={`/theses/${cardId}/flipbook`} 
+                    onClick={() => setIsChatOpen(false)}
+                    className="flex items-center gap-1.5 text-[9.5px] font-black uppercase tracking-wider text-primary hover:text-[#8C000E] hover:underline transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-[12px] shrink-0">menu_book</span>
+                    Đọc sách 3D
+                  </Link>
+                </div>
+              </div>
+            </div>
+          );
+        }
+      }
+
+      // 2. Check if it's a Markdown Link
+      if (part.startsWith('[') && part.includes('](')) {
+        const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/;
+        const match = linkRegex.exec(part);
+        if (match) {
+          const label = match[1];
+          const url = match[2];
+          const isInternal = url.startsWith('/');
+
+          if (isInternal) {
+            return (
+              <Link 
+                key={`link-${index}`} 
+                to={url} 
+                onClick={() => setIsChatOpen(false)}
+                className={linkClass}
+              >
+                {label}
+              </Link>
+            );
+          } else {
+            return (
+              <a 
+                key={`link-${index}`} 
+                href={url} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className={linkClass}
+              >
+                {label}
+              </a>
+            );
+          }
+        }
+      }
+
+      // 3. Otherwise, it is text. Parse bold (**text**) and line breaks/bullets.
+      const lineRegex = /\r?\n/;
+      const lines = part.split(lineRegex);
+
+      return lines.map((line, lineIdx) => {
+        // Parse list bullet markers at the start of a line
+        let cleanLine = line;
+        let isBullet = false;
+        if (/^\s*[•*\-]\s+/.test(line)) {
+          cleanLine = line.replace(/^\s*[•*\-]\s+/, '');
+          isBullet = true;
+        }
+
+        // Parse bold markdown **text**
+        const boldRegex = /(\*\*[^*]+\*\*)/g;
+        const boldParts = cleanLine.split(boldRegex);
+
+        const renderedLine = boldParts.map((bPart, bIdx) => {
+          if (bPart.startsWith('**') && bPart.endsWith('**')) {
+            const boldText = bPart.substring(2, bPart.length - 2);
+            return (
+              <strong 
+                key={`bold-${bIdx}`} 
+                className={sender === 'user' ? "font-extrabold text-yellow-200" : "font-extrabold text-primary"}
+              >
+                {boldText}
+              </strong>
+            );
+          }
+          return bPart;
+        });
+
+        return (
+          <React.Fragment key={`line-${lineIdx}`}>
+            {isBullet ? (
+              <span className="flex items-start gap-2 my-1.5 pl-1.5">
+                <span className={`inline-block w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 select-none ${
+                  sender === 'user' ? 'bg-yellow-300' : 'bg-primary/60'
+                }`} />
+                <span className="flex-1">{renderedLine}</span>
+              </span>
+            ) : (
+              renderedLine
+            )}
+            {lineIdx < lines.length - 1 && <br />}
+          </React.Fragment>
+        );
+      });
+    });
   };
 
   return (
@@ -648,11 +881,11 @@ const Layout = () => {
           <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 bg-surface-container-lowest">
             {messages.map((msg) => (
               <div key={msg.id} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[80%] p-3.5 md:p-4 rounded-2xl text-[12px] md:text-[13px] font-medium leading-relaxed shadow-sm ${msg.sender === 'user'
+                <div className={`max-w-[85%] sm:max-w-[80%] p-2.5 sm:p-3.5 md:p-4 rounded-2xl text-[12px] md:text-[13px] font-medium leading-relaxed shadow-sm ${msg.sender === 'user'
                   ? 'bg-primary text-on-primary rounded-tr-none'
                   : 'bg-surface-container-high text-on-surface rounded-tl-none'
                   }`}>
-                  {msg.text}
+                  {renderMessageText(msg.text, msg.sender)}
                   <div className={`text-[8px] md:text-[9px] mt-1 opacity-60 ${msg.sender === 'user' ? 'text-right' : 'text-left'}`}>
                      {msg.time}
                   </div>

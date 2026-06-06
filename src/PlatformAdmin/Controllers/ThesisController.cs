@@ -1,8 +1,10 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using PlatformAdmin.DTOs.Thesis;
 using PlatformAdmin.Interfaces;
+using PlatformAdmin.Attributes;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
 
 namespace PlatformAdmin.Controllers;
 
@@ -25,6 +27,8 @@ public class ThesisController : ControllerBase
     private int GetCurrentUserId() => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
     [HttpGet]
+    [ApiResponse(typeof(ThesisListResponse), StatusCodes.Status200OK)]
+    [ApiResponse(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<ThesisListResponse>> GetAll([FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? status = null, [FromQuery] string? search = null)
     {
         var userId = GetCurrentUserId();
@@ -38,6 +42,9 @@ public class ThesisController : ControllerBase
     }
 
     [HttpGet("{id}")]
+    [ApiResponse(typeof(ThesisDto), StatusCodes.Status200OK)]
+    [ApiResponse(StatusCodes.Status401Unauthorized)]
+    [ApiResponse(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ThesisDto>> GetById(int id)
     {
         var thesis = await _thesisService.GetByIdAsync(id);
@@ -47,6 +54,10 @@ public class ThesisController : ControllerBase
 
     [HttpPost]
     [Authorize(Roles = "Student")]
+    [ApiResponse(typeof(ThesisDto), StatusCodes.Status201Created)]
+    [ApiResponse(StatusCodes.Status400BadRequest)]
+    [ApiResponse(StatusCodes.Status401Unauthorized)]
+    [ApiResponse(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<ThesisDto>> Create(CreateThesisRequest request)
     {
         var result = await _thesisService.CreateAsync(GetCurrentUserId(), request);
@@ -54,6 +65,10 @@ public class ThesisController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [ApiResponse(typeof(ThesisDto), StatusCodes.Status200OK)]
+    [ApiResponse(StatusCodes.Status400BadRequest)]
+    [ApiResponse(StatusCodes.Status401Unauthorized)]
+    [ApiResponse(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ThesisDto>> Update(int id, UpdateThesisRequest request)
     {
         var result = await _thesisService.UpdateAsync(id, request);
@@ -61,6 +76,9 @@ public class ThesisController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [ApiResponse(StatusCodes.Status204NoContent)]
+    [ApiResponse(StatusCodes.Status401Unauthorized)]
+    [ApiResponse(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(int id)
     {
         await _thesisService.DeleteAsync(id);
@@ -68,6 +86,10 @@ public class ThesisController : ControllerBase
     }
 
     [HttpPost("{id}/submit")]
+    [ApiResponse(typeof(ThesisDto), StatusCodes.Status200OK)]
+    [ApiResponse(StatusCodes.Status400BadRequest)]
+    [ApiResponse(StatusCodes.Status401Unauthorized)]
+    [ApiResponse(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ThesisDto>> Submit(int id)
     {
         var result = await _thesisService.SubmitAsync(id);
@@ -76,6 +98,11 @@ public class ThesisController : ControllerBase
 
     [HttpPost("{id}/assign-advisor")]
     [Authorize(Roles = "Admin")]
+    [ApiResponse(typeof(ThesisDto), StatusCodes.Status200OK)]
+    [ApiResponse(StatusCodes.Status400BadRequest)]
+    [ApiResponse(StatusCodes.Status401Unauthorized)]
+    [ApiResponse(StatusCodes.Status403Forbidden)]
+    [ApiResponse(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ThesisDto>> AssignAdvisor(int id, AssignAdvisorRequest request)
     {
         var result = await _thesisService.AssignAdvisorAsync(id, request);
@@ -84,6 +111,11 @@ public class ThesisController : ControllerBase
 
     [HttpPost("{id}/approve")]
     [Authorize(Roles = "Admin,Advisor")]
+    [ApiResponse(typeof(ThesisDto), StatusCodes.Status200OK)]
+    [ApiResponse(StatusCodes.Status400BadRequest)]
+    [ApiResponse(StatusCodes.Status401Unauthorized)]
+    [ApiResponse(StatusCodes.Status403Forbidden)]
+    [ApiResponse(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ThesisDto>> Approve(int id)
     {
         var result = await _thesisService.ApproveAsync(id);
@@ -92,6 +124,11 @@ public class ThesisController : ControllerBase
 
     [HttpPost("{id}/reject")]
     [Authorize(Roles = "Admin,Advisor")]
+    [ApiResponse(typeof(ThesisDto), StatusCodes.Status200OK)]
+    [ApiResponse(StatusCodes.Status400BadRequest)]
+    [ApiResponse(StatusCodes.Status401Unauthorized)]
+    [ApiResponse(StatusCodes.Status403Forbidden)]
+    [ApiResponse(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ThesisDto>> Reject(int id, [FromBody] string reason)
     {
         var result = await _thesisService.RejectAsync(id, reason);
@@ -99,6 +136,10 @@ public class ThesisController : ControllerBase
     }
 
     [HttpPost("{id}/upload")]
+    [ApiResponse(typeof(object), StatusCodes.Status200OK)]
+    [ApiResponse(StatusCodes.Status400BadRequest)]
+    [ApiResponse(StatusCodes.Status401Unauthorized)]
+    [ApiResponse(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<string>> Upload(int id, IFormFile file)
     {
         if (file == null || file.Length == 0) return BadRequest("No file uploaded.");
@@ -108,6 +149,8 @@ public class ThesisController : ControllerBase
     }
 
     [HttpGet("stats")]
+    [ApiResponse(typeof(ThesisStatsDto), StatusCodes.Status200OK)]
+    [ApiResponse(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<ThesisStatsDto>> GetStats()
     {
         var result = await _thesisService.GetStatsAsync();
@@ -116,6 +159,9 @@ public class ThesisController : ControllerBase
 
     // Reviews & Comments nested endpoints
     [HttpGet("{id}/reviews")]
+    [ApiResponse(typeof(IEnumerable<ThesisReviewDto>), StatusCodes.Status200OK)]
+    [ApiResponse(StatusCodes.Status401Unauthorized)]
+    [ApiResponse(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<IEnumerable<ThesisReviewDto>>> GetReviews(int id)
     {
         return Ok(await _reviewService.GetByThesisAsync(id));
@@ -123,6 +169,11 @@ public class ThesisController : ControllerBase
 
     [HttpPost("{id}/reviews")]
     [Authorize(Roles = "Advisor,Admin")]
+    [ApiResponse(typeof(ThesisReviewDto), StatusCodes.Status200OK)]
+    [ApiResponse(StatusCodes.Status400BadRequest)]
+    [ApiResponse(StatusCodes.Status401Unauthorized)]
+    [ApiResponse(StatusCodes.Status403Forbidden)]
+    [ApiResponse(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ThesisReviewDto>> AddReview(int id, CreateReviewRequest request)
     {
         var result = await _reviewService.CreateAsync(id, GetCurrentUserId(), request);
@@ -130,12 +181,19 @@ public class ThesisController : ControllerBase
     }
 
     [HttpGet("{id}/comments")]
+    [ApiResponse(typeof(IEnumerable<ThesisCommentDto>), StatusCodes.Status200OK)]
+    [ApiResponse(StatusCodes.Status401Unauthorized)]
+    [ApiResponse(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<IEnumerable<ThesisCommentDto>>> GetComments(int id)
     {
         return Ok(await _commentService.GetByThesisAsync(id));
     }
 
     [HttpPost("{id}/comments")]
+    [ApiResponse(typeof(ThesisCommentDto), StatusCodes.Status200OK)]
+    [ApiResponse(StatusCodes.Status400BadRequest)]
+    [ApiResponse(StatusCodes.Status401Unauthorized)]
+    [ApiResponse(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ThesisCommentDto>> AddComment(int id, CreateCommentRequest request)
     {
         var result = await _commentService.CreateAsync(id, GetCurrentUserId(), request);

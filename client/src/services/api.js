@@ -56,6 +56,7 @@ export const thesisService = {
 
 export const chatbotService = {
   chat: (prompt) => api.post('/chatbot/chat', { prompt }),
+  getHistory: () => api.get('/chatbot/history'),
 };
 
 export const plagiarismService = {

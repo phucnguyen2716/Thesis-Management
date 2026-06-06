@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using PlatformAdmin.Data;
 using PlatformAdmin.Entities;
+using PlatformAdmin.Attributes;
 using BuildingBlocks.SharedContracts;
 
 namespace PlatformAdmin.Controllers
@@ -27,6 +29,7 @@ namespace PlatformAdmin.Controllers
         /// Seed mock thesis documents into the generic Elasticsearch index for plagiarism checking.
         /// </summary>
         [HttpPost("seed")]
+        [ApiResponse(typeof(object), StatusCodes.Status200OK)]
         public async Task<IActionResult> SeedMockDocuments()
         {
             await SeedMockIndicesAsync();
@@ -37,6 +40,8 @@ namespace PlatformAdmin.Controllers
         /// Perform dynamic plagiarism check on a specific thesis submission using the generic Elasticsearch Repository.
         /// </summary>
         [HttpPost("check/{thesisId}")]
+        [ApiResponse(typeof(PlagiarismReport), StatusCodes.Status200OK)]
+        [ApiResponse(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> CheckPlagiarism(int thesisId)
         {
             // First, make sure mock documents are seeded in the index
@@ -46,8 +51,10 @@ namespace PlatformAdmin.Controllers
                 .Include(t => t.Student)
                 .FirstOrDefaultAsync(t => t.Id == thesisId);
 
-            string title = thesis?.Title ?? "Nghiên cứu Sentiment Analysis bằng PhoBERT";
-            string abstractText = thesis?.Description ?? "Đề tài ứng dụng PhoBERT tiếng Việt để phân tích dữ liệu mạng xã hội UEF.";
+            if (thesis == null) return NotFound(new { message = "Thesis not found" });
+
+            string title = thesis.Title;
+            string abstractText = thesis.Description ?? "Đề tài ứng dụng PhoBERT tiếng Việt để phân tích dữ liệu mạng xã hội UEF.";
             string fullContent = abstractText + " Mô hình xử lý ngôn ngữ tự nhiên PhoBERT tiếng Việt đạt độ chính xác cao. Dữ liệu mạng xã hội dồi dào từ Facebook và TikTok.";
 
             // Split content into individual sentences (chunks) to match phucnguyen2716/Check-plagarism algorithm

@@ -7,6 +7,7 @@ import ThesisList from './pages/ThesisList';
 import ThesisDetail from './pages/ThesisDetail';
 import Profile from './pages/Profile';
 import StudentGames from './pages/StudentGames';
+import FlipbookPage from './pages/FlipbookPage';
 
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem('token');
@@ -46,6 +47,11 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/theses/:id/flipbook" element={
+          <ProtectedRoute>
+            <FlipbookPage />
+          </ProtectedRoute>
+        } />
         <Route path="/letcturer" element={<Navigate to="/lecturer" replace />} />
 
         <Route

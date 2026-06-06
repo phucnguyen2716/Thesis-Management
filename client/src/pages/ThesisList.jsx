@@ -22,6 +22,25 @@ const ThesisList = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [previewThesis, setPreviewThesis] = useState(null);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+
+  const handleOpenPreview = (thesis) => {
+    setPreviewThesis({
+      id: thesis.id,
+      title: thesis.title,
+      studentName: thesis.studentName || thesis.student || "Sinh viên",
+      advisorName: thesis.advisorName || thesis.advisor || "Chưa phân công",
+      year: thesis.year || "2024",
+      department: thesis.department || "Khoa học Công nghệ",
+      similarity: thesis.similarity || "12%",
+      similarityLevel: thesis.similarityLevel || (parseFloat(thesis.similarity) > 20 ? "high" : "safe"),
+      description: thesis.description || thesis.desc || "Chưa có mô tả chi tiết.",
+      tags: thesis.tags || ["#research"]
+    });
+    setShowPreviewModal(true);
+  };
+
   const user = JSON.parse(localStorage.getItem('user') || '{"role": "Student"}');
 
   useEffect(() => {
@@ -160,13 +179,29 @@ const ThesisList = () => {
                     )}
                   </td>
                   <td className="px-8 py-6">
-                    <Link 
-                      to={`/theses/${thesis.id}`}
-                      className="px-4 py-2 bg-surface-container-high text-on-surface font-bold text-[10px] uppercase tracking-widest rounded-lg hover:bg-primary hover:text-on-primary transition-all flex items-center gap-2 w-fit"
-                    >
-                      Chi tiết
-                      <span className="material-symbols-outlined text-sm">arrow_forward</span>
-                    </Link>
+                    <div className="flex items-center gap-2">
+                      <Link 
+                        to={`/theses/${thesis.id}`}
+                        className="px-4 py-2 bg-surface-container-high text-on-surface font-bold text-[10px] uppercase tracking-widest rounded-lg hover:bg-primary hover:text-on-primary transition-all flex items-center gap-2 w-fit shrink-0"
+                      >
+                        Chi tiết
+                        <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                      </Link>
+                      <button
+                        onClick={() => handleOpenPreview(thesis)}
+                        className="w-8 h-8 rounded-lg bg-surface-container-high hover:bg-primary/10 hover:text-primary flex items-center justify-center transition-all cursor-pointer border-none"
+                        title="Xem nhanh"
+                      >
+                        <span className="material-symbols-outlined text-base">visibility</span>
+                      </button>
+                      <button
+                        onClick={() => window.open(`/theses/${thesis.id}/flipbook`, '_blank')}
+                        className="w-8 h-8 rounded-lg bg-surface-container-high hover:bg-primary/10 hover:text-primary flex items-center justify-center transition-all cursor-pointer border-none"
+                        title="Đọc sách 3D"
+                      >
+                        <span className="material-symbols-outlined text-base">menu_book</span>
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -174,6 +209,117 @@ const ThesisList = () => {
           </table>
         </div>
       </div>
+
+      {/* Quick Preview Modal (Glassmorphic UEF Style) */}
+      {showPreviewModal && previewThesis && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-[2.5rem] border border-outline-variant shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 md:p-10 relative flex flex-col gap-6">
+            
+            {/* Close Button */}
+            <button
+              onClick={() => setShowPreviewModal(false)}
+              className="absolute right-6 top-6 w-10 h-10 rounded-full hover:bg-surface-container flex items-center justify-center transition-all cursor-pointer text-on-surface-variant border-none bg-transparent"
+            >
+              <span className="material-symbols-outlined text-xl">close</span>
+            </button>
+
+            {/* Header */}
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <span className="px-2 py-0.5 bg-surface-container-high text-[8px] font-black uppercase tracking-widest rounded border border-outline-variant/30">
+                  #{previewThesis.id}
+                </span>
+                <span className="text-[9px] font-black text-primary uppercase tracking-widest bg-primary/5 px-2 py-0.5 rounded">
+                  {previewThesis.department}
+                </span>
+                <span className="text-[9px] font-black text-on-surface-variant/60 uppercase tracking-widest bg-surface-container-low px-2 py-0.5 rounded ml-auto">
+                  Niên khóa: {previewThesis.year}
+                </span>
+              </div>
+              <h3 className="text-xl sm:text-2xl font-black text-on-surface leading-snug">
+                {previewThesis.title}
+              </h3>
+            </div>
+
+            {/* Content Details Grid */}
+            <div className="grid sm:grid-cols-2 gap-4 py-4 border-t border-b border-outline-variant/10">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 bg-primary/5 text-primary rounded-xl flex items-center justify-center border border-primary/10">
+                  <span className="material-symbols-outlined text-base">person</span>
+                </div>
+                <div>
+                  <p className="text-[8px] font-black text-on-surface-variant/40 uppercase tracking-widest leading-none mb-0.5">Sinh viên</p>
+                  <p className="text-xs font-black text-on-surface">{previewThesis.studentName}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 bg-secondary-container/10 text-primary rounded-xl flex items-center justify-center border border-outline-variant/30">
+                  <span className="material-symbols-outlined text-base">psychology</span>
+                </div>
+                <div>
+                  <p className="text-[8px] font-black text-on-surface-variant/40 uppercase tracking-widest leading-none mb-0.5">Giảng viên HD</p>
+                  <p className="text-xs font-black text-on-surface">{previewThesis.advisorName}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Abstract */}
+            <div className="space-y-2">
+              <h4 className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-sm">segment</span> Tóm tắt nội dung
+              </h4>
+              <p className="text-xs text-on-surface leading-relaxed font-bold italic border-l-2 border-primary/20 pl-3">
+                "{previewThesis.description}"
+              </p>
+            </div>
+
+            {/* Similarity Badge */}
+            <div className="flex items-center justify-between p-4 bg-surface-container-low rounded-2xl border border-outline-variant/25">
+              <div className="flex items-center gap-3">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                  parseFloat(previewThesis.similarity) > 20 ? 'bg-red-50 text-error' : 'bg-emerald-50 text-emerald-700'
+                }`}>
+                  <span className="material-symbols-outlined text-sm">speed</span>
+                </div>
+                <div>
+                  <p className="text-[8px] font-black text-on-surface-variant/40 uppercase tracking-widest leading-none mb-0.5">Chỉ số trùng lắp</p>
+                  <p className="text-xs font-black text-on-surface font-sans">Mức độ tương đồng: {previewThesis.similarity}</p>
+                </div>
+              </div>
+              <span className={`px-2.5 py-1 text-[8px] font-black uppercase tracking-widest rounded-md ${
+                parseFloat(previewThesis.similarity) > 20 ? 'bg-red-100 text-error' : 'bg-emerald-100 text-emerald-800'
+              }`}>
+                {parseFloat(previewThesis.similarity) > 20 ? 'Nguy cơ cao' : 'An toàn'}
+              </span>
+            </div>
+
+            {/* Footer Buttons */}
+            <div className="flex gap-3 mt-2 flex-col sm:flex-row">
+              <button
+                onClick={() => {
+                  setShowPreviewModal(false);
+                  window.open(`/theses/${previewThesis.id}/flipbook`, '_blank');
+                }}
+                className="flex-1 py-3.5 bg-primary hover:bg-primary/95 text-white rounded-xl font-bold uppercase tracking-widest text-[10px] shadow-md hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer border-none"
+              >
+                <span className="material-symbols-outlined text-base">menu_book</span>
+                Đọc Sách 3D (Flipbook)
+              </button>
+              <button
+                onClick={() => {
+                  setShowPreviewModal(false);
+                  navigate(`/theses/${previewThesis.id}`, { state: previewThesis });
+                }}
+                className="py-3.5 px-6 bg-on-surface hover:bg-on-surface-variant text-white rounded-xl font-bold uppercase tracking-widest text-[10px] shadow-md hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer border-none"
+              >
+                Chi tiết đầy đủ
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
     </div>
   );
 };

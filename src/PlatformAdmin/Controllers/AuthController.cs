@@ -1,6 +1,8 @@
 using PlatformAdmin.DTOs.Auth;
 using PlatformAdmin.Interfaces;
+using PlatformAdmin.Attributes;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
 
 namespace PlatformAdmin.Controllers;
 
@@ -16,6 +18,8 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("login")]
+    [ApiResponse(typeof(LoginResponse), StatusCodes.Status200OK)]
+    [ApiResponse(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<LoginResponse>> Login(LoginRequest request)
     {
         try
@@ -30,6 +34,8 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("register")]
+    [ApiResponse(typeof(LoginResponse), StatusCodes.Status200OK)]
+    [ApiResponse(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<LoginResponse>> Register(RegisterRequest request)
     {
         try
@@ -44,6 +50,8 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("google-login")]
+    [ApiResponse(typeof(LoginResponse), StatusCodes.Status200OK)]
+    [ApiResponse(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<LoginResponse>> GoogleLogin([FromBody] GoogleLoginRequest request)
     {
         try

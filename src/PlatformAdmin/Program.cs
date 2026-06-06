@@ -79,6 +79,8 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IThesisService, ThesisService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
 builder.Services.AddScoped<ICommentService, CommentService>();
+builder.Services.AddScoped<ISocialService, SocialService>();
+builder.Services.AddScoped<IAdminService, AdminService>();
 
 // Chatbot Double-Guardrail and ShellScope DI registrations
 builder.Services.AddSingleton(typeof(IElasticSearchRepository<>), typeof(ElasticSearchRepository<>));
@@ -126,6 +128,24 @@ using (var scope = app.Services.CreateScope())
     {
         var context = services.GetRequiredService<AppDbContext>();
         context.Database.EnsureCreated();
+
+        try
+        {
+            var provider = builder.Configuration["Database:Provider"]?.Trim().ToLowerInvariant();
+            if (provider == "postgresql" || provider == "postgres")
+            {
+                context.Database.ExecuteSqlRaw("ALTER TABLE \"ChatHistory\" ADD COLUMN IF NOT EXISTS \"UserId\" INTEGER;");
+            }
+            else
+            {
+                context.Database.ExecuteSqlRaw("ALTER TABLE \"ChatHistory\" ADD COLUMN \"UserId\" INTEGER;");
+            }
+        }
+        catch (Exception)
+        {
+            // Column may already exist, safe to ignore
+        }
+
         Console.WriteLine("Database initialized and seeded successfully.");
     }
     catch (Exception ex)

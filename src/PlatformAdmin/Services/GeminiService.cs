@@ -135,6 +135,37 @@ namespace PlatformAdmin.Services
                     {
                         return "Completed successfully! The notification dispatch request has been approved and sent. The audit activity log has been recorded in the Postgres schema `notification.notifications`!";
                     }
+                    if (executionResult.Contains("Search completed"))
+                    {
+                        if (executionResult.Contains("Found"))
+                        {
+                            var listPart = executionResult.Substring(executionResult.IndexOf("matching theses:") + "matching theses:".Length);
+                            var formattedList = string.Join("\n", listPart.Split(new[] { "; " }, StringSplitOptions.RemoveEmptyEntries)
+                                .Select(item =>
+                                {
+                                    var trimmed = item.Trim();
+                                    try
+                                    {
+                                        var idStr = trimmed.Substring(3, trimmed.IndexOf(":") - 3).Trim();
+                                        var titleAndStudent = trimmed.Substring(trimmed.IndexOf(":") + 1).Trim();
+                                        var title = titleAndStudent.Substring(1, titleAndStudent.IndexOf("'", 1) - 1);
+                                        var student = titleAndStudent.Substring(titleAndStudent.IndexOf("by student") + 10).Trim();
+
+                                        return $"[THESIS_CARD:id={idStr}|title={title}|student={student}]";
+                                    }
+                                    catch
+                                    {
+                                        return $"• {trimmed}";
+                                    }
+                                }));
+
+                            return $"I found matching theses for your request! Here are the search results:\n\n{formattedList}\n\nYou can click on a link to view its details or read it in the 3D Flipbook reader!";
+                        }
+                        else
+                        {
+                            return $"I searched for theses but couldn't find any match for your request. Please try again with other keywords!";
+                        }
+                    }
                     return $"I have received your request: \"{originalPrompt}\". The Sandwich Guardrail secure redirection pipeline has processed it successfully. Logic execution result: {executionResult}";
                 }
                 else
@@ -151,6 +182,37 @@ namespace PlatformAdmin.Services
                     {
                         return "Đã hoàn thành! Yêu cầu gửi thông báo đã được phê duyệt và gửi đi thành công. Nhật ký hoạt động kiểm toán đã được ghi nhận trong Postgres schema `notification.notifications`!";
                     }
+                    if (executionResult.Contains("Search completed"))
+                    {
+                        if (executionResult.Contains("Found"))
+                        {
+                            var listPart = executionResult.Substring(executionResult.IndexOf("matching theses:") + "matching theses:".Length);
+                            var formattedList = string.Join("\n", listPart.Split(new[] { "; " }, StringSplitOptions.RemoveEmptyEntries)
+                                .Select(item =>
+                                {
+                                    var trimmed = item.Trim();
+                                    try
+                                    {
+                                        var idStr = trimmed.Substring(3, trimmed.IndexOf(":") - 3).Trim();
+                                        var titleAndStudent = trimmed.Substring(trimmed.IndexOf(":") + 1).Trim();
+                                        var title = titleAndStudent.Substring(1, titleAndStudent.IndexOf("'", 1) - 1);
+                                        var student = titleAndStudent.Substring(titleAndStudent.IndexOf("by student") + 10).Trim();
+
+                                        return $"[THESIS_CARD:id={idStr}|title={title}|student={student}]";
+                                    }
+                                    catch
+                                    {
+                                        return $"• {trimmed}";
+                                    }
+                                }));
+
+                            return $"Tôi đã tìm thấy đề tài phù hợp với yêu cầu của bạn! Dưới đây là kết quả:\n\n{formattedList}\n\nBạn có thể nhấp vào liên kết tương ứng để xem chi tiết hoặc đọc sách 3D Flipbook nhé!";
+                        }
+                        else
+                        {
+                            return $"Tôi đã thực hiện tìm kiếm đề tài nhưng rất tiếc chưa tìm thấy kết quả nào khớp với yêu cầu của bạn. Bạn hãy thử tìm với từ khóa khác nhé!";
+                        }
+                    }
                     return $"Tôi đã tiếp nhận yêu cầu của bạn: \"{originalPrompt}\". Luồng điều hướng Sandwich Guardrail bảo mật đã xử lý thành công. Kết quả logic: {executionResult}";
                 }
             }
@@ -158,7 +220,7 @@ namespace PlatformAdmin.Services
             try
             {
                 var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={_apiKey}";
-                var promptWithContext = $"Original User Intent: {originalPrompt}\n\nExecution Result Data: {executionResult}\n\nTask: Draft a highly professional, polite, and descriptive response summarizing the action completed. Maintain a positive tone and do not output any inappropriate terms.";
+                var promptWithContext = $"Original User Intent: {originalPrompt}\n\nExecution Result Data: {executionResult}\n\nTask: Draft a highly professional, polite, and descriptive response summarizing the action completed. Maintain a positive tone and do not output any inappropriate terms. IMPORTANT: If the Execution Result Data contains any [THESIS_CARD:id=...|title=...|student=...] tags, you MUST preserve them exactly as they are in your response without modification so the client UI can render them as rich card components.";
 
                 var requestBody = new
                 {
@@ -247,17 +309,17 @@ namespace PlatformAdmin.Services
             return $"Analyze this user input prompt for violent words, threats, hate speech, or abuse.\n" +
                    $"Also, check if they are requesting actions we can handle:\n" +
                    $"- Creating a post (FunctionName: 'CreatePostCommand', arguments: 'content', 'title')\n" +
-                   $"- Sending an email or notification (FunctionName: 'SendNotificationCommand', arguments: 'recipient', 'message', 'type')\n\n" +
+                   $"- Sending an email or notification (FunctionName: 'SendNotificationCommand', arguments: 'recipient', 'message', 'type')\n" +
+                   $"- Searching or selecting a thesis (FunctionName: 'SearchThesisCommand', arguments: 'query')\n\n" +
                    $"User prompt: \"{prompt}\"\n\n" +
                    $"Format your response EXACTLY as a JSON object matching this schema:\n" +
                    $"{{\n" +
                    $"  \"isViolent\": false,\n" +
                    $"  \"violationReason\": null,\n" +
                    $"  \"requestFunctionCall\": true,\n" +
-                   $"  \"functionName\": \"CreatePostCommand\",\n" +
+                   $"  \"functionName\": \"SearchThesisCommand\",\n" +
                    $"  \"functionArguments\": {{\n" +
-                   $"     \"title\": \"Example Title\",\n" +
-                   $"     \"content\": \"Example post contents\"\n" +
+                   $"     \"query\": \"Example search term or thesis title\"\n" +
                    $"  }}\n" +
                    $"}}";
         }
@@ -302,6 +364,37 @@ namespace PlatformAdmin.Services
                         { "recipient", "user@example.com" },
                         { "message", prompt },
                         { "type", "Email" }
+                    }
+                };
+            }
+            else if (lower.Contains("search") || lower.Contains("find") || lower.Contains("thesis") || lower.Contains("đề tài") || 
+                     lower.Contains("khóa luận") || lower.Contains("đồ án") || lower.Contains("chọn") || lower.Contains("kiếm") || 
+                     lower.Contains("tìm"))
+            {
+                var query = prompt;
+                var prefixes = new[] { "chọn thesis", "chọn đề tài", "chọn khoa luận", "chọn đồ án", "tìm kiếm đề tài", "tìm kiếm", "tìm đề tài", "tìm", "kiếm", "search for", "search", "find" };
+                foreach (var prefix in prefixes)
+                {
+                    var idx = lower.IndexOf(prefix);
+                    if (idx >= 0)
+                    {
+                        var potentialQuery = prompt.Substring(idx + prefix.Length).Trim();
+                        if (!string.IsNullOrEmpty(potentialQuery))
+                        {
+                            query = potentialQuery;
+                            break;
+                        }
+                    }
+                }
+
+                return new PreFilterResult
+                {
+                    IsViolent = false,
+                    RequestFunctionCall = true,
+                    FunctionName = "SearchThesisCommand",
+                    FunctionArguments = new Dictionary<string, string>
+                    {
+                        { "query", query }
                     }
                 };
             }

@@ -23,7 +23,8 @@ const ThesisDetail = () => {
       description: "This thesis explores the implementation of Hyperledger Fabric in tracking agricultural products from farm to consumer in Southeast Asia. The study utilizes qualitative research methods to analyze cost-benefit variables, systemic integration hurdles, and regulatory alignment in emerging markets.",
       tags: ["#blockchain", "#supplychain", "#transparency"],
       status: "Approved",
-      latestScore: 9.0
+      latestScore: 9.0,
+      pdfUrl: "/Document%20Detail.pdf"
     },
     {
       id: 2,
@@ -38,7 +39,8 @@ const ThesisDetail = () => {
       description: "Researching the transition from brick-and-mortar to omnichannel strategies in the apparel industry during 2020-2022. The paper analyzes consumer behavior changes, logistical challenges, and the digital transformation of brick-and-mortar business models.",
       tags: ["#retail", "#economics"],
       status: "Rejected",
-      latestScore: 5.5
+      latestScore: 5.5,
+      pdfUrl: "/Document%20Detail.pdf"
     },
     {
       id: 3,
@@ -53,7 +55,8 @@ const ThesisDetail = () => {
       description: "This quantitative research develops a machine learning model based on recurrent neural networks (RNN) to predict stock market volatility. Comparing the AI-driven approach with traditional models, the study highlights the efficacy of deep learning in multi-asset portfolio optimization.",
       tags: ["#AI", "#fintech", "#ML"],
       status: "Approved",
-      latestScore: 8.8
+      latestScore: 8.8,
+      pdfUrl: "/Document%20Detail.pdf"
     },
     // Mock items from Favorites
     {
@@ -120,7 +123,8 @@ const ThesisDetail = () => {
         description: s.description || s.desc || "Chưa có mô tả chi tiết.",
         tags: s.tags || ["#research"],
         status: s.status || "Approved",
-        latestScore: s.latestScore || 8.5
+        latestScore: s.latestScore || 8.5,
+        pdfUrl: s.pdfUrl || "/Document%20Detail.pdf"
       };
     }
     return null;
@@ -156,7 +160,8 @@ const ThesisDetail = () => {
           description: res.data.description || "Chưa có mô tả chi tiết cho sáng kiến này.",
           tags: res.data.tags || ["#research", "#uef"],
           status: res.data.status || "Pending",
-          latestScore: res.data.latestScore || null
+          latestScore: res.data.latestScore || null,
+          pdfUrl: res.data.pdfUrl || "/Document%20Detail.pdf"
         });
       } else {
         const foundMock = combinedMocks.find(item => item.id.toString() === id.toString());
@@ -373,9 +378,17 @@ const ThesisDetail = () => {
                         <p className="text-[10px] text-on-surface-variant opacity-60">Định dạng: PDF | Dung lượng: 4.8 MB</p>
                       </div>
                     </div>
-                    <button className="px-6 py-2.5 bg-on-surface text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-primary transition-all flex items-center gap-2 shadow-md">
-                      <span className="material-symbols-outlined text-sm">download</span> Tải xuống
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button 
+                        onClick={() => window.open(`/theses/${thesis.id}/flipbook`, '_blank')}
+                        className="px-6 py-2.5 bg-primary text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-primary/90 transition-all flex items-center gap-2 shadow-md border-none cursor-pointer"
+                      >
+                        <span className="material-symbols-outlined text-sm">menu_book</span> Đọc sách 3D
+                      </button>
+                      <button className="px-6 py-2.5 bg-on-surface text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-primary transition-all flex items-center gap-2 shadow-md border-none cursor-pointer">
+                        <span className="material-symbols-outlined text-sm">download</span> Tải xuống
+                      </button>
+                    </div>
                   </div>
 
                   {/* Document Simulated Page */}
@@ -396,10 +409,16 @@ const ThesisDetail = () => {
                     </div>
                     
                     {/* Floating Preview Overlay */}
-                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/20 backdrop-blur-[2px]">
-                      <span className="material-symbols-outlined text-on-surface/40 text-5xl mb-3">lock</span>
-                      <p className="text-xs font-bold text-on-surface">Bản xem trước bị hạn chế</p>
-                      <p className="text-[10px] text-on-surface-variant opacity-60 text-center max-w-xs mt-1">Đăng nhập tài khoản UEF chính thức để xem toàn văn tài liệu này trực tuyến.</p>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/20 backdrop-blur-[2px] p-4 text-center">
+                      <span className="material-symbols-outlined text-on-surface/40 text-5xl mb-3">menu_book</span>
+                      <p className="text-xs font-black text-on-surface">Đọc Bản thảo 3D Flipbook</p>
+                      <p className="text-[10px] text-on-surface-variant opacity-75 max-w-xs mt-1 mb-4 font-medium">Hệ thống hỗ trợ xem trực tuyến toàn văn đồ án dưới định dạng sách lật 3D thực tế ảo.</p>
+                      <button 
+                        onClick={() => window.open(`/theses/${thesis.id}/flipbook`, '_blank')}
+                        className="px-6 py-2.5 bg-primary text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-primary/90 transition-all flex items-center gap-2 shadow-md border-none cursor-pointer"
+                      >
+                        <span className="material-symbols-outlined text-sm">open_in_new</span> Mở Sách Lật 3D
+                      </button>
                     </div>
                   </div>
                 </div>

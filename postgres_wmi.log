@@ -1,0 +1,20 @@
+2026-06-06 09:13:19.311 +07 [13080] LOG:  starting PostgreSQL 18.4 on x86_64-windows, compiled by msvc-19.44.35226, 64-bit
+2026-06-06 09:13:19.320 +07 [13080] LOG:  listening on IPv6 address "::1", port 5432
+2026-06-06 09:13:19.320 +07 [13080] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2026-06-06 09:13:19.479 +07 [7968] LOG:  database system was interrupted; last known up at 2026-06-06 09:09:06 +07
+2026-06-06 09:13:19.795 +07 [7968] LOG:  database system was not properly shut down; automatic recovery in progress
+2026-06-06 09:13:19.800 +07 [7968] LOG:  redo starts at 0/17E6830
+2026-06-06 09:13:19.800 +07 [7968] LOG:  invalid record length at 0/17E6868: expected at least 24, got 0
+2026-06-06 09:13:19.800 +07 [7968] LOG:  redo done at 0/17E6830 system usage: CPU: user: 0.00 s, system: 0.00 s, elapsed: 0.00 s
+2026-06-06 09:13:19.809 +07 [5944] LOG:  checkpoint starting: end-of-recovery immediate wait
+2026-06-06 09:13:19.831 +07 [5944] LOG:  checkpoint complete: wrote 0 buffers (0.0%), wrote 3 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.004 s, sync=0.005 s, total=0.030 s; sync files=2, longest=0.003 s, average=0.003 s; distance=0 kB, estimate=0 kB; lsn=0/17E6868, redo lsn=0/17E6868
+2026-06-06 09:13:19.843 +07 [13080] LOG:  database system is ready to accept connections
+2026-06-06 09:14:09.150 +07 [6828] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-06-06 09:14:09.151 +07 [5088] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-06-06 09:32:42.168 +07 [13080] LOG:  background worker "logical replication launcher" (PID 11760) was terminated by exception 0xC000013A
+2026-06-06 09:32:42.168 +07 [13080] HINT:  See C include file "ntstatus.h" for a description of the hexadecimal value.
+2026-06-06 09:32:42.168 +07 [13080] LOG:  terminating any other active server processes
+2026-06-06 09:32:42.218 +07 [13080] LOG:  all server processes terminated; reinitializing
+2026-06-06 09:32:42.375 +07 [2192] LOG:  database system was interrupted; last known up at 2026-06-06 09:13:19 +07
