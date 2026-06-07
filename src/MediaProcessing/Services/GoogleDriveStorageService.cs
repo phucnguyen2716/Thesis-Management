@@ -2,6 +2,13 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Google.Apis.Drive.v3;
+using Google.Apis.Services;
+using Google.Apis.Upload;
+using Google.Apis.Auth.OAuth2;
+using System.IO;
+using System.Linq;
+using System.Collections.Generic;
 
 namespace MediaProcessing.Services
 {
@@ -19,7 +26,11 @@ namespace MediaProcessing.Services
             byte[] fileBytes, 
             AcademicCategory category, 
             string academicSubjectOrMajor, 
-            string topicName);
+            string topicName,
+            string? subjectCode = null,
+            string? uid = null,
+            string? projectName = null,
+            string? major = null);
     }
 
     public class GoogleDriveStorageService : IGoogleDriveStorageService
@@ -31,7 +42,7 @@ namespace MediaProcessing.Services
         private readonly string? _driveKey2_Topic;   // For Topics (Chuyên đề)
         private readonly string? _driveKey3_Thesis;  // For Theses (Khóa luận)
         
-        private readonly bool _useMock;
+        private readonly bool _useMockConfig;
 
         public GoogleDriveStorageService(IConfiguration configuration, ILogger<GoogleDriveStorageService> logger)
         {
@@ -42,16 +53,48 @@ namespace MediaProcessing.Services
             _driveKey2_Topic = configuration["GoogleDrive:DriveKey2_Topic"];
             _driveKey3_Thesis = configuration["GoogleDrive:DriveKey3_Thesis"];
             
-            // Runs mock if credentials are blank
-            _useMock = string.IsNullOrEmpty(_driveKey1_Project) || 
-                       string.IsNullOrEmpty(_driveKey2_Topic) || 
-                       string.IsNullOrEmpty(_driveKey3_Thesis) || 
-                       configuration.GetValue<bool>("GoogleDrive:UseMock", true);
+            _useMockConfig = configuration.GetValue<bool>("GoogleDrive:UseMock", true);
+        }
 
-            if (_useMock)
+        private async Task<string> GetOrCreateFolderAsync(DriveService service, string folderName, string? parentId)
+        {
+            _logger.LogInformation("GoogleDrive: Searching/creating folder '{FolderName}' (parent: '{ParentId}')...", folderName, parentId ?? "Root");
+            
+            var listRequest = service.Files.List();
+            var query = $"mimeType = 'application/vnd.google-apps.folder' and name = '{folderName}' and trashed = false";
+            if (!string.IsNullOrEmpty(parentId))
             {
-                _logger.LogWarning("One or more of the 3 Google Drive API keys are missing. Running in Simulated Academic Drive mode.");
+                query += $" and '{parentId}' in parents";
             }
+            listRequest.Q = query;
+            listRequest.Fields = "files(id, name)";
+            
+            var response = await listRequest.ExecuteAsync();
+            var existingFolder = response.Files?.FirstOrDefault();
+            
+            if (existingFolder != null)
+            {
+                _logger.LogInformation("GoogleDrive: Folder '{FolderName}' already exists with ID: {Id}", folderName, existingFolder.Id);
+                return existingFolder.Id;
+            }
+            
+            // Create the folder
+            var folderMetadata = new Google.Apis.Drive.v3.Data.File()
+            {
+                Name = folderName,
+                MimeType = "application/vnd.google-apps.folder"
+            };
+            if (!string.IsNullOrEmpty(parentId))
+            {
+                folderMetadata.Parents = new List<string> { parentId };
+            }
+            
+            var createRequest = service.Files.Create(folderMetadata);
+            createRequest.Fields = "id";
+            var newFolder = await createRequest.ExecuteAsync();
+            
+            _logger.LogInformation("GoogleDrive: Folder '{FolderName}' created with ID: {Id}", folderName, newFolder.Id);
+            return newFolder.Id;
         }
 
         public async Task<GoogleDriveUploadResult> UploadAcademicPdfAsync(
@@ -59,45 +102,76 @@ namespace MediaProcessing.Services
             byte[] fileBytes, 
             AcademicCategory category, 
             string academicSubjectOrMajor, 
-            string topicName)
+            string topicName,
+            string? subjectCode = null,
+            string? uid = null,
+            string? projectName = null,
+            string? major = null)
         {
-            var uniqueGuid = Guid.NewGuid().ToString("N").Substring(0, 10);
             string activeDriveKey = string.Empty;
-            string parentFolderName = string.Empty; // Môn học or Chuyên ngành
-            string documentFolderName = $"{topicName} - {uniqueGuid}"; // Tên đề tài - GUID
             
-            // 1. Identify Drive client key and folder parameters
+            // 1. Identify Drive client key
             switch (category)
             {
                 case AcademicCategory.Project:
-                    activeDriveKey = _driveKey1_Project ?? "DRIVE_KEY_1_MOCK";
-                    parentFolderName = academicSubjectOrMajor; // Tên môn học
-                    _logger.LogInformation("GoogleDrive [Drive 1 - Đồ án]: Upload triggered using Key: '{Key}'", activeDriveKey);
+                    activeDriveKey = _driveKey1_Project ?? string.Empty;
+                    _logger.LogInformation("GoogleDrive [Drive 1 - Đồ án]: Upload triggered using Key length: {Length}", activeDriveKey.Length);
                     break;
                 case AcademicCategory.Topic:
-                    activeDriveKey = _driveKey2_Topic ?? "DRIVE_KEY_2_MOCK";
-                    parentFolderName = academicSubjectOrMajor; // Tên chuyên ngành
-                    _logger.LogInformation("GoogleDrive [Drive 2 - Chuyên đề]: Upload triggered using Key: '{Key}'", activeDriveKey);
+                    activeDriveKey = _driveKey2_Topic ?? string.Empty;
+                    _logger.LogInformation("GoogleDrive [Drive 2 - Chuyên đề]: Upload triggered using Key length: {Length}", activeDriveKey.Length);
                     break;
                 case AcademicCategory.Thesis:
-                    activeDriveKey = _driveKey3_Thesis ?? "DRIVE_KEY_3_MOCK";
-                    parentFolderName = academicSubjectOrMajor; // Tên chuyên ngành
-                    _logger.LogInformation("GoogleDrive [Drive 3 - Khóa luận]: Upload triggered using Key: '{Key}'", activeDriveKey);
+                    activeDriveKey = _driveKey3_Thesis ?? string.Empty;
+                    _logger.LogInformation("GoogleDrive [Drive 3 - Khóa luận]: Upload triggered using Key length: {Length}", activeDriveKey.Length);
                     break;
             }
 
-            // 2. Perform Folder Creation and Upload Simulation
-            _logger.LogInformation("GoogleDrive: Verifying/Creating Parent Folder structure: '{Parent}' in Drive...", parentFolderName);
-            await Task.Delay(200); // Simulate folder query latency
-            
-            _logger.LogInformation("GoogleDrive: Verifying/Creating Sub-Folder structure: '{Parent}/{Sub}'...", parentFolderName, documentFolderName);
-            await Task.Delay(200); // Simulate nested directory creation
-            
-            _logger.LogInformation("GoogleDrive: Uploading academic file '{File}' ({Size} bytes) into path '{Parent}/{Sub}/{File}'...", 
-                fileName, fileBytes.Length, parentFolderName, documentFolderName);
+            // Determine if we should use mock for this category
+            bool categoryUseMock = _useMockConfig || string.IsNullOrEmpty(activeDriveKey);
 
-            if (_useMock)
+            // Construct folder names
+            string majorName = string.IsNullOrEmpty(major) ? "Chuyên ngành" : major;
+            string pCode = string.IsNullOrEmpty(subjectCode) ? "UnknownCode" : subjectCode;
+            
+            string parentFolderName = category == AcademicCategory.Project 
+                ? $"{academicSubjectOrMajor} - {pCode}" 
+                : academicSubjectOrMajor;
+
+            string pUid = string.IsNullOrEmpty(uid) ? "UnknownUid" : uid;
+            string pName = string.IsNullOrEmpty(projectName) ? topicName : projectName;
+            string documentFolderName = category == AcademicCategory.Project
+                ? $"{pUid} - {pName}"
+                : $"{topicName} - {Guid.NewGuid().ToString("N").Substring(0, 10)}";
+
+            if (categoryUseMock)
             {
+                _logger.LogWarning("Running in Simulated Academic Drive mode for category: {Category}.", category);
+                
+                // 2. Perform Folder Creation and Upload Simulation
+                if (category == AcademicCategory.Project)
+                {
+                    _logger.LogInformation("GoogleDrive: Verifying/Creating 'ThesisStorage' folder...");
+                    await Task.Delay(100);
+                    _logger.LogInformation("GoogleDrive: Verifying/Creating Major folder: '{Major}' under 'ThesisStorage'...", majorName);
+                    await Task.Delay(100);
+                    _logger.LogInformation("GoogleDrive: Verifying/Creating Subject Folder: '{Parent}' under Major...", parentFolderName);
+                    await Task.Delay(100);
+                    _logger.LogInformation("GoogleDrive: Verifying/Creating Sub-Folder: '{Sub}' under Subject...", documentFolderName);
+                    await Task.Delay(100);
+                    _logger.LogInformation("GoogleDrive: Uploading academic file '{File}' ({Size} bytes) into path 'ThesisStorage/{Major}/{Parent}/{Sub}/{FileName}'...", 
+                        fileName, fileBytes.Length, majorName, parentFolderName, documentFolderName, fileName);
+                }
+                else
+                {
+                    _logger.LogInformation("GoogleDrive: Verifying/Creating Parent Folder structure: '{Parent}' in Drive...", parentFolderName);
+                    await Task.Delay(200);
+                    _logger.LogInformation("GoogleDrive: Verifying/Creating Sub-Folder structure: '{Parent}/{Sub}'...", parentFolderName, documentFolderName);
+                    await Task.Delay(200);
+                    _logger.LogInformation("GoogleDrive: Uploading academic file '{File}' ({Size} bytes) into path '{Parent}/{Sub}/{FileName}'...", 
+                        fileName, fileBytes.Length, parentFolderName, documentFolderName, fileName);
+                }
+
                 await Task.Delay(500); // Simulate network upload
                 
                 var secureWebUrl = $"https://drive.google.com/drive/folders/{Guid.NewGuid():N}";
@@ -117,18 +191,145 @@ namespace MediaProcessing.Services
 
             try
             {
-                // Real Google Drive API SDK integration:
-                // var service = AuthenticateDriveClient(activeDriveKey);
-                // var parentId = GetOrCreateFolder(service, parentFolderName, null);
-                // var subId = GetOrCreateFolder(service, documentFolderName, parentId);
-                // UploadFile(service, fileName, fileBytes, subId);
-                // ...
-                return new GoogleDriveUploadResult { Success = false };
+                // 1. Initialize Drive service
+                DriveService service;
+                
+                if (activeDriveKey.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
+                {
+                    // Find the credentials file location robustly
+                    string credPath = Path.Combine(AppContext.BaseDirectory, activeDriveKey);
+                    if (!File.Exists(credPath))
+                    {
+                        credPath = Path.Combine(Directory.GetCurrentDirectory(), activeDriveKey);
+                    }
+                    if (!File.Exists(credPath))
+                    {
+                        string? dir = AppContext.BaseDirectory;
+                        while (dir != null)
+                        {
+                            string checkPath = Path.Combine(dir, activeDriveKey);
+                            if (File.Exists(checkPath))
+                            {
+                                credPath = checkPath;
+                                break;
+                            }
+                            dir = Path.GetDirectoryName(dir);
+                        }
+                    }
+
+                    _logger.LogInformation("GoogleDrive: Loading Service Account credentials from: '{Path}'", credPath);
+
+#pragma warning disable CS0618
+                    GoogleCredential credential = GoogleCredential.FromJson(File.ReadAllText(credPath))
+                        .CreateScoped(new[] { DriveService.ScopeConstants.DriveFile, DriveService.ScopeConstants.Drive });
+#pragma warning restore CS0618
+
+                    service = new DriveService(new BaseClientService.Initializer()
+                    {
+                        HttpClientInitializer = credential,
+                        ApplicationName = "Thesis-Management"
+                    });
+                }
+                else
+                {
+                    _logger.LogInformation("GoogleDrive: Connecting to Google Drive using API Key...");
+                    service = new DriveService(new BaseClientService.Initializer()
+                    {
+                        ApiKey = activeDriveKey,
+                        ApplicationName = "Thesis-Management"
+                    });
+                }
+                
+                // Verify connection
+                var testReq = service.Files.List();
+                testReq.PageSize = 1;
+                await testReq.ExecuteAsync();
+                _logger.LogInformation("GoogleDrive SUCCESS: Connection test completed successfully.");
+
+                // 2. Create folders
+                string targetFolderId;
+                if (category == AcademicCategory.Project)
+                {
+                    // Look for shared "ThesisStorage" folder
+                    _logger.LogInformation("GoogleDrive: Searching for shared 'ThesisStorage' folder...");
+                    string? thesisStorageId = null;
+                    var storageListReq = service.Files.List();
+                    storageListReq.Q = "mimeType = 'application/vnd.google-apps.folder' and name = 'ThesisStorage' and trashed = false";
+                    storageListReq.Fields = "files(id, name)";
+                    var storageRes = await storageListReq.ExecuteAsync();
+                    var storageFolder = storageRes.Files?.FirstOrDefault();
+                    
+                    if (storageFolder != null)
+                    {
+                        thesisStorageId = storageFolder.Id;
+                        _logger.LogInformation("GoogleDrive: Found shared 'ThesisStorage' folder with ID: {Id}", thesisStorageId);
+                    }
+                    else
+                    {
+                        _logger.LogWarning("GoogleDrive: Shared 'ThesisStorage' folder not found. Creating it in the root directory.");
+                        thesisStorageId = await GetOrCreateFolderAsync(service, "ThesisStorage", null);
+                    }
+
+                    // Create Major folder under ThesisStorage
+                    string majorFolderId = await GetOrCreateFolderAsync(service, majorName, thesisStorageId);
+                    
+                    // Create Subject folder under Major
+                    string subjectFolderId = await GetOrCreateFolderAsync(service, parentFolderName, majorFolderId);
+                    
+                    // Create Project folder under Subject
+                    targetFolderId = await GetOrCreateFolderAsync(service, documentFolderName, subjectFolderId);
+                }
+                else
+                {
+                    string parentId = await GetOrCreateFolderAsync(service, parentFolderName, null);
+                    targetFolderId = await GetOrCreateFolderAsync(service, documentFolderName, parentId);
+                }
+
+                // 3. Upload file
+                _logger.LogInformation("GoogleDrive: Uploading academic file '{File}' ({Size} bytes) into path '{Parent}/{Sub}/{FileName}'...", 
+                    fileName, fileBytes.Length, parentFolderName, documentFolderName, fileName);
+
+                var fileMetadata = new Google.Apis.Drive.v3.Data.File()
+                {
+                    Name = fileName,
+                    Parents = new List<string> { targetFolderId }
+                };
+
+                using (var stream = new MemoryStream(fileBytes))
+                {
+                    var uploadRequest = service.Files.Create(fileMetadata, stream, "application/pdf");
+                    uploadRequest.Fields = "id, webViewLink, webContentLink";
+                    
+                    var progress = await uploadRequest.UploadAsync();
+                    if (progress.Status == UploadStatus.Failed)
+                    {
+                        throw new Exception($"File upload failed: {progress.Exception?.Message}", progress.Exception);
+                    }
+
+                    var uploadedFile = uploadRequest.ResponseBody;
+                    string webUrl = uploadedFile?.WebViewLink ?? $"https://drive.google.com/file/d/{uploadedFile?.Id}";
+
+                    _logger.LogInformation("GoogleDrive SUCCESS: File archived. Shareable URL: {Url}", webUrl);
+
+                    return new GoogleDriveUploadResult
+                    {
+                        Success = true,
+                        DriveName = $"Drive-{category}",
+                        ParentFolder = parentFolderName,
+                        SubFolder = documentFolderName,
+                        SharedWebUrl = webUrl,
+                        BytesUploaded = fileBytes.Length
+                    };
+                }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed uploading document to Google Drive storage pools.");
-                return new GoogleDriveUploadResult { Success = false, ErrorMessage = ex.Message };
+                return new GoogleDriveUploadResult 
+                { 
+                    Success = false, 
+                    ErrorMessage = $"Failed to upload: {ex.Message}" 
+                };
             }
         }
     }

@@ -4,6 +4,8 @@
 *.key
 *.pem
 *.pub
+# Google Credentials
+src/MediaProcessing/google-credentials.json
 *.ppk
 *.pfx
 *.p12

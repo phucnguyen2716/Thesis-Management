@@ -127,7 +127,11 @@ namespace MediaProcessing.Controllers
                 new byte[2048], // Mock PDF bytes
                 academicCategory,
                 request.SubjectOrMajor,
-                request.TopicTitle
+                request.TopicTitle,
+                request.SubjectCode,
+                request.Uid,
+                request.ProjectName,
+                request.Major
             );
 
             var job = new MediaJobDbModel
@@ -218,6 +222,10 @@ namespace MediaProcessing.Controllers
         public string Category { get; set; } = "Project"; // Project (Đồ án), Topic (Chuyên đề), Thesis (Khóa luận)
         public string SubjectOrMajor { get; set; } = "Distributed Systems"; // Môn học or Chuyên ngành
         public string TopicTitle { get; set; } = "Building Microservices Sandbox"; // Tên đề tài
+        public string? SubjectCode { get; set; } // Mã môn
+        public string? Uid { get; set; } // Uid
+        public string? ProjectName { get; set; } // Tên project
+        public string? Major { get; set; } // Chuyên ngành
     }
 
     public class OptimizeImageRequest
