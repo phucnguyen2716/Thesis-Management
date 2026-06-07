@@ -858,4 +858,27 @@ sequenceDiagram
 
 ---
 
+### 6. 📁 Tích hợp Lưu trữ Google Drive cho Đồ án Môn học (Google Drive Academic Storage)
+
+Phân hệ **MediaProcessing** hỗ trợ lưu trữ tệp tài liệu số hóa của Đồ án môn học trực tiếp lên đám mây **Google Drive** thông qua tài khoản dịch vụ **Google Service Account Credentials**.
+
+#### 📂 Cấu trúc Lưu trữ Phân cấp Tự động (Folder Hierarchy)
+Khi sinh viên hoặc giảng viên tải lên tệp tin Đồ án môn học, hệ thống tự động kết nối và tạo sơ đồ lưu trữ dạng cây ngăn nắp:
+
+```text
+Bộ nhớ dùng chung (Shared Drive)
+  └── ThesisStorage/ (Thư mục gốc chia sẻ)
+        └── [Tên Chuyên ngành]/ (Ví dụ: Công nghệ phần mềm)
+              └── [Tên Môn học] - [Mã Môn]/ (Ví dụ: Thiết kế phần mềm - SE104)
+                    └── [UID Sinh viên] - [Tên Đồ án]/ (Ví dụ: SV123456 - Project Management System)
+                          └── [File tài liệu PDF]
+```
+
+#### ⚙️ Cơ chế Xác thực & Phân quyền bảo mật
+- **Xác thực qua Service Account:** Hệ thống sử dụng khóa bảo mật Service Account lưu trữ tại `src/MediaProcessing/google-credentials.json` để tự động xác thực ứng dụng với Google API mà không yêu cầu người dùng cuối đăng nhập thủ công (zero-interaction).
+- **Hạn mức dung lượng (Storage Quota Bypass):** Theo chính sách Google Cloud, Service Account cá nhân có hạn mức dung lượng mặc định là 0 byte. Để lưu trữ thành công, thư mục gốc `ThesisStorage` được cấu hình nằm bên trong một **Shared Drive (Bộ nhớ dùng chung)** của tổ chức/trường đại học và phân quyền truy cập cho email của Service Account. Khi đó tệp tin tải lên sẽ được tính dung lượng vào Shared Drive thay vì Service Account.
+- **Bảo mật mã nguồn:** Tệp tin chứa khóa Service Account (`google-credentials.json`) được tự động cấu hình trong `.gitignore` để ngăn chặn việc rò rỉ thông tin bảo mật lên các kho mã nguồn công khai như GitHub.
+
+---
+
 *Chúc bạn có những trải nghiệm tuyệt vời và nghiên cứu khoa học hiệu quả cùng **eThesis**!* 🎓🚀
