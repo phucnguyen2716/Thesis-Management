@@ -81,6 +81,7 @@ builder.Services.AddScoped<IReviewService, ReviewService>();
 builder.Services.AddScoped<ICommentService, CommentService>();
 builder.Services.AddScoped<ISocialService, SocialService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
+builder.Services.AddSingleton<IGoogleDriveStorageService, GoogleDriveStorageService>();
 
 // Chatbot Double-Guardrail and ShellScope DI registrations
 builder.Services.AddSingleton(typeof(IElasticSearchRepository<>), typeof(ElasticSearchRepository<>));
@@ -136,6 +137,25 @@ using (var scope = app.Services.CreateScope())
             if (provider == "postgresql" || provider == "postgres")
             {
                 context.Database.ExecuteSqlRaw("ALTER TABLE \"ChatHistory\" ADD COLUMN IF NOT EXISTS \"UserId\" INTEGER;");
+                context.Database.ExecuteSqlRaw("ALTER TABLE \"Theses\" ADD COLUMN IF NOT EXISTS \"Major\" VARCHAR(500);");
+                context.Database.ExecuteSqlRaw("ALTER TABLE \"Theses\" ADD COLUMN IF NOT EXISTS \"Subject\" VARCHAR(500);");
+                context.Database.ExecuteSqlRaw("ALTER TABLE \"Theses\" ADD COLUMN IF NOT EXISTS \"SubjectCode\" VARCHAR(100);");
+                context.Database.ExecuteSqlRaw("ALTER TABLE \"Theses\" ADD COLUMN IF NOT EXISTS \"Category\" VARCHAR(50) DEFAULT 'Project';");
+                context.Database.ExecuteSqlRaw(@"
+                    UPDATE ""Theses"" 
+                    SET ""Category"" = 'Project', ""Major"" = 'ai', ""Subject"" = 'Phát triển ứng dụng trí tuệ nhân tạo', ""SubjectCode"" = 'ITE1174E'
+                    WHERE ""Id"" = 2 AND (""Major"" IS NULL OR ""Major"" = '');
+                ");
+                context.Database.ExecuteSqlRaw(@"
+                    UPDATE ""Theses"" 
+                    SET ""Category"" = 'Thesis', ""Major"" = 'ai'
+                    WHERE ""Id"" = 1 AND (""Major"" IS NULL OR ""Major"" = '');
+                ");
+                context.Database.ExecuteSqlRaw(@"
+                    UPDATE ""Theses"" 
+                    SET ""Category"" = 'Topic', ""Major"" = 'networking'
+                    WHERE ""Id"" = 3 AND (""Major"" IS NULL OR ""Major"" = '');
+                ");
                 context.Database.ExecuteSqlRaw(@"
                     CREATE TABLE IF NOT EXISTS ""PlagiarismReports"" (
                         ""Id"" SERIAL PRIMARY KEY,
@@ -147,6 +167,27 @@ using (var scope = app.Services.CreateScope())
             }
             else if (provider == "sqlite")
             {
+                try { context.Database.ExecuteSqlRaw("ALTER TABLE \"Theses\" ADD COLUMN \"Major\" TEXT;"); } catch {}
+                try { context.Database.ExecuteSqlRaw("ALTER TABLE \"Theses\" ADD COLUMN \"Subject\" TEXT;"); } catch {}
+                try { context.Database.ExecuteSqlRaw("ALTER TABLE \"Theses\" ADD COLUMN \"SubjectCode\" TEXT;"); } catch {}
+                try { context.Database.ExecuteSqlRaw("ALTER TABLE \"Theses\" ADD COLUMN \"Category\" TEXT DEFAULT 'Project';"); } catch {}
+                try {
+                    context.Database.ExecuteSqlRaw(@"
+                        UPDATE ""Theses"" 
+                        SET ""Category"" = 'Project', ""Major"" = 'ai', ""Subject"" = 'Phát triển ứng dụng trí tuệ nhân tạo', ""SubjectCode"" = 'ITE1174E'
+                        WHERE ""Id"" = 2 AND (""Major"" IS NULL OR ""Major"" = '');
+                    ");
+                    context.Database.ExecuteSqlRaw(@"
+                        UPDATE ""Theses"" 
+                        SET ""Category"" = 'Thesis', ""Major"" = 'ai'
+                        WHERE ""Id"" = 1 AND (""Major"" IS NULL OR ""Major"" = '');
+                    ");
+                    context.Database.ExecuteSqlRaw(@"
+                        UPDATE ""Theses"" 
+                        SET ""Category"" = 'Topic', ""Major"" = 'networking'
+                        WHERE ""Id"" = 3 AND (""Major"" IS NULL OR ""Major"" = '');
+                    ");
+                } catch {}
                 context.Database.ExecuteSqlRaw(@"
                     CREATE TABLE IF NOT EXISTS ""PlagiarismReports"" (
                         ""Id"" INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -163,6 +204,27 @@ using (var scope = app.Services.CreateScope())
                     context.Database.ExecuteSqlRaw("ALTER TABLE ChatHistory ADD UserId INT;");
                 }
                 catch { }
+                try { context.Database.ExecuteSqlRaw("ALTER TABLE Theses ADD Major NVARCHAR(500);"); } catch { }
+                try { context.Database.ExecuteSqlRaw("ALTER TABLE Theses ADD Subject NVARCHAR(500);"); } catch { }
+                try { context.Database.ExecuteSqlRaw("ALTER TABLE Theses ADD SubjectCode NVARCHAR(100);"); } catch { }
+                try { context.Database.ExecuteSqlRaw("ALTER TABLE Theses ADD Category NVARCHAR(50) DEFAULT 'Project';"); } catch { }
+                try {
+                    context.Database.ExecuteSqlRaw(@"
+                        UPDATE Theses 
+                        SET Category = 'Project', Major = 'ai', Subject = N'Phát triển ứng dụng trí tuệ nhân tạo', SubjectCode = 'ITE1174E'
+                        WHERE Id = 2 AND (Major IS NULL OR Major = '');
+                    ");
+                    context.Database.ExecuteSqlRaw(@"
+                        UPDATE Theses 
+                        SET Category = 'Thesis', Major = 'ai'
+                        WHERE Id = 1 AND (Major IS NULL OR Major = '');
+                    ");
+                    context.Database.ExecuteSqlRaw(@"
+                        UPDATE Theses 
+                        SET Category = 'Topic', Major = 'networking'
+                        WHERE Id = 3 AND (Major IS NULL OR Major = '');
+                    ");
+                } catch {}
                 context.Database.ExecuteSqlRaw(@"
                     IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='PlagiarismReports' AND xtype='U')
                     BEGIN

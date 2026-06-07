@@ -76,7 +76,9 @@ public class AppDbContext : DbContext
                 Status = "Approved", 
                 StudentId = 3, 
                 AdvisorId = 2, 
-                CreatedAt = DateTime.UtcNow.AddDays(-30) 
+                CreatedAt = DateTime.UtcNow.AddDays(-30),
+                Category = "Thesis",
+                Major = "ai"
             },
             new Thesis 
             { 
@@ -86,7 +88,11 @@ public class AppDbContext : DbContext
                 Status = "InProgress", 
                 StudentId = 3, 
                 AdvisorId = 2, 
-                CreatedAt = DateTime.UtcNow.AddDays(-15) 
+                CreatedAt = DateTime.UtcNow.AddDays(-15),
+                Category = "Project",
+                Major = "ai",
+                Subject = "Phát triển ứng dụng trí tuệ nhân tạo",
+                SubjectCode = "ITE1174E"
             },
             new Thesis 
             { 
@@ -96,7 +102,9 @@ public class AppDbContext : DbContext
                 Status = "Submitted", 
                 StudentId = 3, 
                 AdvisorId = 2, 
-                CreatedAt = DateTime.UtcNow.AddDays(-5) 
+                CreatedAt = DateTime.UtcNow.AddDays(-5),
+                Category = "Topic",
+                Major = "networking"
             }
         );
 

@@ -1,4 +1,4 @@
-﻿namespace PlatformAdmin.DTOs.Thesis;
+namespace PlatformAdmin.DTOs.Thesis;
 
 public record ThesisDto(
     int Id,
@@ -17,17 +17,37 @@ public record ThesisDto(
     string? AdvisorName,
     string? Department,
     int ReviewCount,
-    decimal? LatestScore
+    decimal? LatestScore,
+    string? Major = null,
+    string? Subject = null,
+    string? SubjectCode = null,
+    string Category = "Project"
 );
 
 public record CreateThesisRequest(
     string Title,
-    string? Description
+    string? Description,
+    string? Major = null,
+    string? Subject = null,
+    string? SubjectCode = null,
+    string Category = "Project",
+    int? StudentId = null,
+    int? AdvisorId = null,
+    string? Status = null,
+    string? FilePath = null
 );
 
 public record UpdateThesisRequest(
     string Title,
-    string? Description
+    string? Description,
+    string? Major = null,
+    string? Subject = null,
+    string? SubjectCode = null,
+    string Category = "Project",
+    int? StudentId = null,
+    int? AdvisorId = null,
+    string? Status = null,
+    string? FilePath = null
 );
 
 public record AssignAdvisorRequest(int AdvisorId);

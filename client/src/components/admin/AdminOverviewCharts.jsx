@@ -11,8 +11,6 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { getAdminUsers, getLoginAudit } from '../../utils/adminStore';
-
 const COLORS = ['#f59e0b', '#38bdf8', '#a78bfa', '#34d399', '#f87171'];
 
 const tooltipStyle = {
@@ -23,10 +21,7 @@ const tooltipStyle = {
   fontSize: '12px',
 };
 
-const AdminOverviewCharts = () => {
-  const users = getAdminUsers();
-  const logs = getLoginAudit();
-
+const AdminOverviewCharts = ({ users = [], logs = [] }) => {
   const rolePie = useMemo(
     () => [
       { name: 'Sinh viên', value: users.filter(u => u.role === 'Student').length },

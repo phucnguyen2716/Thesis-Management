@@ -1,4 +1,4 @@
-﻿using PlatformAdmin.DTOs.Thesis;
+using PlatformAdmin.DTOs.Thesis;
 using PlatformAdmin.Interfaces;
 using PlatformAdmin.Entities;
 using PlatformAdmin.Data;
@@ -10,10 +10,12 @@ public class ThesisService : IThesisService
 {
     private readonly AppDbContext _db;
     private readonly string _uploadPath;
+    private readonly IGoogleDriveStorageService _driveService;
 
-    public ThesisService(AppDbContext db)
+    public ThesisService(AppDbContext db, IGoogleDriveStorageService driveService)
     {
         _db = db;
+        _driveService = driveService;
         _uploadPath = Path.Combine(Directory.GetCurrentDirectory(), "uploads");
         Directory.CreateDirectory(_uploadPath);
     }
@@ -30,16 +32,21 @@ public class ThesisService : IThesisService
         t.AdvisorId, t.Advisor?.FullName,
         t.Student.Department,
         t.Reviews.Count,
-        t.Reviews.Any() ? t.Reviews.Max(r => r.Score) : null
+        t.Reviews.Any() ? t.Reviews.Max(r => r.Score) : null,
+        t.Major,
+        t.Subject,
+        t.SubjectCode,
+        t.Category
     );
 
-    public async Task<ThesisListResponse> GetAllAsync(int page, int pageSize, string? status, string? search, int? studentId, int? advisorId)
+    public async Task<ThesisListResponse> GetAllAsync(int page, int pageSize, string? status, string? search, int? studentId, int? advisorId, string? category = null)
     {
         var q = BaseQuery().AsQueryable();
         if (!string.IsNullOrEmpty(status)) q = q.Where(t => t.Status == status);
         if (!string.IsNullOrEmpty(search)) q = q.Where(t => t.Title.Contains(search) || t.Student.FullName.Contains(search));
         if (studentId.HasValue) q = q.Where(t => t.StudentId == studentId);
         if (advisorId.HasValue) q = q.Where(t => t.AdvisorId == advisorId);
+        if (!string.IsNullOrEmpty(category)) q = q.Where(t => t.Category == category);
 
         var total = await q.CountAsync();
         var items = await q.OrderByDescending(t => t.CreatedAt)
@@ -61,8 +68,14 @@ public class ThesisService : IThesisService
             Title = request.Title,
             Description = request.Description,
             StudentId = studentId,
-            Status = "Pending",
-            CreatedAt = DateTime.UtcNow
+            Status = string.IsNullOrEmpty(request.Status) ? "Pending" : request.Status,
+            CreatedAt = DateTime.UtcNow,
+            Major = request.Major,
+            Subject = request.Subject,
+            SubjectCode = request.SubjectCode,
+            Category = request.Category,
+            AdvisorId = request.AdvisorId == 0 ? null : request.AdvisorId,
+            FilePath = request.FilePath
         };
         _db.Theses.Add(thesis);
         await _db.SaveChangesAsync();
@@ -74,6 +87,26 @@ public class ThesisService : IThesisService
         var thesis = await _db.Theses.FindAsync(id) ?? throw new KeyNotFoundException();
         thesis.Title = request.Title;
         thesis.Description = request.Description;
+        thesis.Major = request.Major;
+        thesis.Subject = request.Subject;
+        thesis.SubjectCode = request.SubjectCode;
+        thesis.Category = request.Category;
+        if (request.StudentId.HasValue && request.StudentId.Value != 0)
+        {
+            thesis.StudentId = request.StudentId.Value;
+        }
+        if (request.AdvisorId.HasValue)
+        {
+            thesis.AdvisorId = request.AdvisorId.Value == 0 ? null : request.AdvisorId;
+        }
+        if (!string.IsNullOrEmpty(request.Status))
+        {
+            thesis.Status = request.Status;
+        }
+        if (request.FilePath != null)
+        {
+            thesis.FilePath = request.FilePath == "" ? null : request.FilePath;
+        }
         thesis.UpdatedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
         return Map(await BaseQuery().FirstAsync(t => t.Id == id));
@@ -137,28 +170,74 @@ public class ThesisService : IThesisService
 
     public async Task<string> UploadFileAsync(int id, Stream fileStream, string fileName, string contentType)
     {
-        var thesis = await _db.Theses.FindAsync(id) ?? throw new KeyNotFoundException();
+        var thesis = await _db.Theses.Include(t => t.Student).FirstOrDefaultAsync(t => t.Id == id) ?? throw new KeyNotFoundException();
+        
+        // Read file bytes
+        byte[] fileBytes;
+        using (var memoryStream = new MemoryStream())
+        {
+            await fileStream.CopyToAsync(memoryStream);
+            fileBytes = memoryStream.ToArray();
+        }
+
+        // Save locally first as a backup
         var ext = Path.GetExtension(fileName);
         var savedName = $"thesis_{id}_{DateTime.UtcNow.Ticks}{ext}";
         var fullPath = Path.Combine(_uploadPath, savedName);
-        using var fs = File.Create(fullPath);
-        await fileStream.CopyToAsync(fs);
+        await File.WriteAllBytesAsync(fullPath, fileBytes);
+
+        // Upload to Google Drive matching standard majors and subjects
+        AcademicCategory driveCategory = AcademicCategory.Project;
+        if (Enum.TryParse<AcademicCategory>(thesis.Category, true, out var parsedCategory))
+        {
+            driveCategory = parsedCategory;
+        }
+
+        var majorDisplayName = GetMajorDisplayName(thesis.Major);
+
+        var driveResult = await _driveService.UploadAcademicPdfAsync(
+            fileName,
+            fileBytes,
+            driveCategory,
+            driveCategory == AcademicCategory.Project ? (thesis.Subject ?? "General") : majorDisplayName,
+            thesis.Title,
+            thesis.SubjectCode,
+            thesis.Student?.StudentId ?? "UnknownUid",
+            thesis.Title,
+            majorDisplayName
+        );
+
+        string finalPath = driveResult.Success ? driveResult.SharedWebUrl : $"/uploads/{savedName}";
 
         var submission = new ThesisSubmission
         {
             ThesisId = id,
-            FilePath = fullPath,
+            FilePath = finalPath,
             FileName = fileName,
-            FileSize = new FileInfo(fullPath).Length,
+            FileSize = fileBytes.Length,
             Version = await _db.ThesisSubmissions.CountAsync(s => s.ThesisId == id) + 1,
             SubmittedAt = DateTime.UtcNow
         };
         _db.ThesisSubmissions.Add(submission);
 
-        thesis.FilePath = $"/uploads/{savedName}";
+        thesis.FilePath = finalPath;
         thesis.UpdatedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
         return thesis.FilePath;
+    }
+
+    private static string GetMajorDisplayName(string? majorKey)
+    {
+        if (string.IsNullOrEmpty(majorKey)) return "Chuyên ngành";
+        return majorKey.ToLowerInvariant() switch
+        {
+            "ai" => "Trí tuệ nhân tạo",
+            "networking" or "computer-networks" => "Mạng máy tính",
+            "is" or "information-systems" or "systems" => "Hệ thống thông tin DN",
+            "security" or "cybersecurity" => "An toàn không gian mạng",
+            "software-engineering" => "Công nghệ phần mềm",
+            _ => majorKey
+        };
     }
 
     public async Task<ThesisStatsDto> GetStatsAsync()
@@ -174,4 +253,62 @@ public class ThesisService : IThesisService
             theses.Count(t => t.Status == "Rejected")
         );
     }
+
+    public async Task SyncDriveFoldersAsync(string category)
+    {
+        // Chỉ Đồ án mới sync theo cấu trúc chuyên ngành + học phần
+        if (!string.Equals(category, "Project", StringComparison.OrdinalIgnoreCase))
+            return;
+
+        // Toàn bộ chuyên ngành và học phần — tạo đủ thư mục bất kể DB
+        var subjectsByMajor = new Dictionary<string, List<(string Name, string Code)>>
+        {
+            ["Trí tuệ nhân tạo"] = new List<(string, string)>
+            {
+                ("Máy học",                                       "ITE1173E"),
+                ("Phát triển ứng dụng trí tuệ nhân tạo",         "ITE1174E"),
+                ("Đồ án chuyên ngành trí tuệ nhân tạo",          "ITE1491"),
+                ("Khai thác dữ liệu và ứng dụng",                "ITE1176E"),
+                ("Thị giác máy tính",                             "ITE1181E"),
+            },
+            ["Mạng máy tính"] = new List<(string, string)>
+            {
+                ("Mạng máy tính nâng cao",                        "ITE1235E"),
+                ("Thiết kế mạng máy tính",                        "ITE1267E"),
+                ("Lập trình mạng máy tính",                       "ITE1255E"),
+                ("Quản trị mạng",                                 "ITE1241E"),
+                ("Đồ án chuyên ngành mạng máy tính",              "ITE1489"),
+            },
+            ["Hệ thống thông tin DN"] = new List<(string, string)>
+            {
+                ("Cơ sở dữ liệu nâng cao",                        "ITE1224E"),
+                ("Hoạch định nguồn nhân lực doanh nghiệp",        "ITE1285E"),
+                ("Hệ thống thông tin quản lý",                    "ITE1129E"),
+                ("Phân tích nghiệp vụ kinh doanh",                "ITE1284E"),
+                ("Đồ án chuyên ngành hệ thống thông tin DN",      "ITE1488"),
+            },
+            ["An toàn không gian mạng"] = new List<(string, string)>
+            {
+                ("An toàn thông tin cho ứng dụng web",            "ITE1268E"),
+                ("An toàn hệ thống mạng máy tính",                "ITE1232E"),
+                ("Phân tích và đánh giá an toàn thông tin",       "ITE1239E"),
+                ("Điều tra số",                                    "ITE1258E"),
+                ("Đồ án chuyên ngành an toàn không gian mạng",    "ITE1490"),
+            },
+        };
+
+        foreach (var majorEntry in subjectsByMajor)
+        {
+            foreach (var subject in majorEntry.Value)
+            {
+                await _driveService.GetOrCreateSubjectFolderAsync(
+                    AcademicCategory.Project,
+                    majorEntry.Key,
+                    subject.Name,
+                    subject.Code
+                );
+            }
+        }
+    }
+
 }

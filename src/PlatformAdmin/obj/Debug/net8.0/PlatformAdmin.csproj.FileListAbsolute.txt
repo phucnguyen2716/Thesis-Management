@@ -317,3 +317,5 @@ C:\Users\nguye\Desktop\Thesis-Management\src\PlatformAdmin\bin\Debug\net8.0\runt
 C:\Users\nguye\Desktop\Thesis-Management\src\PlatformAdmin\bin\Debug\net8.0\runtimes\win-x64\native\e_sqlite3.dll
 C:\Users\nguye\Desktop\Thesis-Management\src\PlatformAdmin\bin\Debug\net8.0\runtimes\win-x86\native\e_sqlite3.dll
 C:\Users\nguye\Desktop\Thesis-Management\src\PlatformAdmin\bin\Debug\net8.0\RabbitMQ.Client.dll
+C:\Users\nguye\Desktop\Thesis-Management\src\PlatformAdmin\bin\Debug\net8.0\google-credentials.json
+C:\Users\nguye\Desktop\Thesis-Management\src\PlatformAdmin\bin\Debug\net8.0\Google.Apis.Drive.v3.dll

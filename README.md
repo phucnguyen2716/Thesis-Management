@@ -4,6 +4,68 @@
 
 ---
 
+## 📚 Danh mục Học phần theo Chuyên ngành (Đồ án)
+
+Hệ thống Admin quản lý **Đồ án** theo cấu trúc phân cấp: **Chuyên ngành → Học phần (Mã môn)**. Các học phần này được dùng để tạo cấu trúc thư mục trên Google Drive (`CourseProjectStorage`).
+
+### 🤖 Trí tuệ nhân tạo
+| Học phần | Mã môn |
+|---|---|
+| Máy học | ITE1173E |
+| Phát triển ứng dụng trí tuệ nhân tạo | ITE1174E |
+| Đồ án chuyên ngành trí tuệ nhân tạo | ITE1491 |
+| Khai thác dữ liệu và ứng dụng | ITE1176E |
+| Thị giác máy tính | ITE1181E |
+
+### 🌐 Mạng máy tính
+| Học phần | Mã môn |
+|---|---|
+| Mạng máy tính nâng cao | ITE1235E |
+| Thiết kế mạng máy tính | ITE1267E |
+| Lập trình mạng máy tính | ITE1255E |
+| Quản trị mạng | ITE1241E |
+| Đồ án chuyên ngành mạng máy tính | ITE1489 |
+
+### 🏢 Hệ thống thông tin DN
+| Học phần | Mã môn |
+|---|---|
+| Cơ sở dữ liệu nâng cao | ITE1224E |
+| Hoạch định nguồn nhân lực doanh nghiệp | ITE1285E |
+| Hệ thống thông tin quản lý | ITE1129E |
+| Phân tích nghiệp vụ kinh doanh | ITE1284E |
+| Đồ án chuyên ngành hệ thống thông tin DN | ITE1488 |
+
+### 🔐 An toàn không gian mạng
+| Học phần | Mã môn |
+|---|---|
+| An toàn thông tin cho ứng dụng web | ITE1268E |
+| An toàn hệ thống mạng máy tính | ITE1232E |
+| Phân tích và đánh giá an toàn thông tin | ITE1239E |
+| Điều tra số | ITE1258E |
+| Đồ án chuyên ngành an toàn không gian mạng | ITE1490 |
+
+> **Lưu ý:** Chuyên đề chỉ có chọn Chuyên ngành (không có học phần cụ thể). Khóa luận không có cấu trúc học phần.
+
+---
+
+## 🗂️ Cấu trúc thư mục Google Drive
+
+```
+CourseProjectStorage/
+├── Trí tuệ nhân tạo/
+│   ├── Phát triển ứng dụng trí tuệ nhân tạo (ITE1174E)/
+│   ├── Máy học (ITE1173E)/
+│   └── ...
+├── Mạng máy tính/
+│   └── ...
+├── Hệ thống thông tin DN/
+│   └── ...
+└── An toàn không gian mạng/
+    └── ...
+```
+
+---
+
 ## 📌 Tổng quan đề tài
 
 Trong bối cảnh học thuật tại các trường đại học Việt Nam, kho tàng khóa luận tốt nghiệp và đề tài nghiên cứu khoa học của sinh viên là một tài sản tri thức vô cùng quý giá. Tuy nhiên, hầu hết các tài liệu này sau khi bảo vệ xong đều bị lưu trữ phân mảnh trong ổ cứng cá nhân, thư viện truyền thống hoặc các thư mục chia sẻ rời rạc. Điều này dẫn đến nhiều hạn chế:

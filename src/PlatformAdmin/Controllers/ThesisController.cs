@@ -29,7 +29,7 @@ public class ThesisController : ControllerBase
     [HttpGet]
     [ApiResponse(typeof(ThesisListResponse), StatusCodes.Status200OK)]
     [ApiResponse(StatusCodes.Status401Unauthorized)]
-    public async Task<ActionResult<ThesisListResponse>> GetAll([FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? status = null, [FromQuery] string? search = null)
+    public async Task<ActionResult<ThesisListResponse>> GetAll([FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? status = null, [FromQuery] string? search = null, [FromQuery] string? category = null)
     {
         var userId = GetCurrentUserId();
         var role = User.FindFirstValue(ClaimTypes.Role);
@@ -37,7 +37,7 @@ public class ThesisController : ControllerBase
         int? studentId = role == "Student" ? userId : null;
         int? advisorId = role == "Advisor" ? userId : null;
 
-        var result = await _thesisService.GetAllAsync(page, pageSize, status, search, studentId, advisorId);
+        var result = await _thesisService.GetAllAsync(page, pageSize, status, search, studentId, advisorId, category);
         return Ok(result);
     }
 
@@ -53,14 +53,29 @@ public class ThesisController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = "Student")]
+    [Authorize(Roles = "Student,Admin")]
     [ApiResponse(typeof(ThesisDto), StatusCodes.Status201Created)]
     [ApiResponse(StatusCodes.Status400BadRequest)]
     [ApiResponse(StatusCodes.Status401Unauthorized)]
     [ApiResponse(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<ThesisDto>> Create(CreateThesisRequest request)
     {
-        var result = await _thesisService.CreateAsync(GetCurrentUserId(), request);
+        var role = User.FindFirstValue(ClaimTypes.Role);
+        int studentId;
+        if (role == "Admin")
+        {
+            if (request.StudentId == null || request.StudentId == 0)
+            {
+                return BadRequest("StudentId is required for Admin to create a thesis.");
+            }
+            studentId = request.StudentId.Value;
+        }
+        else
+        {
+            studentId = GetCurrentUserId();
+        }
+
+        var result = await _thesisService.CreateAsync(studentId, request);
         return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
     }
 
@@ -146,6 +161,19 @@ public class ThesisController : ControllerBase
         using var stream = file.OpenReadStream();
         var result = await _thesisService.UploadFileAsync(id, stream, file.FileName, file.ContentType);
         return Ok(new { filePath = result });
+    }
+
+    [HttpPost("sync-drive")]
+    [Authorize(Roles = "Admin")]
+    [ApiResponse(StatusCodes.Status200OK)]
+    [ApiResponse(StatusCodes.Status400BadRequest)]
+    [ApiResponse(StatusCodes.Status401Unauthorized)]
+    [ApiResponse(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> SyncDrive([FromQuery] string category)
+    {
+        if (string.IsNullOrEmpty(category)) return BadRequest("Category is required.");
+        await _thesisService.SyncDriveFoldersAsync(category);
+        return Ok(new { message = "Drive folders synchronized successfully." });
     }
 
     [HttpGet("stats")]

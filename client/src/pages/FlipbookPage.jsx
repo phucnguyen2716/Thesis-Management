@@ -73,7 +73,10 @@ const FlipbookPage = () => {
   useEffect(() => {
     // 1. Try to load from navigation state
     if (location.state) {
-      setThesis(location.state);
+      setThesis({
+        ...location.state,
+        pdfUrl: location.state.filePath || location.state.pdfUrl || "/Document%20Detail.pdf"
+      });
       setLoading(false);
       return;
     }
@@ -83,15 +86,18 @@ const FlipbookPage = () => {
       try {
         const res = await thesisService.getById(id);
         if (res.data) {
-          setThesis(res.data);
+          setThesis({
+            ...res.data,
+            pdfUrl: res.data.filePath || "/Document%20Detail.pdf"
+          });
         } else {
           const mock = combinedMocks.find(m => m.id.toString() === id.toString());
-          setThesis(mock || { id, title: "Đề tài nghiên cứu học thuật", studentName: "Sinh viên UEF" });
+          setThesis(mock || { id, title: "Đề tài nghiên cứu học thuật", studentName: "Sinh viên UEF", pdfUrl: "/Document%20Detail.pdf" });
         }
       } catch (err) {
         console.error(err);
         const mock = combinedMocks.find(m => m.id.toString() === id.toString());
-        setThesis(mock || { id, title: "Đề tài nghiên cứu học thuật", studentName: "Sinh viên UEF" });
+        setThesis(mock || { id, title: "Đề tài nghiên cứu học thuật", studentName: "Sinh viên UEF", pdfUrl: "/Document%20Detail.pdf" });
       } finally {
         setLoading(false);
       }

@@ -148,23 +148,6 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* Action: Chấm điểm - Blue Theme */}
-          <div 
-            onClick={() => navigate('/theses')}
-            className="bg-surface-container-lowest p-5 rounded-[1.75rem] border border-outline-variant hover:border-blue-400/50 hover:shadow-[0_15px_40px_rgba(59,130,246,0.08)] transition-all group cursor-pointer relative overflow-hidden flex flex-col justify-between min-h-[235px]"
-          >
-            <div className="absolute -right-6 -top-6 w-24 h-24 bg-blue-500/5 rounded-full group-hover:scale-150 transition-transform duration-700"></div>
-            <div>
-              <div className="w-12 h-12 bg-blue-50 flex items-center justify-center rounded-xl mb-4 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-all shadow-sm">
-                <span className="material-symbols-outlined text-xl">fact_check</span>
-              </div>
-              <h3 className="text-lg font-black mb-1.5 text-on-surface">{t.cardGradeTitle}</h3>
-              <p className="text-xs text-on-surface-variant font-medium leading-relaxed line-clamp-3 opacity-80">{t.cardGradeDesc}</p>
-            </div>
-            <div className="text-blue-600 font-black text-[9px] uppercase tracking-widest flex items-center gap-2 group-hover:gap-3 transition-all">
-              {t.cardGradeAction} <span className="material-symbols-outlined text-xs">arrow_forward</span>
-            </div>
-          </div>
 
           {/* Action: Gemini - Purple Theme */}
           <div 

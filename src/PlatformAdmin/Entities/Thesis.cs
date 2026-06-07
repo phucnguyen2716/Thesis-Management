@@ -1,4 +1,4 @@
-﻿namespace PlatformAdmin.Entities;
+namespace PlatformAdmin.Entities;
 
 public class Thesis
 {
@@ -21,6 +21,11 @@ public class Thesis
 
     public int? CommitteeId { get; set; }
     public Committee? Committee { get; set; }
+
+    public string? Major { get; set; }
+    public string? Subject { get; set; }
+    public string? SubjectCode { get; set; }
+    public string Category { get; set; } = "Project"; // Project | Topic | Thesis
 
     public ICollection<ThesisReview> Reviews { get; set; } = new List<ThesisReview>();
     public ICollection<ThesisSubmission> Submissions { get; set; } = new List<ThesisSubmission>();

@@ -76,7 +76,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Users\\nguye\\AppData\\Local\\Microsoft\\dotnet\\sdk\\8.0.421/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Users\\nguye\\dotnet\\sdk\\8.0.421/PortableRuntimeIdentifierGraph.json"
         }
       }
     },
@@ -129,7 +129,11 @@
             },
             "Google.Apis.Auth": {
               "target": "Package",
-              "version": "[1.68.0, )"
+              "version": "[1.74.0, )"
+            },
+            "Google.Apis.Drive.v3": {
+              "target": "Package",
+              "version": "[1.74.0.4135, )"
             },
             "Microsoft.AspNetCore.Authentication.Google": {
               "target": "Package",
@@ -189,7 +193,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Users\\nguye\\AppData\\Local\\Microsoft\\dotnet\\sdk\\8.0.421/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Users\\nguye\\dotnet\\sdk\\8.0.421/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

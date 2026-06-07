@@ -1,10 +1,10 @@
-﻿using PlatformAdmin.DTOs.Thesis;
+using PlatformAdmin.DTOs.Thesis;
 
 namespace PlatformAdmin.Interfaces;
 
 public interface IThesisService
 {
-    Task<ThesisListResponse> GetAllAsync(int page, int pageSize, string? status, string? search, int? studentId, int? advisorId);
+    Task<ThesisListResponse> GetAllAsync(int page, int pageSize, string? status, string? search, int? studentId, int? advisorId, string? category = null);
     Task<ThesisDto?> GetByIdAsync(int id);
     Task<ThesisDto> CreateAsync(int studentId, CreateThesisRequest request);
     Task<ThesisDto> UpdateAsync(int id, UpdateThesisRequest request);
@@ -16,4 +16,5 @@ public interface IThesisService
     Task<ThesisDto> SetRevisionAsync(int id);
     Task<string> UploadFileAsync(int id, Stream fileStream, string fileName, string contentType);
     Task<ThesisStatsDto> GetStatsAsync();
+    Task SyncDriveFoldersAsync(string category);
 }

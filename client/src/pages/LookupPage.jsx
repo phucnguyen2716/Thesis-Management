@@ -1,14 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { thesisService } from '../services/api';
 
 // ─── Type config (colours + filters) ────────────────────────────────────────
 const TYPE_CONFIG = {
   'do-an': {
-    label: 'Đồ Án',
+    label: 'Đồ Án Môn Học',
     icon: 'engineering',
     desc: 'Thực hành & Ứng dụng',
-    filterLabel: 'Lọc theo Môn học',
-    filterIcon: 'menu_book',
+    filterLabel: 'Lọc theo Chuyên ngành',
+    filterIcon: 'account_tree',
     // Very faint blobs — no glare
     blob1: 'bg-blue-300/6',
     blob2: 'bg-sky-300/5',
@@ -32,12 +33,10 @@ const TYPE_CONFIG = {
     countColor: 'text-blue-500',
     filters: [
       { label: 'Tất cả', value: null, icon: 'apps' },
-      { label: 'Lập trình Web', value: 'web-dev', icon: 'language' },
-      { label: 'Lập trình Mobile', value: 'mobile-dev', icon: 'phone_android' },
-      { label: 'Cơ sở dữ liệu', value: 'database', icon: 'storage' },
-      { label: 'Mạng máy tính', value: 'networking', icon: 'lan' },
       { label: 'Trí tuệ nhân tạo', value: 'ai', icon: 'smart_toy' },
-      { label: 'An toàn thông tin', value: 'security', icon: 'security' },
+      { label: 'Mạng máy tính', value: 'networking', icon: 'lan' },
+      { label: 'Hệ thống thông tin DN', value: 'is', icon: 'account_tree' },
+      { label: 'An toàn không gian mạng', value: 'security', icon: 'security' },
     ],
   },
   'khoa-luan': {
@@ -100,10 +99,264 @@ const TYPE_CONFIG = {
   },
 };
 
+const DO_AN_MAJORS = {
+  'ai': {
+    label: 'Trí tuệ nhân tạo',
+    icon: 'smart_toy',
+    subjects: [
+      { name: 'Máy học', code: 'ITE1173E' },
+      { name: 'Phát triển ứng dụng trí tuệ nhân tạo', code: 'ITE1174E' },
+      { name: 'Đồ án chuyên ngành trí tuệ nhân tạo', code: 'ITE1491' },
+      { name: 'Khai thác dữ liệu và ứng dụng', code: 'ITE1176E' },
+      { name: 'Thị giác máy tính', code: 'ITE1181E' }
+    ]
+  },
+  'networking': {
+    label: 'Mạng máy tính',
+    icon: 'lan',
+    subjects: [
+      { name: 'Mạng máy tính nâng cao', code: 'ITE1235E' },
+      { name: 'Thiết kế mạng máy tính', code: 'ITE1267E' },
+      { name: 'Lập trình mạng máy tính', code: 'ITE1255E' },
+      { name: 'Quản trị mạng', code: 'ITE1241E' },
+      { name: 'Đồ án chuyên ngành mạng máy tính', code: 'ITE1489' }
+    ]
+  },
+  'is': {
+    label: 'Hệ thống thông tin DN',
+    icon: 'account_tree',
+    subjects: [
+      { name: 'Cơ sở dữ liệu nâng cao', code: 'ITE1224E' },
+      { name: 'Hoạch định nguồn nhân lực doanh nghiệp', code: 'ITE1285E' },
+      { name: 'Hệ thống thông tin quản lý', code: 'ITE1129E' },
+      { name: 'Phân tích nghiệp vụ kinh doanh', code: 'ITE1284E' },
+      { name: 'Đồ án chuyên ngành hệ thống thông tin DN', code: 'ITE1488' }
+    ]
+  },
+  'security': {
+    label: 'An toàn không gian mạng',
+    icon: 'security',
+    subjects: [
+      { name: 'An toàn thông tin cho ứng dụng web', code: 'ITE1268E' },
+      { name: 'An toàn hệ thống mạng máy tính', code: 'ITE1232E' },
+      { name: 'Phân tích và đánh giá an toàn thông tin', code: 'ITE1239E' },
+      { name: 'Điều tra số', code: 'ITE1258E' },
+      { name: 'Đồ án chuyên ngành an toàn không gian mạng', code: 'ITE1490' }
+    ]
+  }
+};
+
 const ALL_RESULTS = [
-  { id: 1, title: 'Impact of Blockchain on Supply Chain Transparency in Emerging Markets', student: 'Trần Ngọc Bảo Hân', advisor: 'TS. Nguyễn Minh Trí', year: '2023', department: 'CNTT', similarity: '8%', similarityLevel: 'safe', desc: 'Khám phá việc triển khai Hyperledger Fabric trong theo dõi sản phẩm nông nghiệp từ nông trại đến tay người tiêu dùng tại Đông Nam Á...', tags: ['blockchain', 'supplychain', 'transparency'], pdfUrl: "/Document%20Detail.pdf" },
-  { id: 2, title: 'Economic Shifts in Post-Pandemic Retail: A Comparative Study', student: 'Lê Quốc Anh', advisor: 'GS. Sarah Jenkins', year: '2022', department: 'Kinh tế', similarity: '32%', similarityLevel: 'high', desc: 'Nghiên cứu sự chuyển đổi từ bán lẻ truyền thống sang omnichannel trong ngành may mặc giai đoạn 2020-2022...', tags: ['retail', 'economics'], pdfUrl: "/Document%20Detail.pdf" },
-  { id: 3, title: 'Artificial Intelligence in Modern Portfolio Management', student: 'Phạm Minh Tú', advisor: 'TS. Hoàng Vũ', year: '2024', department: 'Tài chính', similarity: '12%', similarityLevel: 'safe', desc: 'Phát triển mô hình học máy dựa trên mạng nơ-ron hồi tiếp (RNN) để dự đoán biến động thị trường chứng khoán...', tags: ['AI', 'fintech', 'ML'], pdfUrl: "/Document%20Detail.pdf" },
+  // ── ĐỒ ÁN (type: 'do-an') ──────────────────────────────────────────────────
+  {
+    id: 101,
+    type: 'do-an',
+    major: 'ai',
+    subjectCode: 'ITE1173E',
+    title: 'Phát hiện bất thường giao dịch tài chính sử dụng thuật toán Random Forest',
+    student: 'Nguyễn Thanh Tùng',
+    advisor: 'TS. Trần Minh Triết',
+    year: '2025',
+    department: 'Trí tuệ nhân tạo',
+    similarity: '12%',
+    similarityLevel: 'safe',
+    desc: 'Đồ án thực hành môn Máy học (ITE1173E). Xây dựng mô hình Random Forest để phân loại các giao dịch thẻ tín dụng có dấu hiệu gian lận với độ chính xác cao.',
+    tags: ['machinelearning', 'finance', 'fraud-detection']
+  },
+  {
+    id: 102,
+    type: 'do-an',
+    major: 'ai',
+    subjectCode: 'ITE1174E',
+    title: 'Ứng dụng AI hỗ trợ phân loại rác thải tự động tại nguồn',
+    student: 'Lê Hoài Nam',
+    advisor: 'ThS. Nguyễn Thị Minh Thư',
+    year: '2025',
+    department: 'Trí tuệ nhân tạo',
+    similarity: '15%',
+    similarityLevel: 'safe',
+    desc: 'Đồ án môn Phát triển ứng dụng trí tuệ nhân tạo (ITE1174E). Tích hợp mô hình YOLOv8 trên thiết bị di động để nhận diện và phân loại rác hữu cơ, vô cơ.',
+    tags: ['ai-application', 'yolov8', 'environment']
+  },
+  {
+    id: 103,
+    type: 'do-an',
+    major: 'ai',
+    subjectCode: 'ITE1491',
+    title: 'Hệ thống khuyến nghị phòng trọ thông minh dựa trên hành vi sinh viên',
+    student: 'Phạm Minh Quân',
+    advisor: 'TS. Hoàng Văn Đức',
+    year: '2025',
+    department: 'Trí tuệ nhân tạo',
+    similarity: '9%',
+    similarityLevel: 'safe',
+    desc: 'Đồ án chuyên ngành trí tuệ nhân tạo (ITE1491). Sử dụng thuật toán lọc cộng tác (Collaborative Filtering) để đề xuất phòng trọ phù hợp nhất cho sinh viên.',
+    tags: ['recommendation-system', 'ai-project', 'uef']
+  },
+  {
+    id: 104,
+    type: 'do-an',
+    major: 'ai',
+    subjectCode: 'ITE1176E',
+    title: 'Phân tích xu hướng tiêu dùng điện tử từ dữ liệu mạng xã hội',
+    student: 'Đỗ Thị Lan Anh',
+    advisor: 'TS. Nguyễn Khắc Nhật',
+    year: '2025',
+    department: 'Trí tuệ nhân tạo',
+    similarity: '24%',
+    similarityLevel: 'high',
+    desc: 'Đồ án môn Khai thác dữ liệu và ứng dụng (ITE1176E). Cào dữ liệu từ Facebook/TikTok và thực hiện phân tích cảm xúc (Sentiment Analysis) về các dòng smartphone mới.',
+    tags: ['datamining', 'nlp', 'sentiment-analysis']
+  },
+  {
+    id: 105,
+    type: 'do-an',
+    major: 'ai',
+    subjectCode: 'ITE1181E',
+    title: 'Hệ thống điểm danh lớp học bằng nhận diện khuôn mặt thời gian thực',
+    student: 'Trương Quốc Bảo',
+    advisor: 'TS. Bùi Hải Hưng',
+    year: '2024',
+    department: 'Trí tuệ nhân tạo',
+    similarity: '14%',
+    similarityLevel: 'safe',
+    desc: 'Đồ án môn Thị giác máy tính (ITE1181E). Nhận diện khuôn mặt sinh viên uef qua camera IP và tự động cập nhật trạng thái điểm danh lên hệ thống.',
+    tags: ['computervision', 'face-recognition', 'realtime']
+  },
+  {
+    id: 106,
+    type: 'do-an',
+    major: 'networking',
+    subjectCode: 'ITE1235E',
+    title: 'Thiết kế mạng WAN kết nối đa chi nhánh bảo mật bằng IPSec VPN',
+    student: 'Vũ Minh Khang',
+    advisor: 'ThS. Lê Văn Lộc',
+    year: '2025',
+    department: 'Mạng máy tính',
+    similarity: '11%',
+    similarityLevel: 'safe',
+    desc: 'Đồ án môn Mạng máy tính nâng cao (ITE1235E). Giả lập mô hình kết nối an toàn cho doanh nghiệp 3 chi nhánh trên nền tảng Cisco Packet Tracer.',
+    tags: ['networking', 'ipsec-vpn', 'wan']
+  },
+  {
+    id: 107,
+    type: 'do-an',
+    major: 'networking',
+    subjectCode: 'ITE1255E',
+    title: 'Xây dựng ứng dụng truyền tải file đa luồng qua Socket TCP/IP',
+    student: 'Hoàng Tiến Đạt',
+    advisor: 'TS. Đỗ Thanh Nghị',
+    year: '2025',
+    department: 'Mạng máy tính',
+    similarity: '7%',
+    similarityLevel: 'safe',
+    desc: 'Đồ án môn Lập trình mạng máy tính (ITE1255E). Viết ứng dụng client-server bằng C# cho phép chia nhỏ file để tải song song và kiểm tra checksum tự động.',
+    tags: ['socket-programming', 'multithreading', 'csharp']
+  },
+  {
+    id: 108,
+    type: 'do-an',
+    major: 'is',
+    subjectCode: 'ITE1224E',
+    title: 'Phân hoạch và tối ưu hóa hiệu năng cơ sở dữ liệu bán lẻ',
+    student: 'Trần Thị Mỹ Duyên',
+    advisor: 'TS. Nguyễn Gia Trí',
+    year: '2024',
+    department: 'Hệ thống thông tin DN',
+    similarity: '18%',
+    similarityLevel: 'safe',
+    desc: 'Đồ án môn Cơ sở dữ liệu nâng cao (ITE1224E). Thiết kế partition và tối ưu hóa index trên bảng lịch sử giao dịch chứa hơn 10 triệu bản ghi SQL Server.',
+    tags: ['database-optimization', 'partitioning', 'sqlserver']
+  },
+  {
+    id: 109,
+    type: 'do-an',
+    major: 'security',
+    subjectCode: 'ITE1268E',
+    title: 'Đánh giá an toàn thông tin và khai thác thử nghiệm SQL Injection',
+    student: 'Nguyễn Duy Mạnh',
+    advisor: 'TS. Lâm Quang Vinh',
+    year: '2025',
+    department: 'An toàn không gian mạng',
+    similarity: '28%',
+    similarityLevel: 'high',
+    desc: 'Đồ án môn An toàn thông tin cho ứng dụng web (ITE1268E). Nghiên cứu các kỹ thuật SQL Injection, kiểm thử xâm nhập trang web demo và đề xuất giải pháp vá lỗ hổng.',
+    tags: ['security', 'pentesting', 'sqli']
+  },
+
+  // ── KHÓA LUẬN (type: 'khoa-luan') ──────────────────────────────────────────
+  {
+    id: 201,
+    type: 'khoa-luan',
+    major: 'ai',
+    title: 'Nghiên cứu mô hình ngôn ngữ lớn (LLM) hỗ trợ tư vấn học vụ tiếng Việt',
+    student: 'Trần Ngọc Bảo Hân',
+    advisor: 'TS. Nguyễn Minh Trí',
+    year: '2025',
+    department: 'Công nghệ thông tin',
+    similarity: '8%',
+    similarityLevel: 'safe',
+    desc: 'Khóa luận tốt nghiệp chuyên ngành Trí tuệ nhân tạo. Tinh chỉnh (fine-tune) mô hình LLaMA-3 trên bộ dữ liệu quy chế học vụ UEF để trả lời tự động cho sinh viên.',
+    tags: ['llm', 'nlp', 'vietnamese-chatbot']
+  },
+  {
+    id: 202,
+    type: 'khoa-luan',
+    major: 'cybersecurity',
+    title: 'Hệ thống phát hiện mã độc Ransomware dựa trên phân tích hành vi học sâu',
+    student: 'Trịnh Gia Huy',
+    advisor: 'TS. Đặng Minh Tuấn',
+    year: '2025',
+    department: 'An toàn thông tin',
+    similarity: '12%',
+    similarityLevel: 'safe',
+    desc: 'Khóa luận tốt nghiệp chuyên ngành An toàn không gian mạng. Đề xuất kiến trúc CNN-LSTM phân tích chuỗi API call của các tiến trình để cô lập ransomware trước khi mã hóa file.',
+    tags: ['ransomware', 'deeplearning', 'intrusion-detection']
+  },
+  {
+    id: 203,
+    type: 'khoa-luan',
+    major: 'computer-networks',
+    title: 'Nghiên cứu định tuyến tối ưu trong mạng phần mềm định nghĩa (SDN)',
+    student: 'Bùi Văn Hùng',
+    advisor: 'TS. Ngô Minh Hồng',
+    year: '2024',
+    department: 'Mạng máy tính',
+    similarity: '15%',
+    similarityLevel: 'safe',
+    desc: 'Khóa luận tốt nghiệp chuyên ngành Mạng máy tính. Triển khai bộ điều khiển Ryu Controller để phân bổ băng thông động dựa trên thuật toán Dijkstra cải tiến.',
+    tags: ['sdn', 'routing', 'ryu-controller']
+  },
+
+  // ── CHUYÊN ĐỀ (type: 'chuyen-de') ──────────────────────────────────────────
+  {
+    id: 301,
+    type: 'chuyen-de',
+    major: 'software-engineering',
+    title: 'Thiết kế hệ thống vi dịch vụ (Microservices) chịu tải cao với Spring Boot',
+    student: 'Vương Chí Cường',
+    advisor: 'TS. Hoàng Minh Khải',
+    year: '2025',
+    department: 'Công nghệ phần mềm',
+    similarity: '10%',
+    similarityLevel: 'safe',
+    desc: 'Chuyên đề nghiên cứu chuyên sâu về xây dựng cổng dịch vụ (API Gateway), Service Discovery, và Circuit Breaker để tăng khả năng chống chịu lỗi của hệ thống e-commerce.',
+    tags: ['microservices', 'springboot', 'system-design']
+  },
+  {
+    id: 302,
+    type: 'chuyen-de',
+    major: 'information-systems',
+    title: 'Ứng dụng giải pháp ERP trong quản trị chuỗi cung ứng doanh nghiệp sản xuất',
+    student: 'Nguyễn Thị Mai',
+    advisor: 'TS. Phạm Hoàng Anh',
+    year: '2025',
+    department: 'Hệ thống thông tin',
+    similarity: '31%',
+    similarityLevel: 'high',
+    desc: 'Chuyên đề nghiên cứu ứng dụng thực tế phân hệ cung ứng vật tư của SAP ERP cho quy trình vận hành tại một nhà máy chế biến thực phẩm.',
+    tags: ['erp', 'sap', 'supplychain']
+  }
 ];
 
 // ─── Main Component ──────────────────────────────────────────────────────────
@@ -113,6 +366,37 @@ const LookupPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [previewThesis, setPreviewThesis] = useState(null);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [dbTheses, setDbTheses] = useState([]);
+
+  useEffect(() => {
+    const fetchDbTheses = async () => {
+      try {
+        const { data } = await thesisService.getAll({ page: 1, pageSize: 100 });
+        if (data && data.items) {
+          const mapped = data.items.map(t => ({
+            id: t.id,
+            type: t.category === 'Thesis' ? 'khoa-luan' : t.category === 'Topic' ? 'chuyen-de' : 'do-an',
+            major: t.major,
+            subjectCode: t.subjectCode,
+            title: t.title,
+            student: t.studentName,
+            advisor: t.advisorName || 'Chưa phân công',
+            year: t.createdAt ? new Date(t.createdAt).getFullYear().toString() : '2026',
+            department: t.department || 'Khoa học Công nghệ',
+            similarity: t.latestScore ? `${Math.round(t.latestScore * 3)}%` : '10%',
+            similarityLevel: 'safe',
+            desc: t.description || 'Chưa có mô tả chi tiết cho đề tài này.',
+            tags: t.major ? [`#${t.major}`] : ['#research'],
+            pdfUrl: t.filePath || '/Document%20Detail.pdf'
+          }));
+          setDbTheses(mapped);
+        }
+      } catch (err) {
+        console.error("Failed to fetch database theses in LookupPage", err);
+      }
+    };
+    fetchDbTheses();
+  }, []);
 
   const handleOpenPreview = (thesis) => {
     setPreviewThesis({
@@ -132,15 +416,58 @@ const LookupPage = () => {
 
   const thesisType  = searchParams.get('type');
   const activeFilter = searchParams.get('filter');
+  const activeSubject = searchParams.get('subject');
   const tc = thesisType ? TYPE_CONFIG[thesisType] : null;
 
   const setFilter = (value) => {
     const p = new URLSearchParams(searchParams);
     if (value) p.set('filter', value); else p.delete('filter');
+    p.delete('subject'); // Reset subject when major changes
+    setSearchParams(p);
+  };
+
+  const setSubject = (value) => {
+    const p = new URLSearchParams(searchParams);
+    if (value) p.set('subject', value); else p.delete('subject');
     setSearchParams(p);
   };
 
   const clearType = () => setSearchParams({});
+
+  const combinedResults = [...dbTheses, ...ALL_RESULTS];
+  const filteredResults = combinedResults.filter(item => {
+    // 1. Filter by thesisType
+    if (thesisType && item.type !== thesisType) {
+      return false;
+    }
+    // 2. Filter by major (activeFilter)
+    if (activeFilter) {
+      if (item.major !== activeFilter) {
+        return false;
+      }
+    }
+    // 3. Filter by subjectCode (activeSubject)
+    if (thesisType === 'do-an' && activeSubject) {
+      if (item.subjectCode !== activeSubject) {
+        return false;
+      }
+    }
+    // 4. Filter by searchQuery
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase().trim();
+      const titleMatch = item.title.toLowerCase().includes(q);
+      const studentMatch = item.student.toLowerCase().includes(q);
+      const advisorMatch = item.advisor.toLowerCase().includes(q);
+      const codeMatch = item.subjectCode ? item.subjectCode.toLowerCase().includes(q) : false;
+      const descMatch = item.desc ? item.desc.toLowerCase().includes(q) : false;
+      const tagsMatch = item.tags ? item.tags.some(tag => tag.toLowerCase().includes(q)) : false;
+      
+      if (!titleMatch && !studentMatch && !advisorMatch && codeMatch === false && !descMatch && !tagsMatch) {
+        return false;
+      }
+    }
+    return true;
+  });
 
   return (
     <div className="min-h-screen bg-surface-bright relative overflow-hidden">
@@ -240,6 +567,58 @@ const LookupPage = () => {
           </div>
         )}
 
+        {/* ── Subject chips row (Only for Đồ Án and when a major is selected) ── */}
+        {thesisType === 'do-an' && activeFilter && DO_AN_MAJORS[activeFilter] && (
+          <div className="mb-7 mt-[-10px] pl-4 animate-in slide-in-from-top-2 duration-300">
+            {/* Section label */}
+            <div className="flex items-center gap-2 mb-3 px-1">
+              <div className="w-1 h-3 rounded-full bg-blue-300" />
+              <span className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant opacity-60 flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-[11px]">menu_book</span>
+                Môn học thuộc chuyên ngành
+              </span>
+            </div>
+
+            {/* Scrollable subject chip row */}
+            <div
+              className="flex gap-2 overflow-x-auto pb-2 px-1"
+              style={{ WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            >
+              {/* "Tất cả môn học" chip */}
+              <button
+                onClick={() => setSubject(null)}
+                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[10px] font-black whitespace-nowrap transition-all duration-200 shrink-0 uppercase tracking-wider ${
+                  !activeSubject 
+                    ? 'bg-blue-600 text-white shadow-md' 
+                    : 'bg-white text-blue-600 border border-blue-100 hover:bg-blue-50/50'
+                }`}
+              >
+                <span className="material-symbols-outlined text-[13px]">apps</span>
+                <span>Tất cả môn học</span>
+              </button>
+
+              {/* Individual subject chips */}
+              {DO_AN_MAJORS[activeFilter].subjects.map((sub) => {
+                const isSubActive = activeSubject === sub.code;
+                return (
+                  <button
+                    key={sub.code}
+                    onClick={() => setSubject(sub.code)}
+                    className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[10px] font-black whitespace-nowrap transition-all duration-200 shrink-0 uppercase tracking-wider ${
+                      isSubActive 
+                        ? 'bg-blue-600 text-white shadow-md' 
+                        : 'bg-white text-blue-600 border border-blue-100 hover:bg-blue-50/50'
+                    }`}
+                  >
+                    <span className="material-symbols-outlined text-[13px]">book</span>
+                    <span>{sub.name} — {sub.code}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* ── Category Segmented Tabs ───────────────────────────── */}
         <div className="flex justify-center mb-6 md:mb-8 animate-in fade-in duration-500">
           <div className="inline-flex p-1.5 bg-surface-container-low rounded-2xl md:rounded-3xl border border-outline-variant/30 shadow-sm overflow-x-auto max-w-full" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
@@ -261,6 +640,7 @@ const LookupPage = () => {
                       p.delete('type');
                     }
                     p.delete('filter'); // Clear sub-filter when switching category
+                    p.delete('subject'); // Clear subject when switching category
                     setSearchParams(p);
                   }}
                   className={`flex items-center gap-2 px-4 py-2.5 md:px-6 md:py-3.5 rounded-xl md:rounded-2xl text-[11px] md:text-xs font-black uppercase tracking-wider whitespace-nowrap transition-all duration-300 cursor-pointer ${
@@ -349,11 +729,15 @@ const LookupPage = () => {
             <div className="flex items-center gap-3">
               <div className={`w-2 h-2 rounded-full ${tc ? tc.divider : 'bg-primary'}`} />
               <p className="text-xs font-bold text-on-surface-variant">
-                Hiển thị <span className="text-on-surface font-black">128</span> đề tài
+                Hiển thị <span className="text-on-surface font-black">{filteredResults.length}</span> đề tài
                 {tc && <span className={`ml-2 font-black ${tc.accentText}`}>· {tc.label}</span>}
                 {activeFilter && tc && (() => {
                   const f = tc.filters.find((x) => x.value === activeFilter);
                   return f ? <span className="ml-1 opacity-60">· {f.label}</span> : null;
+                })()}
+                {activeSubject && thesisType === 'do-an' && activeFilter && DO_AN_MAJORS[activeFilter] && (() => {
+                  const subObj = DO_AN_MAJORS[activeFilter].subjects.find(s => s.code === activeSubject);
+                  return subObj ? <span className="ml-1 opacity-60 font-black text-blue-600">· Môn: {subObj.name} ({subObj.code})</span> : null;
                 })()}
               </p>
             </div>
@@ -369,89 +753,100 @@ const LookupPage = () => {
             </div>
           </div>
 
-          {/* Cards grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-8">
-            {ALL_RESULTS.map((r, idx) => (
-              <div
-                key={r.id}
-                className="bg-white rounded-[2rem] md:rounded-[2.5rem] border border-outline-variant shadow-sm hover:shadow-[0_20px_50px_rgba(0,0,0,0.07)] transition-all duration-500 group relative flex flex-col h-full overflow-hidden"
-                style={{ animationDelay: `${idx * 100}ms` }}
-              >
-                {/* Top accent line — type-coloured */}
-                <div className={`h-1.5 bg-gradient-to-r opacity-0 group-hover:opacity-100 transition-all duration-500 ${tc ? tc.cardAccent : 'from-primary/20 via-primary to-primary/20'}`} />
+          {/* Cards grid / Empty state */}
+          {filteredResults.length === 0 ? (
+            <div className="text-center py-20 bg-white rounded-[2rem] md:rounded-[2.5rem] border border-outline-variant shadow-sm flex flex-col items-center justify-center gap-4">
+              <span className="material-symbols-outlined text-5xl text-on-surface-variant/40 animate-bounce">search_off</span>
+              <h3 className="text-lg font-black text-on-surface">Không tìm thấy đề tài nào</h3>
+              <p className="text-xs text-on-surface-variant max-w-sm">Thử thay đổi từ khóa tìm kiếm hoặc chọn bộ lọc chuyên ngành/môn học khác.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-8">
+              {filteredResults.map((r, idx) => (
+                <div
+                  key={r.id}
+                  className="bg-white rounded-[2rem] md:rounded-[2.5rem] border border-outline-variant shadow-sm hover:shadow-[0_20px_50px_rgba(0,0,0,0.07)] transition-all duration-500 group relative flex flex-col h-full overflow-hidden"
+                  style={{ animationDelay: `${idx * 100}ms` }}
+                >
+                  {/* Top accent line — type-coloured */}
+                  <div className={`h-1.5 bg-gradient-to-r opacity-0 group-hover:opacity-100 transition-all duration-500 ${tc ? tc.cardAccent : 'from-primary/20 via-primary to-primary/20'}`} />
 
-                <div className="p-6 md:p-8 flex-1 flex flex-col">
-                  <div className="flex items-center gap-2 mb-4">
-                    <span className="px-2 py-1 bg-surface-container-high text-on-surface-variant text-[8px] font-black uppercase tracking-widest rounded-md">#{r.id}</span>
-                    <span className={`text-[8px] font-black uppercase tracking-widest ${tc ? tc.accentText : 'text-primary'}`}>{r.department}</span>
-                  </div>
+                  <div className="p-6 md:p-8 flex-1 flex flex-col">
+                    <div className="flex items-center gap-2 mb-4">
+                      <span className="px-2 py-1 bg-surface-container-high text-on-surface-variant text-[8px] font-black uppercase tracking-widest rounded-md">#{r.id}</span>
+                      <span className={`text-[8px] font-black uppercase tracking-widest ${tc ? tc.accentText : 'text-primary'}`}>{r.department}</span>
+                      {r.subjectCode && (
+                        <span className="ml-auto text-[8px] font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">{r.subjectCode}</span>
+                      )}
+                    </div>
 
-                  <h2
-                    onClick={() => navigate(`/theses/${r.id}`, { state: r })}
-                    className={`text-base md:text-lg font-black text-on-surface mb-4 tracking-tight transition-colors leading-snug line-clamp-2 min-h-[52px] cursor-pointer ${tc ? 'group-hover:' + tc.accentText : 'group-hover:text-primary'}`}
-                  >
-                    {r.title}
-                  </h2>
+                    <h2
+                      onClick={() => navigate(`/theses/${r.id}`, { state: r })}
+                      className={`text-base md:text-lg font-black text-on-surface mb-4 tracking-tight transition-colors leading-snug line-clamp-2 min-h-[52px] cursor-pointer ${tc ? 'group-hover:' + tc.accentText : 'group-hover:text-primary'}`}
+                    >
+                      {r.title}
+                    </h2>
 
-                  <div className="space-y-2.5 mb-5">
-                    {[
-                      { icon: 'person', label: 'Sinh viên', value: r.student },
-                      { icon: 'psychology', label: 'GV Hướng dẫn', value: r.advisor },
-                    ].map((item) => (
-                      <div key={item.label} className="flex items-center gap-3">
-                        <div className={`w-7 h-7 md:w-8 md:h-8 bg-surface-container-low rounded-lg md:rounded-xl flex items-center justify-center transition-all ${tc ? 'group-hover:' + tc.bannerBg + ' group-hover:text-white' : 'group-hover:bg-primary group-hover:text-white'} text-primary/60`}>
-                          <span className="material-symbols-outlined text-[14px] md:text-[16px]">{item.icon}</span>
+                    <div className="space-y-2.5 mb-5">
+                      {[
+                        { icon: 'person', label: 'Sinh viên', value: r.student },
+                        { icon: 'psychology', label: 'GV Hướng dẫn', value: r.advisor },
+                      ].map((item) => (
+                        <div key={item.label} className="flex items-center gap-3">
+                          <div className={`w-7 h-7 md:w-8 md:h-8 bg-surface-container-low rounded-lg md:rounded-xl flex items-center justify-center transition-all ${tc ? 'group-hover:' + tc.bannerBg + ' group-hover:text-white' : 'group-hover:bg-primary group-hover:text-white'} text-primary/60`}>
+                            <span className="material-symbols-outlined text-[14px] md:text-[16px]">{item.icon}</span>
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-[8px] font-black text-on-surface-variant/40 uppercase tracking-widest leading-none mb-0.5">{item.label}</span>
+                            <span className="text-[11px] md:text-xs font-bold text-on-surface line-clamp-1">{item.value}</span>
+                          </div>
                         </div>
-                        <div className="flex flex-col">
-                          <span className="text-[8px] font-black text-on-surface-variant/40 uppercase tracking-widest leading-none mb-0.5">{item.label}</span>
-                          <span className="text-[11px] md:text-xs font-bold text-on-surface line-clamp-1">{item.value}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="mt-auto">
-                    <p className="text-[11px] text-on-surface-variant leading-relaxed font-medium mb-4 opacity-60 line-clamp-2 italic">"{r.desc}"</p>
-                    <div className="flex flex-wrap gap-1.5 mb-4">
-                      {r.tags.slice(0, 3).map((tag, i) => (
-                        <span key={i} className="text-[8px] font-black text-on-surface-variant/30 uppercase tracking-widest">#{tag}</span>
                       ))}
                     </div>
-                    <div className="flex items-center justify-between pt-4 border-t border-outline-variant/10">
-                      <button
-                        onClick={() => navigate(`/theses/${r.id}`, { state: r })}
-                        className={`text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 hover:underline transition-all ${tc ? tc.accentText : 'text-primary'}`}
-                      >
-                        Chi tiết <span className="material-symbols-outlined text-sm">east</span>
-                      </button>
-                      <div className="flex items-center gap-2">
+
+                    <div className="mt-auto">
+                      <p className="text-[11px] text-on-surface-variant leading-relaxed font-medium mb-4 opacity-60 line-clamp-2 italic">"{r.desc}"</p>
+                      <div className="flex flex-wrap gap-1.5 mb-4">
+                        {r.tags.slice(0, 3).map((tag, i) => (
+                          <span key={i} className="text-[8px] font-black text-on-surface-variant/30 uppercase tracking-widest">#{tag}</span>
+                        ))}
+                      </div>
+                      <div className="flex items-center justify-between pt-4 border-t border-outline-variant/10">
                         <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleOpenPreview(r);
-                          }}
-                          className="w-7 h-7 rounded-lg bg-surface-container-high hover:bg-primary/10 hover:text-primary flex items-center justify-center transition-all cursor-pointer"
-                          title="Xem nhanh"
+                          onClick={() => navigate(`/theses/${r.id}`, { state: r })}
+                          className={`text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 hover:underline transition-all ${tc ? tc.accentText : 'text-primary'}`}
                         >
-                          <span className="material-symbols-outlined text-base">visibility</span>
+                          Chi tiết <span className="material-symbols-outlined text-sm">east</span>
                         </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            window.open(`/theses/${r.id}/flipbook`, '_blank');
-                          }}
-                          className="w-7 h-7 rounded-lg bg-surface-container-high hover:bg-primary/10 hover:text-primary flex items-center justify-center transition-all cursor-pointer"
-                          title="Đọc sách 3D"
-                        >
-                          <span className="material-symbols-outlined text-base">menu_book</span>
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleOpenPreview(r);
+                            }}
+                            className="w-7 h-7 rounded-lg bg-surface-container-high hover:bg-primary/10 hover:text-primary flex items-center justify-center transition-all cursor-pointer"
+                            title="Xem nhanh"
+                          >
+                            <span className="material-symbols-outlined text-base">visibility</span>
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              window.open(`/theses/${r.id}/flipbook`, '_blank');
+                            }}
+                            className="w-7 h-7 rounded-lg bg-surface-container-high hover:bg-primary/10 hover:text-primary flex items-center justify-center transition-all cursor-pointer"
+                            title="Đọc sách 3D"
+                          >
+                            <span className="material-symbols-outlined text-base">menu_book</span>
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
 
           <div className="mt-12 md:mt-16 flex justify-center">
             <button className="px-8 md:px-10 py-3.5 md:py-4 bg-white border-2 border-outline-variant/50 rounded-[2rem] font-black text-[10px] uppercase tracking-[0.2em] hover:border-primary hover:text-primary transition-all shadow-sm">

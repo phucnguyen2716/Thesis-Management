@@ -122,18 +122,10 @@ const Layout = () => {
       return [
         ...baseItems,
         { label: lang === 'vi' ? 'Portal giảng viên' : 'Advisor Portal', icon: 'supervisor_account', path: '/lecturer' },
-        { label: lang === 'vi' ? 'Chấm điểm đề tài' : 'Thesis Grading', icon: 'fact_check', path: '/theses' },
         { label: lang === 'vi' ? 'Lịch hội đồng' : 'Committee Schedule', icon: 'calendar_month', path: '/schedule' },
       ];
     }
 
-    if (user.role === 'Admin') {
-      return [
-        { label: lang === 'vi' ? 'Admin Portal' : 'Admin Portal', icon: 'admin_panel_settings', path: '/admin' },
-        { label: lang === 'vi' ? 'Sinh viên' : 'Students', icon: 'school', path: '/admin/students' },
-        { label: lang === 'vi' ? 'Giảng viên' : 'Advisors', icon: 'co_present', path: '/admin/advisors' },
-      ];
-    }
 
     return [
       ...baseItems,
@@ -153,7 +145,6 @@ const Layout = () => {
     if (user.role === 'Advisor') {
       items.push(
         { label: lang === 'vi' ? 'Giảng viên' : 'Advisor', icon: 'supervisor_account', path: '/lecturer' },
-        { label: lang === 'vi' ? 'Chấm điểm' : 'Grading', icon: 'fact_check', path: '/theses' },
         { label: lang === 'vi' ? 'Lịch học' : 'Schedule', icon: 'calendar_month', path: '/schedule' }
       );
     } else if (user.role === 'Admin') {

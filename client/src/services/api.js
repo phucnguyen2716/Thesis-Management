@@ -48,6 +48,7 @@ export const thesisService = {
     });
   },
   getStats: () => api.get('/thesis/stats'),
+  syncDrive: (category) => api.post('/thesis/sync-drive', null, { params: { category } }),
   getReviews: (id) => api.get(`/thesis/${id}/reviews`),
   addReview: (id, data) => api.post(`/thesis/${id}/reviews`, data),
   getComments: (id) => api.get(`/thesis/${id}/comments`),

@@ -3,7 +3,6 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
 import LoginPage from './pages/LoginPage';
 import Dashboard from './pages/Dashboard';
-import ThesisList from './pages/ThesisList';
 import ThesisDetail from './pages/ThesisDetail';
 import Profile from './pages/Profile';
 import StudentGames from './pages/StudentGames';
@@ -39,7 +38,7 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminUsersPage from './pages/admin/AdminUsersPage';
 import AdminLoginAuditPage from './pages/admin/AdminLoginAuditPage';
 import AdminSocialPage from './pages/admin/AdminSocialPage';
-import AdminPlagiarismFlowPage from './pages/admin/AdminPlagiarismFlowPage';
+import AdminThesesPage from './pages/admin/AdminThesesPage';
 import AdminLibraryPage from './pages/admin/AdminLibraryPage';
 
 function App() {
@@ -68,7 +67,7 @@ function App() {
           <Route path="users" element={<AdminUsersPage />} />
           <Route path="audit" element={<AdminLoginAuditPage />} />
           <Route path="social" element={<AdminSocialPage />} />
-          <Route path="plagiarism" element={<AdminPlagiarismFlowPage />} />
+          <Route path="theses/:category" element={<AdminThesesPage />} />
           <Route path="library" element={<AdminLibraryPage />} />
         </Route>
 
@@ -101,7 +100,6 @@ function App() {
           <Route path="news/:id" element={<NewsDetailPage />} />
           <Route path="lookup" element={<LookupPage />} />
           <Route path="guidelines" element={<GuidelinesPage />} />
-          <Route path="theses" element={<ThesisList />} />
           <Route path="theses/:id" element={<ThesisDetail />} />
           <Route path="profile" element={<Profile />} />
           <Route path="games" element={<StudentGames />} />
