@@ -18,6 +18,7 @@ public class AppDbContext : DbContext
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<SocialPost> SocialPosts => Set<SocialPost>();
     public DbSet<PlagiarismReportEntity> PlagiarismReports => Set<PlagiarismReportEntity>();
+    public DbSet<DriveFileRecord> DriveFileRecords => Set<DriveFileRecord>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

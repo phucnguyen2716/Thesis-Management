@@ -37,6 +37,20 @@ namespace PlatformAdmin.Services
             string major, 
             string subject, 
             string subjectCode);
+
+        Task<List<DriveFileInfo>> ListFilesFromFolderAsync(string folderName, AcademicCategory category);
+    }
+
+    public class DriveFileInfo
+    {
+        public string Id { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public string MimeType { get; set; } = string.Empty;
+        public long? Size { get; set; }
+        public string WebViewLink { get; set; } = string.Empty;
+        public string WebContentLink { get; set; } = string.Empty;
+        public DateTime? CreatedTime { get; set; }
+        public DateTime? ModifiedTime { get; set; }
     }
 
     public class GoogleDriveStorageService : IGoogleDriveStorageService
@@ -436,6 +450,134 @@ namespace PlatformAdmin.Services
             {
                 _logger.LogError(ex, "Error checking/creating subject folder: {Subject}", parentFolderName);
                 throw;
+            }
+        }
+
+        public async Task<List<DriveFileInfo>> ListFilesFromFolderAsync(string folderName, AcademicCategory category)
+        {
+            string activeDriveKey = string.Empty;
+            switch (category)
+            {
+                case AcademicCategory.Project:
+                    activeDriveKey = _driveKey1_Project ?? string.Empty;
+                    break;
+                case AcademicCategory.Topic:
+                    activeDriveKey = _driveKey2_Topic ?? string.Empty;
+                    break;
+                case AcademicCategory.Thesis:
+                    activeDriveKey = _driveKey3_Thesis ?? string.Empty;
+                    break;
+            }
+
+            bool categoryUseMock = string.IsNullOrEmpty(activeDriveKey);
+
+            if (categoryUseMock)
+            {
+                _logger.LogWarning("ListFilesFromFolderAsync: Running in mock mode for folder '{Folder}'", folderName);
+                // Return sample mock data so the frontend can show something
+                return new List<DriveFileInfo>
+                {
+                    new DriveFileInfo { Id = "mock-1", Name = "Do_An_AI_NhanDienKhuonMat.pdf", MimeType = "application/pdf", Size = 2048000, WebViewLink = "https://drive.google.com/file/d/mock-1/view", WebContentLink = "https://drive.google.com/uc?id=mock-1", CreatedTime = DateTime.UtcNow.AddDays(-30), ModifiedTime = DateTime.UtcNow.AddDays(-5) },
+                    new DriveFileInfo { Id = "mock-2", Name = "KhoaLuan_PhanTichDuLieu.pdf", MimeType = "application/pdf", Size = 3500000, WebViewLink = "https://drive.google.com/file/d/mock-2/view", WebContentLink = "https://drive.google.com/uc?id=mock-2", CreatedTime = DateTime.UtcNow.AddDays(-20), ModifiedTime = DateTime.UtcNow.AddDays(-3) },
+                    new DriveFileInfo { Id = "mock-3", Name = "ChuyenDe_MachineLearning.pdf", MimeType = "application/pdf", Size = 1500000, WebViewLink = "https://drive.google.com/file/d/mock-3/view", WebContentLink = "https://drive.google.com/uc?id=mock-3", CreatedTime = DateTime.UtcNow.AddDays(-15), ModifiedTime = DateTime.UtcNow.AddDays(-1) },
+                };
+            }
+
+            try
+            {
+                DriveService service;
+                if (activeDriveKey.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
+                {
+                    string credPath = Path.Combine(AppContext.BaseDirectory, activeDriveKey);
+                    if (!File.Exists(credPath))
+                        credPath = Path.Combine(Directory.GetCurrentDirectory(), activeDriveKey);
+                    if (!File.Exists(credPath))
+                    {
+                        string? dir = AppContext.BaseDirectory;
+                        while (dir != null)
+                        {
+                            string checkPath = Path.Combine(dir, activeDriveKey);
+                            if (File.Exists(checkPath)) { credPath = checkPath; break; }
+                            dir = Path.GetDirectoryName(dir);
+                        }
+                    }
+
+                    GoogleCredential credential = GoogleCredential.FromJson(File.ReadAllText(credPath))
+                        .CreateScoped(new[] { DriveService.ScopeConstants.DriveFile, DriveService.ScopeConstants.Drive });
+
+                    service = new DriveService(new BaseClientService.Initializer()
+                    {
+                        HttpClientInitializer = credential,
+                        ApplicationName = "Thesis-Management"
+                    });
+                }
+                else
+                {
+                    service = new DriveService(new BaseClientService.Initializer()
+                    {
+                        ApiKey = activeDriveKey,
+                        ApplicationName = "Thesis-Management"
+                    });
+                }
+
+                // Find the folder by name
+                var folderReq = service.Files.List();
+                folderReq.SupportsAllDrives = true;
+                folderReq.IncludeItemsFromAllDrives = true;
+                folderReq.Q = $"mimeType = 'application/vnd.google-apps.folder' and name = '{folderName}' and trashed = false";
+                folderReq.Fields = "files(id, name)";
+                var folderRes = await folderReq.ExecuteAsync();
+                var folder = folderRes.Files?.FirstOrDefault();
+
+                if (folder == null)
+                {
+                    _logger.LogWarning("ListFilesFromFolderAsync: Folder '{Folder}' not found in Drive.", folderName);
+                    return new List<DriveFileInfo>();
+                }
+
+                _logger.LogInformation("ListFilesFromFolderAsync: Found folder '{Folder}' with ID: {Id}", folderName, folder.Id);
+
+                // List all files inside the folder
+                var result = new List<DriveFileInfo>();
+                string? pageToken = null;
+                do
+                {
+                    var listReq = service.Files.List();
+                    listReq.SupportsAllDrives = true;
+                    listReq.IncludeItemsFromAllDrives = true;
+                    listReq.Q = $"'{folder.Id}' in parents and trashed = false";
+                    listReq.Fields = "nextPageToken, files(id, name, mimeType, size, webViewLink, webContentLink, createdTime, modifiedTime)";
+                    listReq.PageSize = 100;
+                    if (pageToken != null) listReq.PageToken = pageToken;
+
+                    var listRes = await listReq.ExecuteAsync();
+                    if (listRes.Files != null)
+                    {
+                        foreach (var f in listRes.Files)
+                        {
+                            result.Add(new DriveFileInfo
+                            {
+                                Id = f.Id,
+                                Name = f.Name,
+                                MimeType = f.MimeType ?? "unknown",
+                                Size = f.Size,
+                                WebViewLink = f.WebViewLink ?? $"https://drive.google.com/file/d/{f.Id}/view",
+                                WebContentLink = f.WebContentLink ?? "",
+                                CreatedTime = f.CreatedTimeDateTimeOffset?.UtcDateTime,
+                                ModifiedTime = f.ModifiedTimeDateTimeOffset?.UtcDateTime
+                            });
+                        }
+                    }
+                    pageToken = listRes.NextPageToken;
+                } while (pageToken != null);
+
+                _logger.LogInformation("ListFilesFromFolderAsync: Found {Count} files in folder '{Folder}'", result.Count, folderName);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "ListFilesFromFolderAsync: Error listing files from folder '{Folder}'", folderName);
+                return new List<DriveFileInfo>();
             }
         }
     }

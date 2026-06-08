@@ -1,19 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getSocialPosts } from '../utils/adminContentStore';
+import useLanguage from '../hooks/useLanguage';
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem('user') || '{"role": "Student"}');
   const [newsItems, setNewsItems] = useState([]);
 
-  const [lang, setLang] = useState(() => localStorage.getItem('lang') || 'vi');
-
-  useEffect(() => {
-    const handleLangChange = () => setLang(localStorage.getItem('lang') || 'vi');
-    window.addEventListener('language-changed', handleLangChange);
-    return () => window.removeEventListener('language-changed', handleLangChange);
-  }, []);
+  const { lang } = useLanguage();
 
   const t = {
     vi: {

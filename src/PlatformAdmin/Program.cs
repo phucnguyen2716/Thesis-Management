@@ -2,6 +2,7 @@ using System.Text;
 using PlatformAdmin.Interfaces;
 using PlatformAdmin.Data;
 using PlatformAdmin.Services;
+using PlatformAdmin.Jobs;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -9,6 +10,8 @@ using Microsoft.OpenApi.Models;
 using BuildingBlocks.SharedContracts;
 using BuildingBlocks.SharedContracts.ShellScope;
 using PlatformAdmin.Entities;
+using Hangfire;
+using Hangfire.PostgreSql;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -100,6 +103,19 @@ builder.Services.AddCors(options =>
     });
 });
 
+// Hangfire — Background Job Processing
+var hangfireConnStr = builder.Configuration.GetConnectionString("PostgreSqlConnection");
+builder.Services.AddHangfire(config => config
+    .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+    .UseSimpleAssemblyNameTypeSerializer()
+    .UseRecommendedSerializerSettings()
+    .UsePostgreSqlStorage(options => options.UseNpgsqlConnection(hangfireConnStr))
+);
+builder.Services.AddHangfireServer();
+
+// Register DriveSyncJob
+builder.Services.AddTransient<DriveSyncJob>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -127,81 +143,6 @@ using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     try
-    {
-        var context = services.GetRequiredService<AppDbContext>();
-        context.Database.EnsureCreated();
-
-        try
-        {
-            var provider = builder.Configuration["Database:Provider"]?.Trim().ToLowerInvariant();
-            if (provider == "postgresql" || provider == "postgres")
-            {
-                context.Database.ExecuteSqlRaw("ALTER TABLE \"ChatHistory\" ADD COLUMN IF NOT EXISTS \"UserId\" INTEGER;");
-                context.Database.ExecuteSqlRaw("ALTER TABLE \"Theses\" ADD COLUMN IF NOT EXISTS \"Major\" VARCHAR(500);");
-                context.Database.ExecuteSqlRaw("ALTER TABLE \"Theses\" ADD COLUMN IF NOT EXISTS \"Subject\" VARCHAR(500);");
-                context.Database.ExecuteSqlRaw("ALTER TABLE \"Theses\" ADD COLUMN IF NOT EXISTS \"SubjectCode\" VARCHAR(100);");
-                context.Database.ExecuteSqlRaw("ALTER TABLE \"Theses\" ADD COLUMN IF NOT EXISTS \"Category\" VARCHAR(50) DEFAULT 'Project';");
-                context.Database.ExecuteSqlRaw(@"
-                    UPDATE ""Theses"" 
-                    SET ""Category"" = 'Project', ""Major"" = 'ai', ""Subject"" = 'Phát triển ứng dụng trí tuệ nhân tạo', ""SubjectCode"" = 'ITE1174E'
-                    WHERE ""Id"" = 2 AND (""Major"" IS NULL OR ""Major"" = '');
-                ");
-                context.Database.ExecuteSqlRaw(@"
-                    UPDATE ""Theses"" 
-                    SET ""Category"" = 'Thesis', ""Major"" = 'ai'
-                    WHERE ""Id"" = 1 AND (""Major"" IS NULL OR ""Major"" = '');
-                ");
-                context.Database.ExecuteSqlRaw(@"
-                    UPDATE ""Theses"" 
-                    SET ""Category"" = 'Topic', ""Major"" = 'networking'
-                    WHERE ""Id"" = 3 AND (""Major"" IS NULL OR ""Major"" = '');
-                ");
-                context.Database.ExecuteSqlRaw(@"
-                    CREATE TABLE IF NOT EXISTS ""PlagiarismReports"" (
-                        ""Id"" SERIAL PRIMARY KEY,
-                        ""ThesisId"" INTEGER NOT NULL REFERENCES ""Theses""(""Id"") ON DELETE CASCADE,
-                        ""SimilarityPercentage"" DOUBLE PRECISION NOT NULL,
-                        ""ReportJson"" TEXT NOT NULL,
-                        ""CheckedAt"" TIMESTAMP WITHOUT TIME ZONE NOT NULL
-                    );");
-            }
-            else if (provider == "sqlite")
-            {
-                try { context.Database.ExecuteSqlRaw("ALTER TABLE \"Theses\" ADD COLUMN \"Major\" TEXT;"); } catch {}
-                try { context.Database.ExecuteSqlRaw("ALTER TABLE \"Theses\" ADD COLUMN \"Subject\" TEXT;"); } catch {}
-                try { context.Database.ExecuteSqlRaw("ALTER TABLE \"Theses\" ADD COLUMN \"SubjectCode\" TEXT;"); } catch {}
-                try { context.Database.ExecuteSqlRaw("ALTER TABLE \"Theses\" ADD COLUMN \"Category\" TEXT DEFAULT 'Project';"); } catch {}
-                try {
-                    context.Database.ExecuteSqlRaw(@"
-                        UPDATE ""Theses"" 
-                        SET ""Category"" = 'Project', ""Major"" = 'ai', ""Subject"" = 'Phát triển ứng dụng trí tuệ nhân tạo', ""SubjectCode"" = 'ITE1174E'
-                        WHERE ""Id"" = 2 AND (""Major"" IS NULL OR ""Major"" = '');
-                    ");
-                    context.Database.ExecuteSqlRaw(@"
-                        UPDATE ""Theses"" 
-                        SET ""Category"" = 'Thesis', ""Major"" = 'ai'
-                        WHERE ""Id"" = 1 AND (""Major"" IS NULL OR ""Major"" = '');
-                    ");
-                    context.Database.ExecuteSqlRaw(@"
-                        UPDATE ""Theses"" 
-                        SET ""Category"" = 'Topic', ""Major"" = 'networking'
-                        WHERE ""Id"" = 3 AND (""Major"" IS NULL OR ""Major"" = '');
-                    ");
-                } catch {}
-                context.Database.ExecuteSqlRaw(@"
-                    CREATE TABLE IF NOT EXISTS ""PlagiarismReports"" (
-                        ""Id"" INTEGER PRIMARY KEY AUTOINCREMENT,
-                        ""ThesisId"" INTEGER NOT NULL REFERENCES ""Theses""(""Id"") ON DELETE CASCADE,
-                        ""SimilarityPercentage"" REAL NOT NULL,
-                        ""ReportJson"" TEXT NOT NULL,
-                        ""CheckedAt"" TEXT NOT NULL
-                    );");
-            }
-            else
-            {
-                try
-                {
-                    context.Database.ExecuteSqlRaw("ALTER TABLE ChatHistory ADD UserId INT;");
                 }
                 catch { }
                 try { context.Database.ExecuteSqlRaw("ALTER TABLE Theses ADD Major NVARCHAR(500);"); } catch { }
@@ -252,5 +193,22 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.MapControllers();
+
+// Hangfire Dashboard (accessible at /hangfire)
+app.UseHangfireDashboard("/hangfire", new DashboardOptions
+{
+    // Allow unauthenticated access in development
+    Authorization = new[] { new Hangfire.Dashboard.LocalRequestsOnlyAuthorizationFilter() }
+});
+
+// Register recurring job: sync Drive files every 1 minute
+RecurringJob.AddOrUpdate<DriveSyncJob>(
+    "drive-sync-temporary-pdf",
+    job => job.SyncTemporaryPdfAsync(),
+    "*/1 * * * *"  // Every 1 minute
+);
+
+Console.WriteLine("🚀 Hangfire is running! Dashboard: http://localhost:5145/hangfire");
+Console.WriteLine("🔄 DriveSyncJob scheduled: every 1 minute (Temporary_PDF → Database)");
 
 app.Run();

@@ -236,6 +236,7 @@ public class ThesisService : IThesisService
             "is" or "information-systems" or "systems" => "Hệ thống thông tin DN",
             "security" or "cybersecurity" => "An toàn không gian mạng",
             "software-engineering" => "Công nghệ phần mềm",
+            "programming" => "Kỹ thuật lập trình",
             _ => majorKey
         };
     }
@@ -294,6 +295,26 @@ public class ThesisService : IThesisService
                 ("Phân tích và đánh giá an toàn thông tin",       "ITE1239E"),
                 ("Điều tra số",                                    "ITE1258E"),
                 ("Đồ án chuyên ngành an toàn không gian mạng",    "ITE1490"),
+            },
+            ["Kỹ thuật lập trình"] = new List<(string, string)>
+            {
+                ("Lập trình Front-End",                          "SWE1208E"),
+                ("Mạng máy tính và bảo mật thông tin",             "SWE1204E"),
+                ("Phân tích và thiết kế phần mềm",                "SWE1107E"),
+                ("Lập trình ứng dụng",                            "SWE1205E"),
+                ("Phát triển ứng dụng Full-Stack",                "SWE1209E"),
+                ("Công cụ phát triển ứng dụng",                    "SWE1210E"),
+                ("Đồ án kỹ thuật phần mềm",                        "SWE1422"),
+                ("Đảm bảo chất lượng phần mềm",                   "SWE1111E"),
+                ("Kiểm thử phần mềm",                             "SWE1212E"),
+                ("Quản lý dự án kiểm thử",                        "SWE1114E"),
+                ("Công cụ và kỹ thuật kiểm thử tự động",            "SWE1213E"),
+                ("Đồ án chuyên ngành kiểm thử phần mềm",           "SWE1415"),
+                ("Phát triển ứng dụng đa nền tảng",                "SWE1216E"),
+                ("Phát triển Game",                               "ITE1279E"),
+                ("Phát triển và vận hành hệ thống công nghệ thông tin", "SWE1219E"),
+                ("Phát triển ứng dụng web nâng cao",              "SWE1218E"),
+                ("Đồ án chuyên ngành phát triển ứng dụng",         "SWE1420"),
             },
         };
 

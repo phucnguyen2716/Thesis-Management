@@ -14,6 +14,7 @@ const MAJOR_DISPLAY = {
   networking: 'Mạng máy tính',
   systems:    'Hệ thống thông tin DN',
   security:   'An toàn không gian mạng',
+  programming: 'Kỹ thuật lập trình',
 };
 
 // Danh sách môn học theo chuyên ngành (chỉ dùng cho Đồ án)
@@ -45,6 +46,25 @@ const SUBJECTS_BY_MAJOR = {
     { name: 'Phân tích và đánh giá an toàn thông tin',       code: 'ITE1239E' },
     { name: 'Điều tra số',                                    code: 'ITE1258E' },
     { name: 'Đồ án chuyên ngành an toàn không gian mạng',    code: 'ITE1490'  },
+  ],
+  programming: [
+    { name: 'Lập trình Front-End',                          code: 'SWE1208E' },
+    { name: 'Mạng máy tính và bảo mật thông tin',             code: 'SWE1204E' },
+    { name: 'Phân tích và thiết kế phần mềm',                code: 'SWE1107E' },
+    { name: 'Lập trình ứng dụng',                            code: 'SWE1205E' },
+    { name: 'Phát triển ứng dụng Full-Stack',                code: 'SWE1209E' },
+    { name: 'Công cụ phát triển ứng dụng',                    code: 'SWE1210E' },
+    { name: 'Đồ án kỹ thuật phần mềm',                        code: 'SWE1422'  },
+    { name: 'Đảm bảo chất lượng phần mềm',                   code: 'SWE1111E' },
+    { name: 'Kiểm thử phần mềm',                             code: 'SWE1212E' },
+    { name: 'Quản lý dự án kiểm thử',                        code: 'SWE1114E' },
+    { name: 'Công cụ và kỹ thuật kiểm thử tự động',            code: 'SWE1213E' },
+    { name: 'Đồ án chuyên ngành kiểm thử phần mềm',           code: 'SWE1415'  },
+    { name: 'Phát triển ứng dụng đa nền tảng',                code: 'SWE1216E' },
+    { name: 'Phát triển Game',                               code: 'ITE1279E' },
+    { name: 'Phát triển và vận hành hệ thống công nghệ thông tin', code: 'SWE1219E' },
+    { name: 'Phát triển ứng dụng web nâng cao',              code: 'SWE1218E' },
+    { name: 'Đồ án chuyên ngành phát triển ứng dụng',         code: 'SWE1420'  },
   ],
 };
 
@@ -170,6 +190,7 @@ const AdminThesesPage = () => {
     { name: 'Mạng máy tính',           subjects: 5 },
     { name: 'Hệ thống thông tin DN',   subjects: 5 },
     { name: 'An toàn không gian mạng', subjects: 5 },
+    { name: 'Kỹ thuật lập trình',       subjects: 17 },
   ];
 
   const handleSyncDrive = async () => {

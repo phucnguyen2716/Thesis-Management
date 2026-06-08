@@ -1,27 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { chatbotService } from '../services/api';
+import useLanguage from '../hooks/useLanguage';
 
 const Layout = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem('user') || '{"role": "Student", "fullName": "Người dùng Demo"}');
 
-  const [lang, setLang] = useState(() => localStorage.getItem('lang') || 'vi');
-
-  useEffect(() => {
-    const handleLangChange = () => {
-      setLang(localStorage.getItem('lang') || 'vi');
-    };
-    window.addEventListener('language-changed', handleLangChange);
-    return () => window.removeEventListener('language-changed', handleLangChange);
-  }, []);
-
-  const toggleLanguage = () => {
-    const newLang = lang === 'vi' ? 'en' : 'vi';
-    localStorage.setItem('lang', newLang);
-    window.dispatchEvent(new Event('language-changed'));
-  };
+  const { lang, toggleLanguage } = useLanguage();
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
     try {
@@ -622,7 +609,7 @@ const Layout = () => {
                       label: 'Khóa luận (Tốt nghiệp)',
                       icon: 'school',
                       desc: 'Nghiên cứu chuyên sâu',
-                      badge: '5 chuyên ngành',
+                      badge: '6 chuyên ngành',
                       activeBg: 'bg-violet-50 border-violet-200 shadow-violet-100',
                       activeText: 'text-violet-700',
                       iconActiveBg: 'bg-violet-500',
@@ -639,6 +626,7 @@ const Layout = () => {
                         { label: 'An toàn không gian mạng', sublabel: 'Cybersecurity', filter: 'cybersecurity' },
                         { label: 'Trí tuệ nhân tạo', sublabel: 'AI', filter: 'ai' },
                         { label: 'Hệ thống thông tin', sublabel: 'Information Systems', filter: 'information-systems' },
+                        { label: 'Kỹ thuật lập trình', sublabel: 'Programming', filter: 'programming' },
                       ],
                     },
                     {
@@ -646,7 +634,7 @@ const Layout = () => {
                       label: 'Chuyên đề',
                       icon: 'lightbulb',
                       desc: 'Chủ đề chuyên biệt',
-                      badge: '5 chuyên ngành',
+                      badge: '6 chuyên ngành',
                       activeBg: 'bg-amber-50 border-amber-200 shadow-amber-100',
                       activeText: 'text-amber-700',
                       iconActiveBg: 'bg-amber-500',
@@ -663,6 +651,7 @@ const Layout = () => {
                         { label: 'An toàn không gian mạng', sublabel: 'Cybersecurity', filter: 'cybersecurity' },
                         { label: 'Trí tuệ nhân tạo', sublabel: 'AI', filter: 'ai' },
                         { label: 'Hệ thống thông tin', sublabel: 'Information Systems', filter: 'information-systems' },
+                        { label: 'Kỹ thuật lập trình', sublabel: 'Programming', filter: 'programming' },
                       ],
                     },
                   ].map((type) => {

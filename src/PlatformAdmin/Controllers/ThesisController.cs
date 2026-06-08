@@ -2,6 +2,7 @@ using System.Security.Claims;
 using PlatformAdmin.DTOs.Thesis;
 using PlatformAdmin.Interfaces;
 using PlatformAdmin.Attributes;
+using PlatformAdmin.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
@@ -16,12 +17,14 @@ public class ThesisController : ControllerBase
     private readonly IThesisService _thesisService;
     private readonly IReviewService _reviewService;
     private readonly ICommentService _commentService;
+    private readonly IGoogleDriveStorageService _driveService;
 
-    public ThesisController(IThesisService thesisService, IReviewService reviewService, ICommentService commentService)
+    public ThesisController(IThesisService thesisService, IReviewService reviewService, ICommentService commentService, IGoogleDriveStorageService driveService)
     {
         _thesisService = thesisService;
         _reviewService = reviewService;
         _commentService = commentService;
+        _driveService = driveService;
     }
 
     private int GetCurrentUserId() => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
@@ -226,5 +229,26 @@ public class ThesisController : ControllerBase
     {
         var result = await _commentService.CreateAsync(id, GetCurrentUserId(), request);
         return Ok(result);
+    }
+
+    [HttpGet("drive-files")]
+    [ApiResponse(typeof(List<DriveFileInfo>), StatusCodes.Status200OK)]
+    [ApiResponse(StatusCodes.Status400BadRequest)]
+    [ApiResponse(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<List<DriveFileInfo>>> ListDriveFiles([FromQuery] string folder = "Temporary_PDF", [FromQuery] string category = "Project")
+    {
+        if (string.IsNullOrEmpty(folder)) return BadRequest("Folder name is required.");
+
+        AcademicCategory cat;
+        switch (category.ToLower())
+        {
+            case "project": cat = AcademicCategory.Project; break;
+            case "topic": cat = AcademicCategory.Topic; break;
+            case "thesis": cat = AcademicCategory.Thesis; break;
+            default: return BadRequest($"Invalid category: {category}. Use Project, Topic, or Thesis.");
+        }
+
+        var files = await _driveService.ListFilesFromFolderAsync(folder, cat);
+        return Ok(files);
     }
 }

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { User, Lock, Eye, EyeOff, Loader2, ChevronUp } from 'lucide-react';
 import { ensureAdminSeed, findUserByEmail, logLoginAttempt } from '../utils/adminStore';
 import { authService } from '../services/api';
+import useLanguage from '../hooks/useLanguage';
 
 const LoginPage = () => {
   const [username, setUsername] = useState('');
@@ -10,7 +11,7 @@ const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [lang, setLang] = useState('EN');
+  const { lang } = useLanguage();
   const [showLangMenu, setShowLangMenu] = useState(false);
   const langMenuRef = useRef(null);
   const navigate = useNavigate();
@@ -88,9 +89,14 @@ const LoginPage = () => {
   };
 
   const languages = [
-    { code: 'EN', label: 'English' },
-    { code: 'VN', label: 'Tiếng Việt' }
+    { code: 'en', label: 'English' },
+    { code: 'vi', label: 'Tiếng Việt' }
   ];
+
+  const setLang = (code) => {
+    localStorage.setItem('lang', code);
+    window.dispatchEvent(new Event('language-changed'));
+  };
 
   return (
     <div 
@@ -116,7 +122,7 @@ const LoginPage = () => {
             />
           </div>
           <h2 className="text-gray-800 text-base font-semibold tracking-tight">
-            {lang === 'EN' ? 'Portal Login' : 'Đăng nhập Portal'}
+            {lang === 'en' ? 'Portal Login' : 'Đăng nhập Portal'}
           </h2>
           <p className="text-gray-400 text-[10px] font-medium uppercase tracking-widest mt-0.5">
             Thesis Management System
@@ -134,12 +140,12 @@ const LoginPage = () => {
               <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
               <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
             </svg>
-            <span>{lang === 'EN' ? 'Sign in with Google' : 'Đăng nhập bằng Google'}</span>
+            <span>{lang === 'en' ? 'Sign in with Google' : 'Đăng nhập bằng Google'}</span>
           </button>
 
           <div className="flex items-center gap-3">
             <div className="flex-1 h-px bg-gray-100"></div>
-            <span className="text-gray-400 text-[10px] font-bold uppercase tracking-widest">{lang === 'EN' ? 'Or' : 'Hoặc'}</span>
+            <span className="text-gray-400 text-[10px] font-bold uppercase tracking-widest">{lang === 'en' ? 'Or' : 'Hoặc'}</span>
             <div className="flex-1 h-px bg-gray-100"></div>
           </div>
 
@@ -152,7 +158,7 @@ const LoginPage = () => {
                 type="text"
                 required
                 className="w-full pl-10 pr-4 py-2.5 bg-gray-50/30 border border-gray-200 rounded-lg focus:bg-white focus:border-[#003399] outline-none transition-all text-[13px] placeholder:text-gray-400"
-                placeholder={lang === 'EN' ? 'Username' : 'Tên đăng nhập'}
+                placeholder={lang === 'en' ? 'Username' : 'Tên đăng nhập'}
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
               />
@@ -166,7 +172,7 @@ const LoginPage = () => {
                 type={showPassword ? "text" : "password"}
                 required
                 className="w-full pl-10 pr-10 py-2.5 bg-gray-50/30 border border-gray-200 rounded-lg focus:bg-white focus:border-[#003399] outline-none transition-all text-[13px] placeholder:text-gray-400"
-                placeholder={lang === 'EN' ? 'Password' : 'Mật khẩu'}
+                placeholder={lang === 'en' ? 'Password' : 'Mật khẩu'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
@@ -188,7 +194,7 @@ const LoginPage = () => {
               disabled={loading}
               className="w-full py-2.5 bg-[#003399] hover:bg-[#002b80] text-white font-semibold rounded-lg shadow-md transition-all active:scale-[0.98] disabled:opacity-70 text-sm"
             >
-              {loading ? <Loader2 className="animate-spin mx-auto" size={18} /> : (lang === 'EN' ? 'Sign In' : 'Đăng nhập')}
+              {loading ? <Loader2 className="animate-spin mx-auto" size={18} /> : (lang === 'en' ? 'Sign In' : 'Đăng nhập')}
             </button>
 
             {/* Demo accounts — compact */}
@@ -208,7 +214,7 @@ const LoginPage = () => {
       <div className="absolute bottom-6 right-6 flex items-center gap-2 z-10">
         <button className="bg-white/10 hover:bg-white/20 backdrop-blur-md px-4 py-2 rounded-lg flex items-center gap-2 text-white text-[10px] font-bold transition-all border border-white/10">
           <span className="material-symbols-outlined text-[16px]">cookie</span>
-          {lang === 'EN' ? 'Cookies' : 'Cookie'}
+          {lang === 'en' ? 'Cookies' : 'Cookie'}
         </button>
         
         <div className="relative" ref={langMenuRef}>

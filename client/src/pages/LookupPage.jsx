@@ -37,6 +37,7 @@ const TYPE_CONFIG = {
       { label: 'Mạng máy tính', value: 'networking', icon: 'lan' },
       { label: 'Hệ thống thông tin DN', value: 'is', icon: 'account_tree' },
       { label: 'An toàn không gian mạng', value: 'security', icon: 'security' },
+      { label: 'Kỹ thuật lập trình', value: 'programming', icon: 'code' },
     ],
   },
   'khoa-luan': {
@@ -66,6 +67,7 @@ const TYPE_CONFIG = {
       { label: 'An toàn không gian mạng', value: 'cybersecurity', icon: 'shield', sub: 'Cyber' },
       { label: 'Trí tuệ nhân tạo', value: 'ai', icon: 'smart_toy', sub: 'AI' },
       { label: 'Hệ thống thông tin', value: 'information-systems', icon: 'account_tree', sub: 'IS' },
+      { label: 'Kỹ thuật lập trình', value: 'programming', icon: 'code', sub: 'Prog' },
     ],
   },
   'chuyen-de': {
@@ -95,6 +97,7 @@ const TYPE_CONFIG = {
       { label: 'An toàn không gian mạng', value: 'cybersecurity', icon: 'shield', sub: 'Cyber' },
       { label: 'Trí tuệ nhân tạo', value: 'ai', icon: 'smart_toy', sub: 'AI' },
       { label: 'Hệ thống thông tin', value: 'information-systems', icon: 'account_tree', sub: 'IS' },
+      { label: 'Kỹ thuật lập trình', value: 'programming', icon: 'code', sub: 'Prog' },
     ],
   },
 };
@@ -142,6 +145,29 @@ const DO_AN_MAJORS = {
       { name: 'Phân tích và đánh giá an toàn thông tin', code: 'ITE1239E' },
       { name: 'Điều tra số', code: 'ITE1258E' },
       { name: 'Đồ án chuyên ngành an toàn không gian mạng', code: 'ITE1490' }
+    ]
+  },
+  'programming': {
+    label: 'Kỹ thuật lập trình',
+    icon: 'code',
+    subjects: [
+      { name: 'Lập trình Front-End', code: 'SWE1208E' },
+      { name: 'Mạng máy tính và bảo mật thông tin', code: 'SWE1204E' },
+      { name: 'Phân tích và thiết kế phần mềm', code: 'SWE1107E' },
+      { name: 'Lập trình ứng dụng', code: 'SWE1205E' },
+      { name: 'Phát triển ứng dụng Full-Stack', code: 'SWE1209E' },
+      { name: 'Công cụ phát triển ứng dụng', code: 'SWE1210E' },
+      { name: 'Đồ án kỹ thuật phần mềm', code: 'SWE1422' },
+      { name: 'Đảm bảo chất lượng phần mềm', code: 'SWE1111E' },
+      { name: 'Kiểm thử phần mềm', code: 'SWE1212E' },
+      { name: 'Quản lý dự án kiểm thử', code: 'SWE1114E' },
+      { name: 'Công cụ và kỹ thuật kiểm thử tự động', code: 'SWE1213E' },
+      { name: 'Đồ án chuyên ngành kiểm thử phần mềm', code: 'SWE1415' },
+      { name: 'Phát triển ứng dụng đa nền tảng', code: 'SWE1216E' },
+      { name: 'Phát triển Game', code: 'ITE1279E' },
+      { name: 'Phát triển và vận hành hệ thống công nghệ thông tin', code: 'SWE1219E' },
+      { name: 'Phát triển ứng dụng web nâng cao', code: 'SWE1218E' },
+      { name: 'Đồ án chuyên ngành phát triển ứng dụng', code: 'SWE1420' }
     ]
   }
 };
@@ -367,6 +393,7 @@ const LookupPage = () => {
   const [previewThesis, setPreviewThesis] = useState(null);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [dbTheses, setDbTheses] = useState([]);
+  const [driveFiles, setDriveFiles] = useState([]);
 
   useEffect(() => {
     const fetchDbTheses = async () => {
@@ -395,7 +422,37 @@ const LookupPage = () => {
         console.error("Failed to fetch database theses in LookupPage", err);
       }
     };
+
+    const fetchDriveFiles = async () => {
+      try {
+        const { data } = await thesisService.getDriveFiles('Temporary_PDF', 'Project');
+        if (data && data.length > 0) {
+          const mapped = data.map((f, idx) => ({
+            id: `drive-${f.id || idx}`,
+            type: 'do-an',
+            major: '',
+            subjectCode: '',
+            title: f.name ? f.name.replace(/\.(pdf|docx?|xlsx?)$/i, '') : `Drive File ${idx + 1}`,
+            student: 'Google Drive',
+            advisor: 'Imported',
+            year: f.modifiedTime ? new Date(f.modifiedTime).getFullYear().toString() : '2026',
+            department: 'Temporary_PDF',
+            similarity: '—',
+            similarityLevel: 'safe',
+            desc: `File từ Google Drive • ${f.mimeType || 'document'} • ${f.size ? (f.size / 1024 / 1024).toFixed(1) + ' MB' : 'N/A'}`,
+            tags: ['#drive', '#imported'],
+            pdfUrl: f.webViewLink || f.webContentLink || '#',
+            isDriveFile: true
+          }));
+          setDriveFiles(mapped);
+        }
+      } catch (err) {
+        console.error("Failed to fetch Drive files in LookupPage", err);
+      }
+    };
+
     fetchDbTheses();
+    fetchDriveFiles();
   }, []);
 
   const handleOpenPreview = (thesis) => {
@@ -434,7 +491,7 @@ const LookupPage = () => {
 
   const clearType = () => setSearchParams({});
 
-  const combinedResults = [...dbTheses, ...ALL_RESULTS];
+  const combinedResults = [...dbTheses, ...driveFiles, ...ALL_RESULTS];
   const filteredResults = combinedResults.filter(item => {
     // 1. Filter by thesisType
     if (thesisType && item.type !== thesisType) {
