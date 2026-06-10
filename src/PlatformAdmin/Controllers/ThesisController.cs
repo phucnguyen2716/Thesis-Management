@@ -3,9 +3,13 @@ using PlatformAdmin.DTOs.Thesis;
 using PlatformAdmin.Interfaces;
 using PlatformAdmin.Attributes;
 using PlatformAdmin.Services;
+using PlatformAdmin.Jobs;
+using PlatformAdmin.Data;
+using PlatformAdmin.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 
 namespace PlatformAdmin.Controllers;
 
@@ -18,13 +22,15 @@ public class ThesisController : ControllerBase
     private readonly IReviewService _reviewService;
     private readonly ICommentService _commentService;
     private readonly IGoogleDriveStorageService _driveService;
+    private readonly AppDbContext _db;
 
-    public ThesisController(IThesisService thesisService, IReviewService reviewService, ICommentService commentService, IGoogleDriveStorageService driveService)
+    public ThesisController(IThesisService thesisService, IReviewService reviewService, ICommentService commentService, IGoogleDriveStorageService driveService, AppDbContext db)
     {
         _thesisService = thesisService;
         _reviewService = reviewService;
         _commentService = commentService;
         _driveService = driveService;
+        _db = db;
     }
 
     private int GetCurrentUserId() => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
@@ -36,15 +42,13 @@ public class ThesisController : ControllerBase
     {
         var userId = GetCurrentUserId();
         var role = User.FindFirstValue(ClaimTypes.Role);
-
         int? studentId = role == "Student" ? userId : null;
         int? advisorId = role == "Advisor" ? userId : null;
-
         var result = await _thesisService.GetAllAsync(page, pageSize, status, search, studentId, advisorId, category);
         return Ok(result);
     }
 
-    [HttpGet("{id}")]
+    [HttpGet("{id:int}")]
     [ApiResponse(typeof(ThesisDto), StatusCodes.Status200OK)]
     [ApiResponse(StatusCodes.Status401Unauthorized)]
     [ApiResponse(StatusCodes.Status404NotFound)]
@@ -68,21 +72,18 @@ public class ThesisController : ControllerBase
         if (role == "Admin")
         {
             if (request.StudentId == null || request.StudentId == 0)
-            {
                 return BadRequest("StudentId is required for Admin to create a thesis.");
-            }
             studentId = request.StudentId.Value;
         }
         else
         {
             studentId = GetCurrentUserId();
         }
-
         var result = await _thesisService.CreateAsync(studentId, request);
         return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
     }
 
-    [HttpPut("{id}")]
+    [HttpPut("{id:int}")]
     [ApiResponse(typeof(ThesisDto), StatusCodes.Status200OK)]
     [ApiResponse(StatusCodes.Status400BadRequest)]
     [ApiResponse(StatusCodes.Status401Unauthorized)]
@@ -93,7 +94,7 @@ public class ThesisController : ControllerBase
         return Ok(result);
     }
 
-    [HttpDelete("{id}")]
+    [HttpDelete("{id:int}")]
     [ApiResponse(StatusCodes.Status204NoContent)]
     [ApiResponse(StatusCodes.Status401Unauthorized)]
     [ApiResponse(StatusCodes.Status404NotFound)]
@@ -103,7 +104,7 @@ public class ThesisController : ControllerBase
         return NoContent();
     }
 
-    [HttpPost("{id}/submit")]
+    [HttpPost("{id:int}/submit")]
     [ApiResponse(typeof(ThesisDto), StatusCodes.Status200OK)]
     [ApiResponse(StatusCodes.Status400BadRequest)]
     [ApiResponse(StatusCodes.Status401Unauthorized)]
@@ -114,7 +115,7 @@ public class ThesisController : ControllerBase
         return Ok(result);
     }
 
-    [HttpPost("{id}/assign-advisor")]
+    [HttpPost("{id:int}/assign-advisor")]
     [Authorize(Roles = "Admin")]
     [ApiResponse(typeof(ThesisDto), StatusCodes.Status200OK)]
     [ApiResponse(StatusCodes.Status400BadRequest)]
@@ -127,7 +128,7 @@ public class ThesisController : ControllerBase
         return Ok(result);
     }
 
-    [HttpPost("{id}/approve")]
+    [HttpPost("{id:int}/approve")]
     [Authorize(Roles = "Admin,Advisor")]
     [ApiResponse(typeof(ThesisDto), StatusCodes.Status200OK)]
     [ApiResponse(StatusCodes.Status400BadRequest)]
@@ -140,7 +141,7 @@ public class ThesisController : ControllerBase
         return Ok(result);
     }
 
-    [HttpPost("{id}/reject")]
+    [HttpPost("{id:int}/reject")]
     [Authorize(Roles = "Admin,Advisor")]
     [ApiResponse(typeof(ThesisDto), StatusCodes.Status200OK)]
     [ApiResponse(StatusCodes.Status400BadRequest)]
@@ -153,7 +154,7 @@ public class ThesisController : ControllerBase
         return Ok(result);
     }
 
-    [HttpPost("{id}/upload")]
+    [HttpPost("{id:int}/upload")]
     [ApiResponse(typeof(object), StatusCodes.Status200OK)]
     [ApiResponse(StatusCodes.Status400BadRequest)]
     [ApiResponse(StatusCodes.Status401Unauthorized)]
@@ -188,8 +189,7 @@ public class ThesisController : ControllerBase
         return Ok(result);
     }
 
-    // Reviews & Comments nested endpoints
-    [HttpGet("{id}/reviews")]
+    [HttpGet("{id:int}/reviews")]
     [ApiResponse(typeof(IEnumerable<ThesisReviewDto>), StatusCodes.Status200OK)]
     [ApiResponse(StatusCodes.Status401Unauthorized)]
     [ApiResponse(StatusCodes.Status404NotFound)]
@@ -198,7 +198,7 @@ public class ThesisController : ControllerBase
         return Ok(await _reviewService.GetByThesisAsync(id));
     }
 
-    [HttpPost("{id}/reviews")]
+    [HttpPost("{id:int}/reviews")]
     [Authorize(Roles = "Advisor,Admin")]
     [ApiResponse(typeof(ThesisReviewDto), StatusCodes.Status200OK)]
     [ApiResponse(StatusCodes.Status400BadRequest)]
@@ -211,7 +211,7 @@ public class ThesisController : ControllerBase
         return Ok(result);
     }
 
-    [HttpGet("{id}/comments")]
+    [HttpGet("{id:int}/comments")]
     [ApiResponse(typeof(IEnumerable<ThesisCommentDto>), StatusCodes.Status200OK)]
     [ApiResponse(StatusCodes.Status401Unauthorized)]
     [ApiResponse(StatusCodes.Status404NotFound)]
@@ -220,7 +220,7 @@ public class ThesisController : ControllerBase
         return Ok(await _commentService.GetByThesisAsync(id));
     }
 
-    [HttpPost("{id}/comments")]
+    [HttpPost("{id:int}/comments")]
     [ApiResponse(typeof(ThesisCommentDto), StatusCodes.Status200OK)]
     [ApiResponse(StatusCodes.Status400BadRequest)]
     [ApiResponse(StatusCodes.Status401Unauthorized)]
@@ -231,24 +231,4 @@ public class ThesisController : ControllerBase
         return Ok(result);
     }
 
-    [HttpGet("drive-files")]
-    [ApiResponse(typeof(List<DriveFileInfo>), StatusCodes.Status200OK)]
-    [ApiResponse(StatusCodes.Status400BadRequest)]
-    [ApiResponse(StatusCodes.Status401Unauthorized)]
-    public async Task<ActionResult<List<DriveFileInfo>>> ListDriveFiles([FromQuery] string folder = "Temporary_PDF", [FromQuery] string category = "Project")
-    {
-        if (string.IsNullOrEmpty(folder)) return BadRequest("Folder name is required.");
-
-        AcademicCategory cat;
-        switch (category.ToLower())
-        {
-            case "project": cat = AcademicCategory.Project; break;
-            case "topic": cat = AcademicCategory.Topic; break;
-            case "thesis": cat = AcademicCategory.Thesis; break;
-            default: return BadRequest($"Invalid category: {category}. Use Project, Topic, or Thesis.");
-        }
-
-        var files = await _driveService.ListFilesFromFolderAsync(folder, cat);
-        return Ok(files);
-    }
 }

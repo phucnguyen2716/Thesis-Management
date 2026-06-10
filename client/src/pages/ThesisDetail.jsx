@@ -8,6 +8,22 @@ const ThesisDetail = () => {
   const location = useLocation();
   const user = JSON.parse(localStorage.getItem('user') || '{"role": "Student"}');
 
+  const handleBack = () => {
+    if (window.opener) {
+      try {
+        window.close();
+        return;
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate('/theses');
+    }
+  };
+
   const combinedMocks = [
     // Mock items from Lookup
     {
@@ -588,7 +604,7 @@ const ThesisDetail = () => {
               </button>
               
               <button 
-                onClick={() => navigate(-1)}
+                onClick={handleBack}
                 className="w-full py-3.5 bg-transparent border-2 border-outline-variant/50 text-on-surface rounded-xl font-bold uppercase tracking-widest text-[10px] hover:border-primary hover:text-primary transition-all flex items-center justify-center gap-2"
               >
                 <span className="material-symbols-outlined text-sm">arrow_back</span> Quay lại danh sách

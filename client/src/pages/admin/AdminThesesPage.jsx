@@ -89,75 +89,48 @@ const emptyForm = (categoryCode) => ({
   status: 'Pending',
 });
 
-// ─── Drive Sync Progress Popup ────────────────────────────────────────────────
-const DriveSyncModal = ({ steps, onClose }) => {
-  const allDone = steps.length > 0 && steps.every(s => s.done || s.error);
-  const hasError = steps.some(s => s.error);
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-2xl bg-slate-900 border border-slate-700 shadow-2xl overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center gap-3 px-6 py-4 border-b border-slate-800 bg-slate-900/80">
-          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${allDone && !hasError ? 'bg-emerald-500/20' : 'bg-amber-500/20'}`}>
-            <span className={`material-symbols-outlined text-lg ${allDone && !hasError ? 'text-emerald-400' : 'text-amber-400'} ${!allDone ? 'animate-spin' : ''}`}>
-              {allDone && !hasError ? 'cloud_done' : allDone && hasError ? 'error' : 'cloud_sync'}
-            </span>
-          </div>
-          <div>
-            <p className="text-sm font-black text-white uppercase tracking-wider">Đồng bộ Google Drive</p>
-            <p className="text-[10px] text-slate-400">
-              {allDone && !hasError ? 'Hoàn thành!' : allDone && hasError ? 'Có lỗi xảy ra' : 'Đang xử lý...'}
-            </p>
-          </div>
+// ─── Google Drive + Lookup panel (Hangfire tự đồng bộ) ───────────────────────
+const DriveLookupPanel = ({ status, onRefresh }) => (
+  <div className="rounded-xl border border-emerald-800/40 bg-emerald-950/20 p-4 space-y-3">
+    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div className="flex items-start gap-3">
+        <div className="w-10 h-10 rounded-xl bg-emerald-500/15 flex items-center justify-center shrink-0">
+          <span className="material-symbols-outlined text-emerald-400">cloud_sync</span>
         </div>
-        {/* Steps */}
-        <div className="px-6 py-5 space-y-3 max-h-80 overflow-y-auto">
-          {steps.map((step, i) => (
-            <div key={i} className="flex items-start gap-3">
-              <div className={`mt-0.5 w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${
-                step.error ? 'bg-red-500/20' : step.done ? 'bg-emerald-500/20' : 'bg-slate-700'
-              }`}>
-                {step.error ? (
-                  <span className="material-symbols-outlined text-xs text-red-400">close</span>
-                ) : step.done ? (
-                  <span className="material-symbols-outlined text-xs text-emerald-400">check</span>
-                ) : step.active ? (
-                  <div className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse" />
-                ) : (
-                  <div className="w-2 h-2 rounded-full bg-slate-600" />
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className={`text-xs font-semibold leading-snug ${
-                  step.error ? 'text-red-400' : step.done ? 'text-emerald-300' : step.active ? 'text-white' : 'text-slate-500'
-                }`}>{step.label}</p>
-                {step.detail && (
-                  <p className="text-[10px] text-slate-500 mt-0.5 font-mono truncate">{step.detail}</p>
-                )}
-              </div>
-            </div>
-          ))}
-          {steps.length === 0 && (
-            <div className="py-4 text-center">
-              <div className="w-6 h-6 border-2 border-amber-400 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-              <p className="text-xs text-slate-400">Đang kết nối Google Drive...</p>
-            </div>
-          )}
+        <div>
+          <p className="text-sm font-black text-emerald-300 uppercase tracking-wider">Google Drive → Lookup</p>
+          <p className="text-[11px] text-slate-400 mt-0.5">
+            Tự seed khi khởi động backend · Hangfire sync mỗi 1 phút · Tra cứu tại <span className="text-emerald-400/80">/lookup?type=do-an</span>
+          </p>
         </div>
-        {allDone && (
-          <div className="px-6 py-4 border-t border-slate-800 flex justify-end">
-            <button
-              onClick={onClose}
-              className="px-5 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black uppercase tracking-wider transition-colors"
-            >
-              Đóng
-            </button>
-          </div>
-        )}
       </div>
+      <button type="button" onClick={onRefresh}
+        className="px-3 py-2 rounded-lg border border-slate-700 hover:bg-slate-800 text-slate-300 text-[10px] font-bold uppercase transition-colors shrink-0">
+        Làm mới
+      </button>
     </div>
-  );
-};
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+      {[
+        { label: 'File trên Drive', value: status?.driveFileCount ?? '—', icon: 'folder' },
+        { label: 'Đã sync vào DB', value: status?.dbRecordCount ?? '—', icon: 'database' },
+        { label: 'Chu kỳ sync', value: status?.hangfireInterval ?? '1 phút', icon: 'schedule' },
+        { label: 'Cập nhật gần nhất', value: status?.lastSyncAt ? new Date(status.lastSyncAt).toLocaleString('vi-VN') : 'Chưa có', icon: 'history' },
+      ].map(item => (
+        <div key={item.label} className="rounded-lg bg-slate-900/60 border border-slate-800 px-3 py-2">
+          <div className="flex items-center gap-1 text-[9px] text-slate-500 uppercase font-bold">
+            <span className="material-symbols-outlined text-[12px]">{item.icon}</span>
+            {item.label}
+          </div>
+          <p className="text-xs font-bold text-white mt-1 truncate">{item.value}</p>
+        </div>
+      ))}
+    </div>
+    <p className="text-[10px] text-slate-500 leading-relaxed">
+      Cấu trúc: <code className="text-emerald-400/80">CourseProjectStorage / Kỹ thuật lập trình / Phát triển Game (ITE1279E) / Nhom01_Game2D_SVxxxx / files</code>
+      {' '}— Word tự chuyển PDF qua LibreOffice vào <code className="text-emerald-400/80">temporary_pdf/</code>
+    </p>
+  </div>
+);
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 const AdminThesesPage = () => {
@@ -181,61 +154,14 @@ const AdminThesesPage = () => {
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
 
-  // Drive sync popup
-  const [driveModal, setDriveModal] = useState(false);
-  const [driveSteps, setDriveSteps] = useState([]);
+  const [driveStatus, setDriveStatus] = useState(null);
 
-  const MAJORS_SYNC = [
-    { name: 'Trí tuệ nhân tạo',       subjects: 5 },
-    { name: 'Mạng máy tính',           subjects: 5 },
-    { name: 'Hệ thống thông tin DN',   subjects: 5 },
-    { name: 'An toàn không gian mạng', subjects: 5 },
-    { name: 'Kỹ thuật lập trình',       subjects: 17 },
-  ];
-
-  const handleSyncDrive = async () => {
-    setDriveSteps([]);
-    setDriveModal(true);
+  const loadDriveStatus = async () => {
     try {
-      // Bước 1: Kết nối
-      setDriveSteps([{ label: 'Kết nối Google Drive API...', detail: 'Xác thực service account credentials', active: true, done: false, error: false }]);
-      await new Promise(r => setTimeout(r, 400));
-
-      // Bước 2: Root folder
-      setDriveSteps(prev => [
-        ...prev.map((s, i) => i === 0 ? { ...s, done: true, active: false } : s),
-        { label: 'Kiểm tra thư mục gốc CourseProjectStorage...', detail: 'Tạo nếu chưa tồn tại', active: true, done: false, error: false },
-      ]);
-      await new Promise(r => setTimeout(r, 300));
-
-      // Gọi API backend — tạo toàn bộ 4 chuyên ngành × 5 học phần
-      const syncPromise = thesisService.syncDrive(catConfig.code);
-
-      // Hiển thị progress từng chuyên ngành trong khi chờ
-      setDriveSteps(prev => prev.map((s, i) => i === 1 ? { ...s, done: true, active: false } : s));
-      for (const major of MAJORS_SYNC) {
-        setDriveSteps(prev => [
-          ...prev,
-          { label: `📁 ${major.name}`, detail: `Tạo ${major.subjects} thư mục học phần...`, active: true, done: false, error: false },
-        ]);
-        await new Promise(r => setTimeout(r, 350));
-        setDriveSteps(prev => prev.map((s, i) => i === prev.length - 1 ? { ...s, done: true, active: false } : s));
-      }
-
-      // Chờ backend hoàn tất thực sự
-      await syncPromise;
-
-      setDriveSteps(prev => [
-        ...prev,
-        { label: '✅ Đồng bộ hoàn tất!', detail: '20 thư mục học phần đã được tạo/kiểm tra trên Drive', active: false, done: true, error: false },
-      ]);
-      loadTheses();
+      const { data } = await thesisService.getDriveStatus();
+      setDriveStatus(data);
     } catch (err) {
-      console.error('Error syncing Drive:', err);
-      setDriveSteps(prev => [
-        ...prev,
-        { label: 'Lỗi đồng bộ', detail: err.response?.data?.message || err.message || 'Lỗi kết nối', active: false, done: false, error: true },
-      ]);
+      console.error('Error loading drive status:', err);
     }
   };
 
@@ -279,6 +205,13 @@ const AdminThesesPage = () => {
   useEffect(() => { loadUsers(); }, []);
   useEffect(() => { setPage(1); loadTheses(); }, [category, search, statusFilter, majorFilter]);
   useEffect(() => { loadTheses(); }, [page]);
+  useEffect(() => {
+    if (isProject) {
+      loadDriveStatus();
+      const t = setInterval(loadDriveStatus, 60_000);
+      return () => clearInterval(t);
+    }
+  }, [isProject]);
 
   const handleOpenCreate = () => {
     setForm(emptyForm(catConfig.code));
@@ -367,9 +300,6 @@ const AdminThesesPage = () => {
 
   return (
     <div className="max-w-6xl space-y-5">
-      {/* Drive Sync Progress Modal */}
-      {driveModal && <DriveSyncModal steps={driveSteps} onClose={() => setDriveModal(false)} />}
-
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
@@ -379,16 +309,6 @@ const AdminThesesPage = () => {
           </p>
         </div>
         <div className="flex gap-2">
-          {isProject && (
-            <button
-              type="button"
-              onClick={handleSyncDrive}
-              className="px-4 py-2 rounded-lg border border-emerald-700/50 hover:bg-emerald-900/30 text-emerald-400 hover:text-emerald-300 text-xs font-bold uppercase transition-colors flex items-center gap-1.5"
-            >
-              <span className="material-symbols-outlined text-sm">cloud_sync</span>
-              Lưu Drive
-            </button>
-          )}
           <button
             type="button"
             onClick={handleOpenCreate}
@@ -401,6 +321,10 @@ const AdminThesesPage = () => {
 
       {error && (
         <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-xs font-bold text-red-400">{error}</div>
+      )}
+
+      {isProject && (
+        <DriveLookupPanel status={driveStatus} onRefresh={loadDriveStatus} />
       )}
 
       {/* Filter panel */}

@@ -66,6 +66,100 @@ CourseProjectStorage/
 
 ---
 
+## ☁️ Đồng bộ Hai Chiều Google Drive ↔ Localhost (Hangfire)
+
+Hệ thống đồng bộ dữ liệu hai chiều tự động giữa Google Drive và PostgreSQL thông qua Hangfire (chạy định kỳ mỗi 1 phút):
+
+### 1. Đồng bộ từ Google Drive → PostgreSQL (Database)
+- Hangfire quét đệ quy toàn bộ thư mục `CourseProjectStorage` trên Google Drive.
+- Định dạng đường dẫn file được hỗ trợ linh hoạt:
+  - **Dạng 1 (Trực tiếp trong môn học):** `CourseProjectStorage / [Chuyên ngành] / [Môn học (Mã môn)] / [MSSV]_[Tên đề tài].pdf` (Ví dụ: `SV2024180_Website Ban Hang.pdf`).
+  - **Dạng 2 (Thư mục nhóm):** `CourseProjectStorage / [Chuyên ngành] / [Môn học (Mã môn)] / NhomXX_ProjectName_StudentUid / files`.
+  - **Dạng 3 (Không cần MSSV):** Nếu tệp hoặc thư mục không chứa mã sinh viên dạng `SVxxxxxx`, hệ thống sẽ **tự động sinh mã sinh viên giả lập (pseudo StudentUid)** một cách nhất quán (ví dụ: `SV1718425`) dựa trên mã băm (hash) của tên thư mục nhóm hoặc tên tệp. Tất cả các tài liệu của cùng một nhóm sẽ được tự động gom vào chung một đồ án.
+- Với mỗi đồ án quét được:
+  - Hệ thống tự động kiểm tra và tạo mới tài khoản sinh viên `Student` trong DB (nếu chưa có) với mật khẩu mặc định `student123`.
+  - Tự động điền/tạo mới bản ghi đề tài tương ứng trong bảng `Theses` của PostgreSQL (đồng bộ thông tin Chuyên ngành, Học phần, Tên đề tài, Sinh viên).
+  - Tự chọn tệp PDF hoặc Word (`.docx`) làm tài liệu chính (`FilePath`). Nếu là tệp Word, LibreOffice sẽ tự động chuyển đổi sang PDF lưu trữ cục bộ để phục vụ chế độ đọc 3D Flipbook.
+
+### 2. Đồng bộ từ PostgreSQL → Google Drive (Admin CRUD)
+- Khi Admin thực hiện CRUD (thêm mới đề tài) trực tiếp thông qua trang quản trị eThesis:
+  - Nếu đề tài chưa tồn tại thư mục tương ứng trên Google Drive, Hangfire sẽ phát hiện và tự tạo thư mục theo đúng cấu trúc phân cấp.
+  - Tự sinh và tải lên Drive các tệp tài liệu mẫu đa định dạng:
+    - 📄 `Bao_cao_DoAn.pdf` (Tệp PDF mẫu)
+    - 📝 `Slide_ThuyetTrinh.docx` (Tệp Word mẫu)
+    - 📊 `Bang_tinh_KinhPhi.xlsx` (Tệp Excel mẫu)
+  - Nhờ vậy, cấu trúc thư mục và tài liệu trên Drive luôn được phản ánh và tương tác qua lại chính xác giữa hai bên.
+
+---
+
+## 📖 Trình đọc tài liệu PDF & 3D Flipbook
+- Trong trang đọc tài liệu nghiên cứu và đồ án (`FlipbookPage.jsx`), người dùng được cung cấp thanh chuyển đổi chế độ xem linh hoạt:
+  - **📖 3D Flipbook:** Hiệu ứng lật trang 3D sinh động (sử dụng thư viện DearFlip).
+  - **📄 PDF Preview:** Trình xem PDF gốc nhúng tốc độ cao hỗ trợ phóng to, tải xuống và in trực tiếp.
+
+### Cấu hình Google Drive
+
+| Mục | Giá trị |
+|---|---|
+| Service Account | `thesis-drive-service@modular-botany-460203-j8.iam.gserviceaccount.com` |
+| Credentials | `src/PlatformAdmin/google-credentials.json` |
+| Thư mục gốc | `CourseProjectStorage/` |
+| Thư mục PDF tạm | `Temporary_PDF/` |
+| PDF local | `temporary_pdf/{uid}_{tên_file}/` (phục vụ Flipbook) |
+
+Trong `appsettings.json`:
+```json
+"GoogleDrive": {
+  "DriveKey1_Project": "google-credentials.json",
+  "UseMock": false,
+  "TemporaryPdfLocalPath": "temporary_pdf"
+}
+```
+
+### Tự sinh dữ liệu mẫu (khi Drive trống)
+
+Nếu `CourseProjectStorage` chưa có file, Hangfire tự gọi `DriveSampleDataSeeder` tạo **đồ án mẫu** theo cấu trúc Kỹ thuật lập trình / Full-Stack:
+
+```
+CourseProjectStorage/
+└── Kỹ thuật lập trình/
+    └── Phát triển ứng dụng Full-Stack (SWE1209E)/
+        └── SV2024101 - Hệ thống quản lý thư viện UEF/
+            ├── Bao_cao_DoAn.docx
+            ├── Slide_ThuyetTrinh.docx
+            └── Source_Code_README.docx
+```
+
+Admin có thể kích hoạt thủ công: `POST /api/thesis/seed-drive-samples` hoặc `POST /api/thesis/trigger-drive-sync`.
+
+### Health Check (Elasticsearch + RabbitMQ)
+
+| Endpoint | Mô tả |
+|---|---|
+| `GET /api/health` | Trạng thái API |
+| `GET /api/health/dependencies` | Kiểm tra Elasticsearch + RabbitMQ |
+
+### URL localhost khi chạy dev
+
+| Dịch vụ | URL |
+|---|---|
+| Frontend | http://localhost:5173 |
+| Backend API | http://localhost:5145 |
+| Swagger | http://localhost:5145/swagger |
+| Hangfire Dashboard | http://localhost:5145/hangfire |
+| Health Dependencies | http://localhost:5145/api/health/dependencies |
+| Tra cứu Đồ án | http://localhost:5173/lookup?type=do-an |
+
+**Yêu cầu:** PostgreSQL (Hangfire + DB), LibreOffice (chuyển Word→PDF), RabbitMQ + Elasticsearch (tùy chọn).
+
+```bash
+# PostgreSQL + RabbitMQ (Docker)
+run_postgres.bat
+run_rabbitmq.bat
+```
+
+---
+
 ## 📌 Tổng quan đề tài
 
 Trong bối cảnh học thuật tại các trường đại học Việt Nam, kho tàng khóa luận tốt nghiệp và đề tài nghiên cứu khoa học của sinh viên là một tài sản tri thức vô cùng quý giá. Tuy nhiên, hầu hết các tài liệu này sau khi bảo vệ xong đều bị lưu trữ phân mảnh trong ổ cứng cá nhân, thư viện truyền thống hoặc các thư mục chia sẻ rời rạc. Điều này dẫn đến nhiều hạn chế:
@@ -645,7 +739,7 @@ Hệ thống đi kèm cơ chế tự động gieo dữ liệu mẫu (Database Se
    ```bash
    dotnet run
    ```
-6. API sẽ khởi chạy thành công tại địa chỉ mặc định `https://localhost:7198` hoặc `http://localhost:5221`. Bạn có thể truy cập ngay `https://localhost:7198/swagger/index.html` để khám phá và thử nghiệm trực quan tài liệu API.
+6. API khởi chạy tại **http://localhost:5145**. Swagger: http://localhost:5145/swagger — Hangfire: http://localhost:5145/hangfire
 
 ---
 

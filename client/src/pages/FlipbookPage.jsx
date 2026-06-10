@@ -1,15 +1,42 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { thesisService } from '../services/api';
 
 const FlipbookPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   
   const [thesis, setThesis] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+  const [viewMode, setViewMode] = useState(() => {
+    const modeParam = searchParams.get('mode');
+    if (modeParam === '3d' || modeParam === 'pdf') return modeParam;
+    return localStorage.getItem('documentViewPreference') || '3d';
+  }); // '3d' | 'pdf'
+
+  const handleSwitchMode = (mode) => {
+    setViewMode(mode);
+    localStorage.setItem('documentViewPreference', mode);
+  };
+
+  const handleBack = () => {
+    if (window.opener) {
+      try {
+        window.close();
+        return;
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate('/theses');
+    }
+  };
 
   useEffect(() => {
     const handleResize = () => {
@@ -108,7 +135,7 @@ const FlipbookPage = () => {
 
   // Initialize the DearFlip viewer programmatically when loaded
   useEffect(() => {
-    if (loading || !thesis) return;
+    if (loading || !thesis || viewMode !== '3d') return;
 
     const initFlipbook = () => {
       const container = document.getElementById("flipbookContainer");
@@ -157,7 +184,7 @@ const FlipbookPage = () => {
     // Small delay to ensure react has committed the container to DOM
     const timer = setTimeout(initFlipbook, 150);
     return () => clearTimeout(timer);
-  }, [loading, thesis, isMobile]);
+  }, [loading, thesis, isMobile, viewMode]);
 
   return (
     <div className="w-full h-screen bg-[#111115] text-white flex flex-col overflow-hidden select-none">
@@ -190,7 +217,7 @@ const FlipbookPage = () => {
       <header className="h-16 border-b border-white/10 px-4 sm:px-6 flex items-center justify-between bg-[#16161c]/80 backdrop-blur-md z-20 shrink-0">
         <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-grow mr-4">
           <button 
-            onClick={() => navigate(-1)}
+            onClick={handleBack}
             className="flex items-center justify-center gap-2 px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-white/5 hover:bg-white/15 active:scale-95 transition-all text-xs font-bold uppercase tracking-wider text-gray-300 border border-white/5 cursor-pointer shrink-0"
           >
             <span className="material-symbols-outlined text-sm">arrow_back</span>
@@ -205,6 +232,32 @@ const FlipbookPage = () => {
               {loading ? "" : `${thesis?.studentName || 'Sinh viên'} · Năm ${thesis?.year || '2024'}`}
             </p>
           </div>
+        </div>
+
+        {/* View Mode Switcher Toggle */}
+        <div className="flex bg-white/5 rounded-xl p-1 border border-white/10 shrink-0 mr-4">
+          <button
+            onClick={() => handleSwitchMode('3d')}
+            className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer border-none flex items-center gap-1.5 ${
+              viewMode === '3d'
+                ? 'bg-primary text-white shadow-sm'
+                : 'bg-transparent text-gray-400 hover:text-white'
+            }`}
+          >
+            <span className="material-symbols-outlined text-xs">menu_book</span>
+            3D Flipbook
+          </button>
+          <button
+            onClick={() => handleSwitchMode('pdf')}
+            className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer border-none flex items-center gap-1.5 ${
+              viewMode === 'pdf'
+                ? 'bg-primary text-white shadow-sm'
+                : 'bg-transparent text-gray-400 hover:text-white'
+            }`}
+          >
+            <span className="material-symbols-outlined text-xs">picture_as_pdf</span>
+            PDF Preview
+          </button>
         </div>
 
         <div className="hidden sm:flex items-center gap-2 shrink-0">
@@ -224,6 +277,18 @@ const FlipbookPage = () => {
             <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
             <p className="text-gray-400 font-bold uppercase tracking-widest text-[10px]">Đang tạo cấu trúc sách 3D...</p>
           </div>
+        ) : viewMode === 'pdf' ? (
+          <iframe
+            src={
+              thesis.pdfUrl.startsWith("http")
+                ? thesis.pdfUrl
+                : (thesis.pdfUrl.startsWith("/temporary_pdf") || thesis.pdfUrl.startsWith("/uploads"))
+                  ? `http://localhost:5145${thesis.pdfUrl}`
+                  : thesis.pdfUrl
+            }
+            className="w-full h-full border-none bg-[#111115]"
+            title="PDF Preview"
+          />
         ) : (
           <div id="flipbookContainer" className="w-full h-full"></div>
         )}

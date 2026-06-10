@@ -3,6 +3,8 @@ using PlatformAdmin.Interfaces;
 using PlatformAdmin.Entities;
 using PlatformAdmin.Data;
 using Microsoft.EntityFrameworkCore;
+using Hangfire;
+using PlatformAdmin.Jobs;
 
 namespace PlatformAdmin.Services;
 
@@ -79,6 +81,13 @@ public class ThesisService : IThesisService
         };
         _db.Theses.Add(thesis);
         await _db.SaveChangesAsync();
+
+        if (thesis.Category == "Project")
+        {
+            // Sync to Google Drive via Hangfire
+            BackgroundJob.Enqueue<DriveSyncJob>(x => x.SyncThesisToDriveAsync(thesis.Id));
+        }
+
         return Map(await BaseQuery().FirstAsync(t => t.Id == thesis.Id));
     }
 
@@ -114,7 +123,27 @@ public class ThesisService : IThesisService
 
     public async Task DeleteAsync(int id)
     {
-        var thesis = await _db.Theses.FindAsync(id) ?? throw new KeyNotFoundException();
+        var thesis = await BaseQuery().FirstOrDefaultAsync(t => t.Id == id) ?? throw new KeyNotFoundException();
+
+        if (thesis.Category == "Project" && thesis.Student != null)
+        {
+            var studentUid = thesis.Student.StudentId ?? $"SV{thesis.StudentId}";
+            var sanitizedName = DrivePathParser.SanitizeFolderName(thesis.Title);
+            var folderName = $"Nhom01_{sanitizedName}_{studentUid}";
+            
+            // Delete folder from Drive
+            BackgroundJob.Enqueue<DriveSyncJob>(job => job.DeleteDriveFolderAsync(folderName, AcademicCategory.Project));
+            
+            // Clean up any local DriveFileRecords
+            var relatedRecords = await _db.DriveFileRecords
+                .Where(r => r.StudentUid == studentUid && r.SubjectCode == thesis.SubjectCode)
+                .ToListAsync();
+            foreach (var record in relatedRecords)
+            {
+                record.IsActive = false;
+            }
+        }
+
         _db.Theses.Remove(thesis);
         await _db.SaveChangesAsync();
     }

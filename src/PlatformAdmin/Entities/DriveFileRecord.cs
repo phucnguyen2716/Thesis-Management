@@ -46,4 +46,17 @@ public class DriveFileRecord
 
     /// <summary>Whether this file still exists on Drive</summary>
     public bool IsActive { get; set; } = true;
+
+    /// <summary>Relative path on Drive, e.g. CourseProjectStorage/Major/Subject/file.pdf</summary>
+    public string RelativePath { get; set; } = string.Empty;
+
+    public string Major { get; set; } = string.Empty;
+    public string MajorKey { get; set; } = string.Empty;
+    public string Subject { get; set; } = string.Empty;
+    public string SubjectCode { get; set; } = string.Empty;
+    public string StudentUid { get; set; } = string.Empty;
+    public string ProjectName { get; set; } = string.Empty;
+
+    /// <summary>Local path to converted PDF (temporary_pdf/uid_filename/)</summary>
+    public string LocalPdfPath { get; set; } = string.Empty;
 }

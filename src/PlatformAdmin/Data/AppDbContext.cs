@@ -67,47 +67,6 @@ public class AppDbContext : DbContext
             new User { Id = 3, FullName = "Tran Thi B", Email = "student@ethesis.edu.vn", PasswordHash = BCrypt("student123"), Role = "Student", StudentId = "SV001", Department = "Computer Science", IsActive = true, CreatedAt = DateTime.UtcNow }
         );
 
-        // Seed default theses
-        modelBuilder.Entity<Thesis>().HasData(
-            new Thesis 
-            { 
-                Id = 1, 
-                Title = "Nghiên cứu ứng dụng Trí tuệ nhân tạo (AI) trong giáo dục đại học", 
-                Description = "Đề tài thực hiện khảo sát ứng dụng hệ thống gia sư thông minh để hỗ trợ quá trình dạy và học tích cực.", 
-                Status = "Approved", 
-                StudentId = 3, 
-                AdvisorId = 2, 
-                CreatedAt = DateTime.UtcNow.AddDays(-30),
-                Category = "Thesis",
-                Major = "ai"
-            },
-            new Thesis 
-            { 
-                Id = 2, 
-                Title = "Ứng dụng Blockchain trong quản lý và xác thực bảng điểm trực tuyến", 
-                Description = "Đồ án đề xuất giải pháp phi tập trung dựa trên Smart Contract Ethereum để giải quyết vấn đề gian lận bảng điểm học thuật.", 
-                Status = "InProgress", 
-                StudentId = 3, 
-                AdvisorId = 2, 
-                CreatedAt = DateTime.UtcNow.AddDays(-15),
-                Category = "Project",
-                Major = "ai",
-                Subject = "Phát triển ứng dụng trí tuệ nhân tạo",
-                SubjectCode = "ITE1174E"
-            },
-            new Thesis 
-            { 
-                Id = 3, 
-                Title = "Phân tích sắc thái cảm xúc người dùng về thương hiệu UEF bằng PhoBERT", 
-                Description = "Sử dụng PhoBERT để phân tích 15,000 bài đăng mạng xã hội, phân loại cảm xúc tích cực, tiêu cực và trung lập.", 
-                Status = "Submitted", 
-                StudentId = 3, 
-                AdvisorId = 2, 
-                CreatedAt = DateTime.UtcNow.AddDays(-5),
-                Category = "Topic",
-                Major = "networking"
-            }
-        );
 
         modelBuilder.Entity<SocialPost>().HasData(
             new SocialPost

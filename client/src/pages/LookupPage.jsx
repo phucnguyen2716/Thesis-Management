@@ -172,218 +172,7 @@ const DO_AN_MAJORS = {
   }
 };
 
-const ALL_RESULTS = [
-  // ── ĐỒ ÁN (type: 'do-an') ──────────────────────────────────────────────────
-  {
-    id: 101,
-    type: 'do-an',
-    major: 'ai',
-    subjectCode: 'ITE1173E',
-    title: 'Phát hiện bất thường giao dịch tài chính sử dụng thuật toán Random Forest',
-    student: 'Nguyễn Thanh Tùng',
-    advisor: 'TS. Trần Minh Triết',
-    year: '2025',
-    department: 'Trí tuệ nhân tạo',
-    similarity: '12%',
-    similarityLevel: 'safe',
-    desc: 'Đồ án thực hành môn Máy học (ITE1173E). Xây dựng mô hình Random Forest để phân loại các giao dịch thẻ tín dụng có dấu hiệu gian lận với độ chính xác cao.',
-    tags: ['machinelearning', 'finance', 'fraud-detection']
-  },
-  {
-    id: 102,
-    type: 'do-an',
-    major: 'ai',
-    subjectCode: 'ITE1174E',
-    title: 'Ứng dụng AI hỗ trợ phân loại rác thải tự động tại nguồn',
-    student: 'Lê Hoài Nam',
-    advisor: 'ThS. Nguyễn Thị Minh Thư',
-    year: '2025',
-    department: 'Trí tuệ nhân tạo',
-    similarity: '15%',
-    similarityLevel: 'safe',
-    desc: 'Đồ án môn Phát triển ứng dụng trí tuệ nhân tạo (ITE1174E). Tích hợp mô hình YOLOv8 trên thiết bị di động để nhận diện và phân loại rác hữu cơ, vô cơ.',
-    tags: ['ai-application', 'yolov8', 'environment']
-  },
-  {
-    id: 103,
-    type: 'do-an',
-    major: 'ai',
-    subjectCode: 'ITE1491',
-    title: 'Hệ thống khuyến nghị phòng trọ thông minh dựa trên hành vi sinh viên',
-    student: 'Phạm Minh Quân',
-    advisor: 'TS. Hoàng Văn Đức',
-    year: '2025',
-    department: 'Trí tuệ nhân tạo',
-    similarity: '9%',
-    similarityLevel: 'safe',
-    desc: 'Đồ án chuyên ngành trí tuệ nhân tạo (ITE1491). Sử dụng thuật toán lọc cộng tác (Collaborative Filtering) để đề xuất phòng trọ phù hợp nhất cho sinh viên.',
-    tags: ['recommendation-system', 'ai-project', 'uef']
-  },
-  {
-    id: 104,
-    type: 'do-an',
-    major: 'ai',
-    subjectCode: 'ITE1176E',
-    title: 'Phân tích xu hướng tiêu dùng điện tử từ dữ liệu mạng xã hội',
-    student: 'Đỗ Thị Lan Anh',
-    advisor: 'TS. Nguyễn Khắc Nhật',
-    year: '2025',
-    department: 'Trí tuệ nhân tạo',
-    similarity: '24%',
-    similarityLevel: 'high',
-    desc: 'Đồ án môn Khai thác dữ liệu và ứng dụng (ITE1176E). Cào dữ liệu từ Facebook/TikTok và thực hiện phân tích cảm xúc (Sentiment Analysis) về các dòng smartphone mới.',
-    tags: ['datamining', 'nlp', 'sentiment-analysis']
-  },
-  {
-    id: 105,
-    type: 'do-an',
-    major: 'ai',
-    subjectCode: 'ITE1181E',
-    title: 'Hệ thống điểm danh lớp học bằng nhận diện khuôn mặt thời gian thực',
-    student: 'Trương Quốc Bảo',
-    advisor: 'TS. Bùi Hải Hưng',
-    year: '2024',
-    department: 'Trí tuệ nhân tạo',
-    similarity: '14%',
-    similarityLevel: 'safe',
-    desc: 'Đồ án môn Thị giác máy tính (ITE1181E). Nhận diện khuôn mặt sinh viên uef qua camera IP và tự động cập nhật trạng thái điểm danh lên hệ thống.',
-    tags: ['computervision', 'face-recognition', 'realtime']
-  },
-  {
-    id: 106,
-    type: 'do-an',
-    major: 'networking',
-    subjectCode: 'ITE1235E',
-    title: 'Thiết kế mạng WAN kết nối đa chi nhánh bảo mật bằng IPSec VPN',
-    student: 'Vũ Minh Khang',
-    advisor: 'ThS. Lê Văn Lộc',
-    year: '2025',
-    department: 'Mạng máy tính',
-    similarity: '11%',
-    similarityLevel: 'safe',
-    desc: 'Đồ án môn Mạng máy tính nâng cao (ITE1235E). Giả lập mô hình kết nối an toàn cho doanh nghiệp 3 chi nhánh trên nền tảng Cisco Packet Tracer.',
-    tags: ['networking', 'ipsec-vpn', 'wan']
-  },
-  {
-    id: 107,
-    type: 'do-an',
-    major: 'networking',
-    subjectCode: 'ITE1255E',
-    title: 'Xây dựng ứng dụng truyền tải file đa luồng qua Socket TCP/IP',
-    student: 'Hoàng Tiến Đạt',
-    advisor: 'TS. Đỗ Thanh Nghị',
-    year: '2025',
-    department: 'Mạng máy tính',
-    similarity: '7%',
-    similarityLevel: 'safe',
-    desc: 'Đồ án môn Lập trình mạng máy tính (ITE1255E). Viết ứng dụng client-server bằng C# cho phép chia nhỏ file để tải song song và kiểm tra checksum tự động.',
-    tags: ['socket-programming', 'multithreading', 'csharp']
-  },
-  {
-    id: 108,
-    type: 'do-an',
-    major: 'is',
-    subjectCode: 'ITE1224E',
-    title: 'Phân hoạch và tối ưu hóa hiệu năng cơ sở dữ liệu bán lẻ',
-    student: 'Trần Thị Mỹ Duyên',
-    advisor: 'TS. Nguyễn Gia Trí',
-    year: '2024',
-    department: 'Hệ thống thông tin DN',
-    similarity: '18%',
-    similarityLevel: 'safe',
-    desc: 'Đồ án môn Cơ sở dữ liệu nâng cao (ITE1224E). Thiết kế partition và tối ưu hóa index trên bảng lịch sử giao dịch chứa hơn 10 triệu bản ghi SQL Server.',
-    tags: ['database-optimization', 'partitioning', 'sqlserver']
-  },
-  {
-    id: 109,
-    type: 'do-an',
-    major: 'security',
-    subjectCode: 'ITE1268E',
-    title: 'Đánh giá an toàn thông tin và khai thác thử nghiệm SQL Injection',
-    student: 'Nguyễn Duy Mạnh',
-    advisor: 'TS. Lâm Quang Vinh',
-    year: '2025',
-    department: 'An toàn không gian mạng',
-    similarity: '28%',
-    similarityLevel: 'high',
-    desc: 'Đồ án môn An toàn thông tin cho ứng dụng web (ITE1268E). Nghiên cứu các kỹ thuật SQL Injection, kiểm thử xâm nhập trang web demo và đề xuất giải pháp vá lỗ hổng.',
-    tags: ['security', 'pentesting', 'sqli']
-  },
-
-  // ── KHÓA LUẬN (type: 'khoa-luan') ──────────────────────────────────────────
-  {
-    id: 201,
-    type: 'khoa-luan',
-    major: 'ai',
-    title: 'Nghiên cứu mô hình ngôn ngữ lớn (LLM) hỗ trợ tư vấn học vụ tiếng Việt',
-    student: 'Trần Ngọc Bảo Hân',
-    advisor: 'TS. Nguyễn Minh Trí',
-    year: '2025',
-    department: 'Công nghệ thông tin',
-    similarity: '8%',
-    similarityLevel: 'safe',
-    desc: 'Khóa luận tốt nghiệp chuyên ngành Trí tuệ nhân tạo. Tinh chỉnh (fine-tune) mô hình LLaMA-3 trên bộ dữ liệu quy chế học vụ UEF để trả lời tự động cho sinh viên.',
-    tags: ['llm', 'nlp', 'vietnamese-chatbot']
-  },
-  {
-    id: 202,
-    type: 'khoa-luan',
-    major: 'cybersecurity',
-    title: 'Hệ thống phát hiện mã độc Ransomware dựa trên phân tích hành vi học sâu',
-    student: 'Trịnh Gia Huy',
-    advisor: 'TS. Đặng Minh Tuấn',
-    year: '2025',
-    department: 'An toàn thông tin',
-    similarity: '12%',
-    similarityLevel: 'safe',
-    desc: 'Khóa luận tốt nghiệp chuyên ngành An toàn không gian mạng. Đề xuất kiến trúc CNN-LSTM phân tích chuỗi API call của các tiến trình để cô lập ransomware trước khi mã hóa file.',
-    tags: ['ransomware', 'deeplearning', 'intrusion-detection']
-  },
-  {
-    id: 203,
-    type: 'khoa-luan',
-    major: 'computer-networks',
-    title: 'Nghiên cứu định tuyến tối ưu trong mạng phần mềm định nghĩa (SDN)',
-    student: 'Bùi Văn Hùng',
-    advisor: 'TS. Ngô Minh Hồng',
-    year: '2024',
-    department: 'Mạng máy tính',
-    similarity: '15%',
-    similarityLevel: 'safe',
-    desc: 'Khóa luận tốt nghiệp chuyên ngành Mạng máy tính. Triển khai bộ điều khiển Ryu Controller để phân bổ băng thông động dựa trên thuật toán Dijkstra cải tiến.',
-    tags: ['sdn', 'routing', 'ryu-controller']
-  },
-
-  // ── CHUYÊN ĐỀ (type: 'chuyen-de') ──────────────────────────────────────────
-  {
-    id: 301,
-    type: 'chuyen-de',
-    major: 'software-engineering',
-    title: 'Thiết kế hệ thống vi dịch vụ (Microservices) chịu tải cao với Spring Boot',
-    student: 'Vương Chí Cường',
-    advisor: 'TS. Hoàng Minh Khải',
-    year: '2025',
-    department: 'Công nghệ phần mềm',
-    similarity: '10%',
-    similarityLevel: 'safe',
-    desc: 'Chuyên đề nghiên cứu chuyên sâu về xây dựng cổng dịch vụ (API Gateway), Service Discovery, và Circuit Breaker để tăng khả năng chống chịu lỗi của hệ thống e-commerce.',
-    tags: ['microservices', 'springboot', 'system-design']
-  },
-  {
-    id: 302,
-    type: 'chuyen-de',
-    major: 'information-systems',
-    title: 'Ứng dụng giải pháp ERP trong quản trị chuỗi cung ứng doanh nghiệp sản xuất',
-    student: 'Nguyễn Thị Mai',
-    advisor: 'TS. Phạm Hoàng Anh',
-    year: '2025',
-    department: 'Hệ thống thông tin',
-    similarity: '31%',
-    similarityLevel: 'high',
-    desc: 'Chuyên đề nghiên cứu ứng dụng thực tế phân hệ cung ứng vật tư của SAP ERP cho quy trình vận hành tại một nhà máy chế biến thực phẩm.',
-    tags: ['erp', 'sap', 'supplychain']
-  }
-];
+const ALL_RESULTS = [];
 
 // ─── Main Component ──────────────────────────────────────────────────────────
 const LookupPage = () => {
@@ -393,7 +182,17 @@ const LookupPage = () => {
   const [previewThesis, setPreviewThesis] = useState(null);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [dbTheses, setDbTheses] = useState([]);
-  const [driveFiles, setDriveFiles] = useState([]);
+  const [documentViewMode, setDocumentViewMode] = useState(() => localStorage.getItem('documentViewPreference') || '3d');
+  const [visibleCount, setVisibleCount] = useState(6);
+
+  useEffect(() => {
+    setVisibleCount(6);
+  }, [searchQuery, searchParams]);
+
+  const handleSetViewMode = (mode) => {
+    setDocumentViewMode(mode);
+    localStorage.setItem('documentViewPreference', mode);
+  };
 
   useEffect(() => {
     const fetchDbTheses = async () => {
@@ -402,11 +201,11 @@ const LookupPage = () => {
         if (data && data.items) {
           const mapped = data.items.map(t => ({
             id: t.id,
-            type: t.category === 'Thesis' ? 'khoa-luan' : t.category === 'Topic' ? 'chuyen-de' : 'do-an',
-            major: t.major,
-            subjectCode: t.subjectCode,
+            type: t.category === 'Project' ? 'do-an' : t.category === 'Thesis' ? 'kho-luan' : 'chuyen-de',
+            major: t.major || '',
+            subjectCode: t.subjectCode || '',
             title: t.title,
-            student: t.studentName,
+            student: t.studentName || 'Sinh viên',
             advisor: t.advisorName || 'Chưa phân công',
             year: t.createdAt ? new Date(t.createdAt).getFullYear().toString() : '2026',
             department: t.department || 'Khoa học Công nghệ',
@@ -423,36 +222,9 @@ const LookupPage = () => {
       }
     };
 
-    const fetchDriveFiles = async () => {
-      try {
-        const { data } = await thesisService.getDriveFiles('Temporary_PDF', 'Project');
-        if (data && data.length > 0) {
-          const mapped = data.map((f, idx) => ({
-            id: `drive-${f.id || idx}`,
-            type: 'do-an',
-            major: '',
-            subjectCode: '',
-            title: f.name ? f.name.replace(/\.(pdf|docx?|xlsx?)$/i, '') : `Drive File ${idx + 1}`,
-            student: 'Google Drive',
-            advisor: 'Imported',
-            year: f.modifiedTime ? new Date(f.modifiedTime).getFullYear().toString() : '2026',
-            department: 'Temporary_PDF',
-            similarity: '—',
-            similarityLevel: 'safe',
-            desc: `File từ Google Drive • ${f.mimeType || 'document'} • ${f.size ? (f.size / 1024 / 1024).toFixed(1) + ' MB' : 'N/A'}`,
-            tags: ['#drive', '#imported'],
-            pdfUrl: f.webViewLink || f.webContentLink || '#',
-            isDriveFile: true
-          }));
-          setDriveFiles(mapped);
-        }
-      } catch (err) {
-        console.error("Failed to fetch Drive files in LookupPage", err);
-      }
-    };
-
     fetchDbTheses();
-    fetchDriveFiles();
+    const interval = setInterval(fetchDbTheses, 30_000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleOpenPreview = (thesis) => {
@@ -491,7 +263,7 @@ const LookupPage = () => {
 
   const clearType = () => setSearchParams({});
 
-  const combinedResults = [...dbTheses, ...driveFiles, ...ALL_RESULTS];
+  const combinedResults = [...dbTheses, ...ALL_RESULTS];
   const filteredResults = combinedResults.filter(item => {
     // 1. Filter by thesisType
     if (thesisType && item.type !== thesisType) {
@@ -525,6 +297,8 @@ const LookupPage = () => {
     }
     return true;
   });
+
+  const displayedResults = filteredResults.slice(0, visibleCount);
 
   return (
     <div className="min-h-screen bg-surface-bright relative overflow-hidden">
@@ -819,7 +593,7 @@ const LookupPage = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-8">
-              {filteredResults.map((r, idx) => (
+              {displayedResults.map((r, idx) => (
                 <div
                   key={r.id}
                   className="bg-white rounded-[2rem] md:rounded-[2.5rem] border border-outline-variant shadow-sm hover:shadow-[0_20px_50px_rgba(0,0,0,0.07)] transition-all duration-500 group relative flex flex-col h-full overflow-hidden"
@@ -905,11 +679,16 @@ const LookupPage = () => {
             </div>
           )}
 
-          <div className="mt-12 md:mt-16 flex justify-center">
-            <button className="px-8 md:px-10 py-3.5 md:py-4 bg-white border-2 border-outline-variant/50 rounded-[2rem] font-black text-[10px] uppercase tracking-[0.2em] hover:border-primary hover:text-primary transition-all shadow-sm">
-              XEM THÊM KẾT QUẢ
-            </button>
-          </div>
+          {filteredResults.length > visibleCount && (
+            <div className="mt-12 md:mt-16 flex justify-center">
+              <button 
+                onClick={() => setVisibleCount(prev => prev + 6)}
+                className="px-8 md:px-10 py-3.5 md:py-4 bg-white border-2 border-outline-variant/50 rounded-[2rem] font-black text-[10px] uppercase tracking-[0.2em] hover:border-primary hover:text-primary transition-all shadow-sm cursor-pointer"
+              >
+                XEM THÊM KẾT QUẢ
+              </button>
+            </div>
+          )}
         </main>
       </div>
 
@@ -997,17 +776,52 @@ const LookupPage = () => {
               </span>
             </div>
 
+            {/* View Mode Preferences Switcher */}
+            <div className="space-y-2.5 p-4 bg-surface-container-low rounded-2xl border border-outline-variant/20">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest flex items-center gap-1.5 opacity-80">
+                  <span className="material-symbols-outlined text-sm">settings</span> Cấu hình chế độ xem tài liệu
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-3 mt-1">
+                <button
+                  onClick={() => handleSetViewMode('3d')}
+                  className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border cursor-pointer ${
+                    documentViewMode === '3d'
+                      ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                      : 'bg-white text-blue-600 border-blue-100 hover:bg-blue-50/50'
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-[13px]">menu_book</span>
+                  Sách 3D Flipbook
+                </button>
+                <button
+                  onClick={() => handleSetViewMode('pdf')}
+                  className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border cursor-pointer ${
+                    documentViewMode === 'pdf'
+                      ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                      : 'bg-white text-blue-600 border-blue-100 hover:bg-blue-50/50'
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-[13px]">picture_as_pdf</span>
+                  PDF Preview
+                </button>
+              </div>
+            </div>
+
             {/* Footer Buttons */}
             <div className="flex gap-3 mt-2 flex-col sm:flex-row">
               <button
                 onClick={() => {
                   setShowPreviewModal(false);
-                  window.open(`/theses/${previewThesis.id}/flipbook`, '_blank');
+                  window.open(`/theses/${previewThesis.id}/flipbook?mode=${documentViewMode}`, '_blank');
                 }}
                 className="flex-1 py-3.5 bg-primary hover:bg-primary/95 text-white rounded-xl font-bold uppercase tracking-widest text-[10px] shadow-md hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer border-none"
               >
-                <span className="material-symbols-outlined text-base">menu_book</span>
-                Đọc Sách 3D (Flipbook)
+                <span className="material-symbols-outlined text-base">
+                  {documentViewMode === '3d' ? 'menu_book' : 'picture_as_pdf'}
+                </span>
+                {documentViewMode === '3d' ? 'Đọc Sách 3D (Flipbook)' : 'Xem PDF Preview'}
               </button>
               <button
                 onClick={() => {
