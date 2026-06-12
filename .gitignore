@@ -80,3 +80,18 @@ desktop.ini
 *.sw?
 *.ntvs*
 *.njsproj
+
+# ==========================================
+# eThesis Specific / Local files
+# ==========================================
+src/PlatformAdmin/google-credentials.json
+src/PlatformAdmin/google-oauth-token.json
+src/PlatformAdmin/ethesis.db
+src/PlatformAdmin/temporary_pdf/
+src/PlatformAdmin/uploads/
+src/PlatformAdmin/mock_google_drive/
+mock_google_drive/
+.dotnet/
+.node/
+dotnet-install.ps1
+
