@@ -136,7 +136,136 @@ public static class DrivePathParser
             subjectCode = category == AcademicCategory.Topic ? "TOPIC101" : "THESIS202";
         }
 
+        if (!string.IsNullOrEmpty(projectName) && !string.IsNullOrEmpty(studentUid) && !string.IsNullOrEmpty(subject))
+        {
+            bool isGeneric = projectName.Contains("DoAn", StringComparison.OrdinalIgnoreCase) || 
+                             projectName.Contains("Nhom", StringComparison.OrdinalIgnoreCase) ||
+                             projectName.Contains("Bao cao", StringComparison.OrdinalIgnoreCase) ||
+                             projectName.Contains("Slide", StringComparison.OrdinalIgnoreCase) ||
+                             projectName.Contains("TaiLieu", StringComparison.OrdinalIgnoreCase) ||
+                             projectName.Contains("HuongDan", StringComparison.OrdinalIgnoreCase) ||
+                             projectName.Contains("Đề tài SV", StringComparison.OrdinalIgnoreCase);
+
+            if (isGeneric)
+            {
+                projectName = GetProfessionalProjectTitle(subject, studentUid);
+            }
+        }
+
         return (major, majorKey, subject, subjectCode, studentUid, projectName);
+    }
+
+    private static string GetProfessionalProjectTitle(string subjectName, string studentUid)
+    {
+        int hash = 0;
+        foreach (char c in studentUid)
+        {
+            hash = (hash * 31) + c;
+        }
+        int index = Math.Abs(hash);
+
+        string[] prefixes = {
+            "Nghiên cứu và phát triển hệ thống",
+            "Xây dựng ứng dụng",
+            "Tối ưu hóa giải pháp",
+            "Thiết kế và triển khai hệ thống",
+            "Phân tích và mô phỏng giải pháp",
+            "Ứng dụng công nghệ mới trong thiết kế"
+        };
+
+        string[] genTopics = {
+            "hệ thống quản lý thư viện số tích hợp tìm kiếm thông minh",
+            "ứng dụng đặt đồ ăn trực tuyến hỗ trợ thanh toán điện tử",
+            "hệ thống quản lý khách sạn và đặt phòng thời gian thực",
+            "giao diện hỗ trợ tiếp cận công nghệ cho người khiếm thị",
+            "hệ thống quản lý quan hệ khách hàng tích hợp phân tích tự động"
+        };
+
+        if (subjectName.Contains("Trí tuệ nhân tạo", StringComparison.OrdinalIgnoreCase) || 
+            subjectName.Contains("Máy học", StringComparison.OrdinalIgnoreCase) || 
+            subjectName.Contains("AI", StringComparison.OrdinalIgnoreCase) || 
+            subjectName.Contains("Thị giác", StringComparison.OrdinalIgnoreCase))
+        {
+            string[] aiTopics = {
+                "nhận diện hành vi và khuôn mặt thời gian thực sử dụng Deep Learning",
+                "dự báo và phân tích dữ liệu lớn trong kinh tế số",
+                "xử lý ngôn ngữ tự nhiên hỗ trợ chatbot thông minh",
+                "phân loại hình ảnh y khoa tự động hỗ trợ chẩn đoán",
+                "tự động hóa quy trình phân tích và gợi ý sản phẩm cá nhân hóa"
+            };
+            return $"{prefixes[index % prefixes.Length]} {aiTopics[index % aiTopics.Length]}";
+        }
+        
+        if (subjectName.Contains("Mạng", StringComparison.OrdinalIgnoreCase) || 
+            subjectName.Contains("Networking", StringComparison.OrdinalIgnoreCase) || 
+            subjectName.Contains("Quản trị", StringComparison.OrdinalIgnoreCase))
+        {
+            string[] netTopics = {
+                "giám sát mạng tự động và cảnh báo bảo mật thời gian thực",
+                "định tuyến tối ưu và cân bằng tải trong môi trường Cloud",
+                "kiến trúc mạng an toàn Software-Defined Networking (SDN)",
+                "triển khai hạ tầng mạng VPN bảo mật đa chi nhánh",
+                "mô phỏng hiệu năng và tối ưu băng thông mạng nội bộ"
+            };
+            return $"{prefixes[index % prefixes.Length]} {netTopics[index % netTopics.Length]}";
+        }
+
+        if (subjectName.Contains("Hệ thống thông tin", StringComparison.OrdinalIgnoreCase) || 
+            subjectName.Contains("Cơ sở dữ liệu", StringComparison.OrdinalIgnoreCase) || 
+            subjectName.Contains("Khai thác", StringComparison.OrdinalIgnoreCase))
+        {
+            string[] isTopics = {
+                "khai phá dữ liệu và dự báo xu hướng tiêu dùng trong bán lẻ",
+                "quản lý nguồn lực doanh nghiệp tích hợp báo cáo thông minh",
+                "hệ thống kho dữ liệu thông minh hỗ trợ ra quyết định",
+                "quản lý thông tin y tế và bệnh án điện tử bảo mật",
+                "phân tích hành vi khách hàng trên các sàn thương mại điện tử"
+            };
+            return $"{prefixes[index % prefixes.Length]} {isTopics[index % isTopics.Length]}";
+        }
+
+        if (subjectName.Contains("An toàn", StringComparison.OrdinalIgnoreCase) || 
+            subjectName.Contains("Bảo mật", StringComparison.OrdinalIgnoreCase) || 
+            subjectName.Contains("Security", StringComparison.OrdinalIgnoreCase) || 
+            subjectName.Contains("Điều tra", StringComparison.OrdinalIgnoreCase))
+        {
+            string[] secTopics = {
+                "phát hiện và ngăn chặn mã độc Ransomware bằng học máy",
+                "đánh giá và vá lỗ hổng bảo mật cho hệ thống ứng dụng web",
+                "điều tra số và khôi phục dữ liệu sau sự cố an ninh mạng",
+                "hệ thống xác thực đa nhân tố bảo mật dựa trên Blockchain",
+                "giám sát an toàn thông tin và phát hiện xâm nhập trái phép (IDS)"
+            };
+            return $"{prefixes[index % prefixes.Length]} {secTopics[index % secTopics.Length]}";
+        }
+
+        if (subjectName.Contains("Game", StringComparison.OrdinalIgnoreCase))
+        {
+            string[] gameTopics = {
+                "Game nhập vai hành động 3D trên nền tảng Unity",
+                "Game đi ải 2D đồ họa Pixel tích hợp chế độ nhiều người chơi",
+                "Game giải đố chiến thuật trên thiết bị di động",
+                "Game giáo dục hỗ trợ học tập tương tác trực quan",
+                "Game phiêu lưu thế giới mở tối ưu hóa hiệu năng render"
+            };
+            return $"{prefixes[index % prefixes.Length]} {gameTopics[index % gameTopics.Length]}";
+        }
+
+        if (subjectName.Contains("Chuyên đề", StringComparison.OrdinalIgnoreCase) || 
+            subjectName.Contains("Khóa luận", StringComparison.OrdinalIgnoreCase) || 
+            subjectName.Contains("Tốt nghiệp", StringComparison.OrdinalIgnoreCase))
+        {
+            string[] thesisTopics = {
+                "nghiên cứu và ứng dụng vi dịch vụ (Microservices) trong hệ thống giao dịch trực tuyến",
+                "xây dựng hệ thống khuyến nghị học tập cá nhân hóa dựa trên học máy",
+                "phân tích dữ liệu chuỗi thời gian hỗ trợ dự báo thị trường tài chính",
+                "triển khai giải pháp Zero Trust cho hạ tầng đám mây lai (Hybrid Cloud)",
+                "phân tích và đánh giá an toàn thông tin cho hệ thống thanh toán ngân hàng điện tử"
+            };
+            return $"{prefixes[index % prefixes.Length]} {thesisTopics[index % thesisTopics.Length]}";
+        }
+
+        return $"{prefixes[index % prefixes.Length]} {genTopics[index % genTopics.Length]}";
     }
 
     public static string SanitizeFolderName(string name)
