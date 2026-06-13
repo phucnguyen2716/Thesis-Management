@@ -1,0 +1,6 @@
+- `[x]` Create `majorImages.js` mapping majors/specializations to default Unsplash images.
+- `[x]` Update `studentActivityStats.js` to implement `getInterestProfile()` and `getRecommendedTheses()`.
+- `[x]` Update `ThesisDetail.jsx` to log actions (view, download, favorite) and support bookmarking.
+- `[x]` Update `FavoritesPage.jsx` to dynamically list user favorites, show the Interest Profile dashboard (majors + tags), and list dynamic recommendations.
+- `[x]` Update `LookupPage.jsx` to include card images using default images.
+- `[x]` Verify changes.

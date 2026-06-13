@@ -315,6 +315,54 @@ RecurringJob.AddOrUpdate<DriveSyncJob>(
     "*/1 * * * *"
 );
 
+// Auto-seed default major images to Cloudinary
+_ = Task.Run(async () =>
+{
+    await Task.Delay(5000);
+    try
+    {
+        using var scope = app.Services.CreateScope();
+        var cloudinaryService = scope.ServiceProvider.GetRequiredService<ICloudinaryService>();
+        
+        var defaultImages = new Dictionary<string, string>
+        {
+            { "ai", "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?q=80&w=800" },
+            { "networking", "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?q=80&w=800" },
+            { "is", "https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=800" },
+            { "security", "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=800" },
+            { "software-engineering", "https://images.unsplash.com/photo-1531403009284-440f080d1e12?q=80&w=800" },
+            { "programming", "https://images.unsplash.com/photo-1542831371-29b0f74f9713?q=80&w=800" },
+            { "general", "https://images.unsplash.com/photo-1457369804613-52c61a468e7d?q=80&w=800" }
+        };
+
+        Console.WriteLine("☁️ Cloudinary: Starting default major images seeding...");
+        foreach (var kvp in defaultImages)
+        {
+            try
+            {
+                var result = await cloudinaryService.UploadImageFromUrlAsync(kvp.Value, "thesis", $"{kvp.Key}.jpg");
+                if (result.Success)
+                {
+                    Console.WriteLine($"☁️ Cloudinary: Seeded default image for '{kvp.Key}' -> {result.SecureUrl}");
+                }
+                else
+                {
+                    Console.WriteLine($"☁️ Cloudinary WARNING: Failed to seed default image for '{kvp.Key}': {result.ErrorMessage}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"☁️ Cloudinary ERROR seeding '{kvp.Key}': {ex.Message}");
+            }
+        }
+        Console.WriteLine("☁️ Cloudinary: Completed default major images seeding.");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"⚠️ Cloudinary seeder failed to initialize: {ex.Message}");
+    }
+});
+
 // Auto-seed Google Drive sample data on startup (nếu Drive chưa có file)
 _ = Task.Run(async () =>
 {

@@ -26,6 +26,66 @@ export const logStudentActivity = (type, meta = {}) => {
 
 export const getStudentActivityLog = () => readLog();
 
+export const getInterestProfile = () => {
+  const log = readLog();
+  const majorPoints = {};
+  const tagPoints = {};
+
+  log.forEach(entry => {
+    let pts = 0;
+    if (entry.type === 'thesis_view') pts = 1;
+    else if (entry.type === 'thesis_download') pts = 3;
+    else if (entry.type === 'thesis_favorite') pts = 5;
+
+    if (pts > 0) {
+      if (entry.major) {
+        const key = entry.major.trim().toLowerCase();
+        majorPoints[key] = (majorPoints[key] || 0) + pts;
+      }
+      if (entry.tags && Array.isArray(entry.tags)) {
+        entry.tags.forEach(tag => {
+          const cleanTag = tag.trim().toLowerCase();
+          tagPoints[cleanTag] = (tagPoints[cleanTag] || 0) + pts;
+        });
+      }
+    }
+  });
+
+  return { majorPoints, tagPoints };
+};
+
+export const getRecommendedTheses = (allTheses, favoritesList = [], limit = 6) => {
+  const { majorPoints, tagPoints } = getInterestProfile();
+  const favIds = new Set(favoritesList.map(f => f.id.toString()));
+
+  const scored = allTheses.map(thesis => {
+    if (favIds.has(thesis.id.toString())) {
+      return { thesis, score: -1 };
+    }
+
+    let score = 0;
+    if (thesis.major) {
+      const key = thesis.major.trim().toLowerCase();
+      score += majorPoints[key] || 0;
+    }
+    if (thesis.tags && Array.isArray(thesis.tags)) {
+      thesis.tags.forEach(tag => {
+        const cleanTag = tag.trim().toLowerCase();
+        score += tagPoints[cleanTag] || 0;
+      });
+    }
+
+    return { thesis, score };
+  });
+
+  const recommended = scored
+    .filter(item => item.score >= 0)
+    .sort((a, b) => b.score - a.score || b.thesis.id - a.thesis.id)
+    .map(item => item.thesis);
+
+  return recommended.slice(0, limit);
+};
+
 const countByMonth = (entries, year) =>
   MONTH_LABELS.map((month, i) => ({
     month,
@@ -82,3 +142,4 @@ export const fetchStudentActivityStats = async () => {
     },
   };
 };
+

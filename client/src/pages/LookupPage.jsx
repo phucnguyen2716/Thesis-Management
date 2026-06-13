@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { thesisService } from '../services/api';
+import { getMajorDefaultImage } from '../utils/majorImages';
 
 // ─── Type config (colours + filters) ────────────────────────────────────────
 const TYPE_CONFIG = {
@@ -642,6 +643,16 @@ const LookupPage = () => {
                 >
                   {/* Top accent line — type-coloured */}
                   <div className={`h-1.5 bg-gradient-to-r opacity-0 group-hover:opacity-100 transition-all duration-500 ${tc ? tc.cardAccent : 'from-primary/20 via-primary to-primary/20'}`} />
+
+                  {/* Card Cover Image */}
+                  <div className="h-40 w-full overflow-hidden relative">
+                    <img 
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[2s]" 
+                      src={getMajorDefaultImage(r.major)} 
+                      alt="" 
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent"></div>
+                  </div>
 
                   <div className="p-6 md:p-8 flex-1 flex flex-col">
                     <div className="flex items-center gap-2 mb-4">

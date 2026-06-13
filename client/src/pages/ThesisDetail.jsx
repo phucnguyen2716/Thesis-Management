@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { thesisService } from '../services/api';
+import { logStudentActivity } from '../utils/studentActivityStats';
+import { getMajorDefaultImage } from '../utils/majorImages';
 
 const getFileIcon = (fileName) => {
   const ext = fileName.split('.').pop().toLowerCase();
@@ -158,6 +160,8 @@ const ThesisDetail = () => {
         advisorName: s.advisor || s.advisorName,
         year: s.year || "2024",
         department: s.department || "IT Department",
+        major: s.major || s.department || "",
+        subjectCode: s.subjectCode || "",
         similarity: s.similarity || "10%",
         similarityLevel: s.similarityLevel || "safe",
         description: s.description || s.desc || "Chưa có mô tả chi tiết.",
@@ -177,12 +181,30 @@ const ThesisDetail = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [copiedCitation, setCopiedCitation] = useState(false);
   const [citationFormat, setCitationFormat] = useState('APA');
+  const [isFavorite, setIsFavorite] = useState(false);
 
   useEffect(() => {
     if (!thesis) {
       fetchRealThesis();
     }
   }, [id, thesis]);
+
+  useEffect(() => {
+    if (thesis) {
+      logStudentActivity('thesis_view', { 
+        id: thesis.id, 
+        major: thesis.major || thesis.department, 
+        tags: thesis.tags 
+      });
+      try {
+        const favs = JSON.parse(localStorage.getItem('studentFavorites') || '[]');
+        const exists = favs.some(f => f.id.toString() === thesis.id.toString());
+        setIsFavorite(exists);
+      } catch (e) {
+        setIsFavorite(false);
+      }
+    }
+  }, [thesis]);
 
   const fetchRealThesis = async () => {
     try {
@@ -196,6 +218,8 @@ const ThesisDetail = () => {
           advisorName: res.data.advisorName || "Chưa phân công",
           year: res.data.year || "2024",
           department: res.data.department || "Khoa học Công nghệ",
+          major: res.data.major || "",
+          subjectCode: res.data.subjectCode || "",
           similarity: res.data.similarity || "10%",
           similarityLevel: parseFloat(res.data.similarity) > 20 ? "high" : "safe",
           description: res.data.description || "Chưa có mô tả chi tiết cho sáng kiến này.",
@@ -295,6 +319,16 @@ const ThesisDetail = () => {
           {/* Main Info Block */}
           <div className="flex-1 w-full space-y-8">
             <div className="bg-white rounded-[2.5rem] p-6 sm:p-8 md:p-10 border border-outline-variant shadow-sm relative overflow-hidden">
+              
+              {/* Cover Banner Image */}
+              <div className="h-48 sm:h-64 -mx-6 -mt-6 sm:-mx-8 sm:-mt-8 md:-mx-10 md:-mt-10 mb-8 overflow-hidden relative">
+                <img 
+                  src={getMajorDefaultImage(thesis.major || thesis.department)} 
+                  alt="" 
+                  className="w-full h-full object-cover opacity-90 transition-transform duration-500 hover:scale-105" 
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-white via-transparent to-black/25"></div>
+              </div>
               
               {/* Top Row Badges */}
               <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
@@ -457,7 +491,14 @@ const ThesisDetail = () => {
                               {/* Keep 3D Flipbook viewer for converted PDF files */}
                               {isPdf && (
                                 <button 
-                                  onClick={() => window.open(`/theses/${thesis.id}/flipbook?file=${encodeURIComponent(sub.filePath)}`, '_blank')}
+                                  onClick={() => {
+                                    logStudentActivity('thesis_download', { 
+                                      id: thesis.id, 
+                                      major: thesis.major || thesis.department, 
+                                      tags: thesis.tags 
+                                    });
+                                    window.open(`/theses/${thesis.id}/flipbook?file=${encodeURIComponent(sub.filePath)}`, '_blank');
+                                  }}
                                   className="px-5 py-2.5 bg-primary text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-primary/95 transition-all flex items-center gap-2 shadow-sm border-none cursor-pointer"
                                 >
                                   <span className="material-symbols-outlined text-sm">menu_book</span> Đọc sách 3D
@@ -467,6 +508,11 @@ const ThesisDetail = () => {
                               {/* View / Download button depending on whether it's local or drive url */}
                               <button 
                                 onClick={() => {
+                                  logStudentActivity('thesis_download', { 
+                                    id: thesis.id, 
+                                    major: thesis.major || thesis.department, 
+                                    tags: thesis.tags 
+                                  });
                                   if (sub.filePath.startsWith('http')) {
                                     window.open(sub.filePath, '_blank');
                                   } else {
@@ -648,8 +694,51 @@ const ThesisDetail = () => {
                 </button>
               )}
 
-              <button className="w-full py-3.5 bg-on-surface text-white rounded-xl font-bold uppercase tracking-widest text-[10px] shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2">
-                <span className="material-symbols-outlined text-sm">bookmark</span> Lưu vào thư viện
+              <button 
+                onClick={() => {
+                  try {
+                    const favs = JSON.parse(localStorage.getItem('studentFavorites') || '[]');
+                    if (isFavorite) {
+                      const updated = favs.filter(f => f.id.toString() !== thesis.id.toString());
+                      localStorage.setItem('studentFavorites', JSON.stringify(updated));
+                      setIsFavorite(false);
+                    } else {
+                      const newFav = {
+                        id: thesis.id,
+                        title: thesis.title,
+                        student: thesis.studentName,
+                        advisor: thesis.advisorName,
+                        year: thesis.year,
+                        major: thesis.major || thesis.department,
+                        tags: thesis.tags || ['#research'],
+                        stats: { views: "1.0k", downloads: "200", rating: "4.8" },
+                        description: thesis.description,
+                        pdfUrl: thesis.pdfUrl
+                      };
+                      favs.push(newFav);
+                      localStorage.setItem('studentFavorites', JSON.stringify(favs));
+                      setIsFavorite(true);
+                      logStudentActivity('thesis_favorite', { 
+                        id: thesis.id, 
+                        major: thesis.major || thesis.department, 
+                        tags: thesis.tags 
+                      });
+                    }
+                    window.dispatchEvent(new Event('student-favorites-updated'));
+                  } catch (e) {
+                    console.error("Failed to toggle favorite", e);
+                  }
+                }}
+                className={`w-full py-3.5 rounded-xl font-bold uppercase tracking-widest text-[10px] shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 ${
+                  isFavorite 
+                    ? 'bg-slate-200 text-on-surface-variant hover:bg-red-50 hover:text-red-600 border border-outline-variant/30' 
+                    : 'bg-on-surface text-white'
+                }`}
+              >
+                <span className="material-symbols-outlined text-sm">
+                  {isFavorite ? 'bookmark_remove' : 'bookmark'}
+                </span>
+                {isFavorite ? 'Xóa khỏi thư viện' : 'Lưu vào thư viện'}
               </button>
               
               <button 

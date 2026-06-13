@@ -8,8 +8,8 @@ namespace PlatformAdmin.Services
 {
     public interface ICloudinaryService
     {
-        Task<CloudinaryUploadResult> UploadImageAsync(string fileName, byte[] fileBytes);
-        Task<CloudinaryUploadResult> UploadImageFromUrlAsync(string imageUrl);
+        Task<CloudinaryUploadResult> UploadImageAsync(string fileName, byte[] fileBytes, string? folder = null);
+        Task<CloudinaryUploadResult> UploadImageFromUrlAsync(string imageUrl, string? folder = null, string? customFileName = null);
     }
 
     public class CloudinaryService : ICloudinaryService
@@ -52,10 +52,10 @@ namespace PlatformAdmin.Services
             }
         }
 
-        public async Task<CloudinaryUploadResult> UploadImageAsync(string fileName, byte[] fileBytes)
+        public async Task<CloudinaryUploadResult> UploadImageAsync(string fileName, byte[] fileBytes, string? folder = null)
         {
             var uniqueGuid = Guid.NewGuid().ToString("D");
-            var secureFolder = $"social_media/posts/{uniqueGuid}";
+            var secureFolder = string.IsNullOrEmpty(folder) ? $"social_media/posts/{uniqueGuid}" : folder;
             
             _logger.LogInformation("PlatformAdmin Cloudinary: Uploading byte stream '{File}' to path: '{Path}'", fileName, secureFolder);
 
@@ -78,13 +78,15 @@ namespace PlatformAdmin.Services
             try
             {
                 using var memoryStream = new MemoryStream(fileBytes);
+                var isThesisFolder = secureFolder.Equals("thesis", StringComparison.OrdinalIgnoreCase);
                 var uploadParams = new CloudinaryDotNet.Actions.ImageUploadParams()
                 {
                     File = new CloudinaryDotNet.FileDescription(fileName, memoryStream),
                     Folder = secureFolder,
                     PublicId = Path.GetFileNameWithoutExtension(fileName),
-                    UseFilename = true,
-                    UniqueFilename = true,
+                    UseFilename = !isThesisFolder,
+                    UniqueFilename = !isThesisFolder,
+                    Overwrite = isThesisFolder,
                     Transformation = new CloudinaryDotNet.Transformation().Quality("auto").FetchFormat("auto")
                 };
 
@@ -119,7 +121,7 @@ namespace PlatformAdmin.Services
             }
         }
 
-        public async Task<CloudinaryUploadResult> UploadImageFromUrlAsync(string imageUrl)
+        public async Task<CloudinaryUploadResult> UploadImageFromUrlAsync(string imageUrl, string? folder = null, string? customFileName = null)
         {
             if (string.IsNullOrEmpty(imageUrl))
             {
@@ -141,7 +143,7 @@ namespace PlatformAdmin.Services
             try
             {
                 byte[] fileBytes;
-                string fileName = "image.jpg";
+                string fileName = string.IsNullOrEmpty(customFileName) ? "image.jpg" : customFileName;
 
                 if (imageUrl.StartsWith("data:image/", StringComparison.OrdinalIgnoreCase))
                 {
@@ -155,35 +157,41 @@ namespace PlatformAdmin.Services
                     var base64Part = imageUrl.Substring(commaIndex + 1);
                     fileBytes = Convert.FromBase64String(base64Part);
 
-                    // Infer extension
-                    var mimeType = imageUrl.Substring(5, commaIndex - 5);
-                    if (mimeType.Contains(';'))
+                    if (string.IsNullOrEmpty(customFileName))
                     {
-                        mimeType = mimeType.Substring(0, mimeType.IndexOf(';'));
+                        // Infer extension
+                        var mimeType = imageUrl.Substring(5, commaIndex - 5);
+                        if (mimeType.Contains(';'))
+                        {
+                            mimeType = mimeType.Substring(0, mimeType.IndexOf(';'));
+                        }
+                        var ext = mimeType.Split('/')[1];
+                        fileName = $"upload_{Guid.NewGuid().ToString("N").Substring(0, 8)}.{ext}";
                     }
-                    var ext = mimeType.Split('/')[1];
-                    fileName = $"upload_{Guid.NewGuid().ToString("N").Substring(0, 8)}.{ext}";
                 }
                 else
                 {
                     // Handle standard HTTP URL
                     fileBytes = await _httpClient.GetByteArrayAsync(imageUrl);
-                    try
+                    if (string.IsNullOrEmpty(customFileName))
                     {
-                        var uri = new Uri(imageUrl);
-                        fileName = Path.GetFileName(uri.LocalPath);
-                        if (string.IsNullOrEmpty(fileName) || !fileName.Contains('.'))
+                        try
+                        {
+                            var uri = new Uri(imageUrl);
+                            var localFileName = Path.GetFileName(uri.LocalPath);
+                            if (!string.IsNullOrEmpty(localFileName) && localFileName.Contains('.'))
+                            {
+                                fileName = localFileName;
+                            }
+                        }
+                        catch
                         {
                             fileName = "image.jpg";
                         }
                     }
-                    catch
-                    {
-                        fileName = "image.jpg";
-                    }
                 }
 
-                return await UploadImageAsync(fileName, fileBytes);
+                return await UploadImageAsync(fileName, fileBytes, folder);
             }
             catch (Exception ex)
             {

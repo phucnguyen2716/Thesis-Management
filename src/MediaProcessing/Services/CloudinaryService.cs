@@ -8,7 +8,7 @@ namespace MediaProcessing.Services
 {
     public interface ICloudinaryService
     {
-        Task<CloudinaryUploadResult> UploadImageAsync(string fileName, byte[] fileBytes);
+        Task<CloudinaryUploadResult> UploadImageAsync(string fileName, byte[] fileBytes, string? folder = null);
     }
 
     public class CloudinaryService : ICloudinaryService
@@ -50,11 +50,11 @@ namespace MediaProcessing.Services
             }
         }
 
-        public async Task<CloudinaryUploadResult> UploadImageAsync(string fileName, byte[] fileBytes)
+        public async Task<CloudinaryUploadResult> UploadImageAsync(string fileName, byte[] fileBytes, string? folder = null)
         {
             var uniqueGuid = Guid.NewGuid().ToString("D");
             // Secure path folder grouping: GUID -> image name
-            var secureFolder = $"social_app/images/{uniqueGuid}";
+            var secureFolder = string.IsNullOrEmpty(folder) ? $"social_app/images/{uniqueGuid}" : folder;
             
             _logger.LogInformation("Cloudinary: Compressing and uploading '{File}' into secure cloud path: '{Path}'", fileName, secureFolder);
 
@@ -79,13 +79,15 @@ namespace MediaProcessing.Services
             try
             {
                 using var memoryStream = new MemoryStream(fileBytes);
+                var isThesisFolder = secureFolder.Equals("thesis", StringComparison.OrdinalIgnoreCase);
                 var uploadParams = new CloudinaryDotNet.Actions.ImageUploadParams()
                 {
                     File = new CloudinaryDotNet.FileDescription(fileName, memoryStream),
                     Folder = secureFolder,
                     PublicId = Path.GetFileNameWithoutExtension(fileName),
-                    UseFilename = true,
-                    UniqueFilename = true,
+                    UseFilename = !isThesisFolder,
+                    UniqueFilename = !isThesisFolder,
+                    Overwrite = isThesisFolder,
                     Transformation = new CloudinaryDotNet.Transformation().Quality("auto").FetchFormat("auto")
                 };
 
