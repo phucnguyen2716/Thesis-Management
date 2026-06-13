@@ -648,7 +648,7 @@ const LookupPage = () => {
                   <div className="h-40 w-full overflow-hidden relative">
                     <img 
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[2s]" 
-                      src={getMajorDefaultImage(r.major)} 
+                      src={getMajorDefaultImage(r.major, r.id)} 
                       alt="" 
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent"></div>

@@ -323,7 +323,7 @@ const ThesisDetail = () => {
               {/* Cover Banner Image */}
               <div className="h-48 sm:h-64 -mx-6 -mt-6 sm:-mx-8 sm:-mt-8 md:-mx-10 md:-mt-10 mb-8 overflow-hidden relative">
                 <img 
-                  src={getMajorDefaultImage(thesis.major || thesis.department)} 
+                  src={getMajorDefaultImage(thesis.major || thesis.department, thesis.id)} 
                   alt="" 
                   className="w-full h-full object-cover opacity-90 transition-transform duration-500 hover:scale-105" 
                 />

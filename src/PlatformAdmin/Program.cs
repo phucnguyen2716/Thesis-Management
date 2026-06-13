@@ -326,13 +326,33 @@ _ = Task.Run(async () =>
         
         var defaultImages = new Dictionary<string, string>
         {
-            { "ai", "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?q=80&w=800" },
-            { "networking", "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?q=80&w=800" },
-            { "is", "https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=800" },
-            { "security", "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=800" },
-            { "software-engineering", "https://images.unsplash.com/photo-1531403009284-440f080d1e12?q=80&w=800" },
-            { "programming", "https://images.unsplash.com/photo-1542831371-29b0f74f9713?q=80&w=800" },
-            { "general", "https://images.unsplash.com/photo-1457369804613-52c61a468e7d?q=80&w=800" }
+            { "ai_1", "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?q=80&w=800" },
+            { "ai_2", "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?q=80&w=800" },
+            { "ai_3", "https://images.unsplash.com/photo-1507146426996-ef05306b995a?q=80&w=800" },
+
+            { "networking_1", "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?q=80&w=800" },
+            { "networking_2", "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?q=80&w=800" },
+            { "networking_3", "https://images.unsplash.com/photo-1506784983877-45594efa4cbe?q=80&w=800" },
+
+            { "is_1", "https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=800" },
+            { "is_2", "https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=800" },
+            { "is_3", "https://images.unsplash.com/photo-1504868584819-f8e8b4b6d7e3?q=80&w=800" },
+
+            { "security_1", "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=800" },
+            { "security_2", "https://images.unsplash.com/photo-1563986768609-322da13575f3?q=80&w=800" },
+            { "security_3", "https://images.unsplash.com/photo-1614064641938-3bbee52942c7?q=80&w=800" },
+
+            { "software-engineering_1", "https://images.unsplash.com/photo-1531403009284-440f080d1e12?q=80&w=800" },
+            { "software-engineering_2", "https://images.unsplash.com/photo-1510915228340-29c85a43dcfe?q=80&w=800" },
+            { "software-engineering_3", "https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=800" },
+
+            { "programming_1", "https://images.unsplash.com/photo-1542831371-29b0f74f9713?q=80&w=800" },
+            { "programming_2", "https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=800" },
+            { "programming_3", "https://images.unsplash.com/photo-1498050108023-c5249f4df085?q=80&w=800" },
+
+            { "general_1", "https://images.unsplash.com/photo-1457369804613-52c61a468e7d?q=80&w=800" },
+            { "general_2", "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?q=80&w=800" },
+            { "general_3", "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=800" }
         };
 
         Console.WriteLine("☁️ Cloudinary: Starting default major images seeding...");

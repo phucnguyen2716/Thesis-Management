@@ -281,7 +281,7 @@ const FavoritesPage = () => {
           <div className="absolute inset-0 transition-all duration-[1s] ease-in-out">
             {/* Cover image backdrop */}
             <img 
-              src={currentItem.image || getMajorDefaultImage(currentItem.major)} 
+              src={currentItem.image || getMajorDefaultImage(currentItem.major, currentItem.id)} 
               className="w-full h-full object-cover opacity-45 transition-transform duration-[8s] group-hover:scale-105" 
               alt="" 
             />
@@ -356,7 +356,7 @@ const FavoritesPage = () => {
                   : 'w-[100px] h-[60px] opacity-30 hover:opacity-100'
                 } rounded-xl overflow-hidden shadow-xl border-none cursor-pointer`}
               >
-                <img src={item.image || getMajorDefaultImage(item.major)} className="w-full h-full object-cover" alt="" />
+                <img src={item.image || getMajorDefaultImage(item.major, item.id)} className="w-full h-full object-cover" alt="" />
                 <div className="absolute inset-0 bg-black/40 hover:bg-transparent transition-colors"></div>
                 <div className="absolute bottom-2 left-2 right-2 text-left">
                   <p className="text-[8px] font-bold text-white truncate uppercase tracking-tight">{item.title}</p>
@@ -501,7 +501,7 @@ const FavoritesPage = () => {
                 <div className="h-44 w-full overflow-hidden relative">
                   <img 
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[2s]" 
-                    src={getMajorDefaultImage(item.major)} 
+                    src={getMajorDefaultImage(item.major, item.id)} 
                     alt={item.title} 
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent"></div>
@@ -582,7 +582,7 @@ const FavoritesPage = () => {
               <div className="h-44 w-full overflow-hidden relative">
                 <img 
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[2s]" 
-                  src={getMajorDefaultImage(item.major)} 
+                  src={getMajorDefaultImage(item.major, item.id)} 
                   alt={item.title} 
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent"></div>
