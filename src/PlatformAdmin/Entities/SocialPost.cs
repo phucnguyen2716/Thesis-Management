@@ -12,5 +12,6 @@ public class SocialPost
     public string Desc { get; set; } = string.Empty;
     public string Content { get; set; } = string.Empty;
     public bool Published { get; set; } = true;
+    public string CloudinaryStatus { get; set; } = "None"; // None, Pending, Uploaded, Failed
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

@@ -2,6 +2,30 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { thesisService } from '../services/api';
 
+const getFileIcon = (fileName) => {
+  const ext = fileName.split('.').pop().toLowerCase();
+  if (ext === 'pdf') return { icon: 'picture_as_pdf', color: 'text-red-500' };
+  if (['doc', 'docx'].includes(ext)) return { icon: 'description', color: 'text-blue-500' };
+  if (['xls', 'xlsx'].includes(ext)) return { icon: 'table_chart', color: 'text-emerald-500' };
+  if (['ppt', 'pptx'].includes(ext)) return { icon: 'slideshow', color: 'text-amber-500' };
+  return { icon: 'insert_drive_file', color: 'text-gray-500' };
+};
+
+const formatSize = (bytes) => {
+  if (!bytes) return '0 KB';
+  if (bytes > 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  return (bytes / 1024).toFixed(0) + ' KB';
+};
+
+const formatDate = (dateString) => {
+  if (!dateString) return '';
+  return new Date(dateString).toLocaleDateString('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  });
+};
+
 const ThesisDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -140,7 +164,8 @@ const ThesisDetail = () => {
         tags: s.tags || ["#research"],
         status: s.status || "Approved",
         latestScore: s.latestScore || 8.5,
-        pdfUrl: s.pdfUrl || "/Document%20Detail.pdf"
+        pdfUrl: s.pdfUrl || "/Document%20Detail.pdf",
+        submissions: s.submissions || []
       };
     }
     return null;
@@ -177,18 +202,19 @@ const ThesisDetail = () => {
           tags: res.data.tags || ["#research", "#uef"],
           status: res.data.status || "Pending",
           latestScore: res.data.latestScore || null,
-          pdfUrl: res.data.pdfUrl || "/Document%20Detail.pdf"
+          pdfUrl: res.data.pdfUrl || "/Document%20Detail.pdf",
+          submissions: res.data.submissions || []
         });
       } else {
         const foundMock = combinedMocks.find(item => item.id.toString() === id.toString());
-        if (foundMock) setThesis(foundMock);
+        if (foundMock) setThesis({ ...foundMock, submissions: foundMock.submissions || [] });
         else setError("Không tìm thấy thông tin sáng kiến.");
       }
     } catch (err) {
       console.error(err);
       const foundMock = combinedMocks.find(item => item.id.toString() === id.toString());
       if (foundMock) {
-        setThesis(foundMock);
+        setThesis({ ...foundMock, submissions: foundMock.submissions || [] });
       } else {
         setError("Không thể tải thông tin chi tiết từ hệ thống.");
       }
@@ -386,57 +412,80 @@ const ThesisDetail = () => {
               {/* Tab: Document Draft */}
               {activeTab === 'document' && (
                 <div className="bg-white rounded-[2.5rem] p-6 sm:p-8 border border-outline-variant shadow-sm space-y-6">
-                  <div className="flex justify-between items-center pb-4 border-b border-outline-variant/20 flex-wrap gap-4">
-                    <div className="flex items-center gap-3">
-                      <span className="material-symbols-outlined text-primary text-3xl shrink-0">picture_as_pdf</span>
-                      <div>
-                        <h4 className="text-sm font-black text-on-surface">Bản thảo lưu trữ chi tiết</h4>
-                        <p className="text-[10px] text-on-surface-variant opacity-60">Định dạng: PDF | Dung lượng: 4.8 MB</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button 
-                        onClick={() => window.open(`/theses/${thesis.id}/flipbook`, '_blank')}
-                        className="px-6 py-2.5 bg-primary text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-primary/90 transition-all flex items-center gap-2 shadow-md border-none cursor-pointer"
-                      >
-                        <span className="material-symbols-outlined text-sm">menu_book</span> Đọc sách 3D
-                      </button>
-                      <button className="px-6 py-2.5 bg-on-surface text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-primary transition-all flex items-center gap-2 shadow-md border-none cursor-pointer">
-                        <span className="material-symbols-outlined text-sm">download</span> Tải xuống
-                      </button>
-                    </div>
+                  <div>
+                    <h3 className="text-xs font-black text-on-surface-variant uppercase tracking-widest mb-4 flex items-center gap-2">
+                      <span className="material-symbols-outlined text-sm">folder_open</span>
+                      Tài liệu và tệp tin liên quan ({thesis.submissions?.length || 0})
+                    </h3>
                   </div>
 
-                  {/* Document Simulated Page */}
-                  <div className="bg-surface-container-lowest border border-outline-variant/30 p-8 rounded-2xl relative select-none">
-                    <div className="space-y-4 opacity-50 blur-[1px]">
-                      <div className="h-6 bg-on-surface-variant/10 rounded w-[80%] mb-8"></div>
-                      <div className="space-y-2">
-                        <div className="h-3.5 bg-on-surface-variant/5 rounded w-full"></div>
-                        <div className="h-3.5 bg-on-surface-variant/5 rounded w-full"></div>
-                        <div className="h-3.5 bg-on-surface-variant/5 rounded w-[95%]"></div>
-                        <div className="h-3.5 bg-on-surface-variant/5 rounded w-[90%]"></div>
-                      </div>
-                      <div className="space-y-2 pt-4">
-                        <div className="h-3.5 bg-on-surface-variant/5 rounded w-[98%]"></div>
-                        <div className="h-3.5 bg-on-surface-variant/5 rounded w-full"></div>
-                        <div className="h-3.5 bg-on-surface-variant/5 rounded w-[85%]"></div>
-                      </div>
+                  {!thesis.submissions || thesis.submissions.length === 0 ? (
+                    <div className="text-center py-12 bg-surface-container-lowest border border-outline-variant/30 rounded-2xl">
+                      <span className="material-symbols-outlined text-on-surface-variant/40 text-5xl mb-3">folder_zip</span>
+                      <p className="text-sm font-black text-on-surface">Chưa có tài liệu sáng kiến</p>
+                      <p className="text-xs text-on-surface-variant opacity-75 max-w-xs mx-auto mt-1">
+                        Hiện tại chưa có tệp tin hoặc tài liệu nào được đồng bộ từ thư mục Drive cho sáng kiến này.
+                      </p>
                     </div>
-                    
-                    {/* Floating Preview Overlay */}
-                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/20 backdrop-blur-[2px] p-4 text-center">
-                      <span className="material-symbols-outlined text-on-surface/40 text-5xl mb-3">menu_book</span>
-                      <p className="text-xs font-black text-on-surface">Đọc Bản thảo 3D Flipbook</p>
-                      <p className="text-[10px] text-on-surface-variant opacity-75 max-w-xs mt-1 mb-4 font-medium">Hệ thống hỗ trợ xem trực tuyến toàn văn đồ án dưới định dạng sách lật 3D thực tế ảo.</p>
-                      <button 
-                        onClick={() => window.open(`/theses/${thesis.id}/flipbook`, '_blank')}
-                        className="px-6 py-2.5 bg-primary text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-primary/90 transition-all flex items-center gap-2 shadow-md border-none cursor-pointer"
-                      >
-                        <span className="material-symbols-outlined text-sm">open_in_new</span> Mở Sách Lật 3D
-                      </button>
+                  ) : (
+                    <div className="space-y-4">
+                      {thesis.submissions.map((sub, idx) => {
+                        const fileInfo = getFileIcon(sub.fileName);
+                        const isPdf = sub.fileName.toLowerCase().endsWith('.pdf') || sub.filePath.toLowerCase().endsWith('.pdf');
+                        return (
+                          <div 
+                            key={sub.id || idx}
+                            className="flex items-center justify-between p-4 bg-surface-container-lowest border border-outline-variant/30 rounded-2xl hover:border-primary/20 hover:shadow-md transition-all flex-wrap gap-4"
+                          >
+                            <div className="flex items-center gap-4 min-w-0 flex-1">
+                              <div className="w-12 h-12 bg-surface-container rounded-xl flex items-center justify-center border border-outline-variant/10 shrink-0">
+                                <span className={`material-symbols-outlined text-2xl ${fileInfo.color}`}>
+                                  {fileInfo.icon}
+                                </span>
+                              </div>
+                              <div className="min-w-0">
+                                <h4 className="text-sm font-black text-on-surface truncate" title={sub.fileName}>
+                                  {sub.fileName}
+                                </h4>
+                                <p className="text-[10px] text-on-surface-variant opacity-60 font-medium">
+                                  Dung lượng: {formatSize(sub.fileSize)} | Ngày đồng bộ: {formatDate(sub.submittedAt)}
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-2 shrink-0">
+                              {/* Keep 3D Flipbook viewer for converted PDF files */}
+                              {isPdf && (
+                                <button 
+                                  onClick={() => window.open(`/theses/${thesis.id}/flipbook?file=${encodeURIComponent(sub.filePath)}`, '_blank')}
+                                  className="px-5 py-2.5 bg-primary text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-primary/95 transition-all flex items-center gap-2 shadow-sm border-none cursor-pointer"
+                                >
+                                  <span className="material-symbols-outlined text-sm">menu_book</span> Đọc sách 3D
+                                </button>
+                              )}
+                              
+                              {/* View / Download button depending on whether it's local or drive url */}
+                              <button 
+                                onClick={() => {
+                                  if (sub.filePath.startsWith('http')) {
+                                    window.open(sub.filePath, '_blank');
+                                  } else {
+                                    window.open(`http://localhost:5145${sub.filePath}`, '_blank');
+                                  }
+                                }}
+                                className="px-5 py-2.5 bg-on-surface text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-primary transition-all flex items-center gap-2 shadow-sm border-none cursor-pointer"
+                              >
+                                <span className="material-symbols-outlined text-sm">
+                                  {sub.filePath.startsWith('http') ? 'open_in_new' : 'download'}
+                                </span>
+                                {sub.filePath.startsWith('http') ? 'Mở trên Drive' : 'Tải xuống'}
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
-                  </div>
+                  )}
                 </div>
               )}
 

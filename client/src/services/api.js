@@ -33,6 +33,7 @@ export const authService = {
 export const thesisService = {
   getAll: (params) => api.get('/thesis', { params }),
   getById: (id) => api.get(`/thesis/${id}`),
+  convertDriveFile: (filePath) => api.post('/drive/convert', null, { params: { filePath } }),
   create: (data) => api.post('/thesis', data),
   update: (id, data) => api.put(`/thesis/${id}`, data),
   delete: (id) => api.delete(`/thesis/${id}`),
@@ -50,6 +51,8 @@ export const thesisService = {
   getStats: () => api.get('/thesis/stats'),
   getDriveFiles: (folder = 'all', category = 'Project') => api.get('/drive/files', { params: { folder, category } }),
   getDriveStatus: () => api.get('/drive/status'),
+  getAuthorizeUrl: (from) => api.get('/drive/authorize-url', { params: { from } }),
+  testDriveConnection: () => api.post('/drive/test-connection'),
   getReviews: (id) => api.get(`/thesis/${id}/reviews`),
   addReview: (id, data) => api.post(`/thesis/${id}/reviews`, data),
   getComments: (id) => api.get(`/thesis/${id}/comments`),
@@ -65,6 +68,13 @@ export const plagiarismService = {
   check: (thesisId) => api.post(`/plagiarism/check/${thesisId}`),
   getStatus: (thesisId) => api.get(`/plagiarism/status/${thesisId}`),
   seed: () => api.post('/plagiarism/seed'),
+};
+
+export const socialService = {
+  getAll: (publishedOnly = false) => api.get('/social/posts', { params: { publishedOnly } }),
+  create: (data) => api.post('/social/posts', data),
+  update: (id, data) => api.put(`/social/posts/${id}`, data),
+  delete: (id) => api.delete(`/social/posts/${id}`),
 };
 
 export const adminService = {

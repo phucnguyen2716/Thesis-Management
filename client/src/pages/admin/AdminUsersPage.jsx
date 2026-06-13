@@ -103,7 +103,7 @@ const AdminUsersPage = ({ fixedRole }) => {
   const set = (k, v) => setForm(prev => ({ ...prev, [k]: v }));
 
   return (
-    <div className="max-w-6xl space-y-5">
+    <div className="w-full space-y-5">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-2xl font-black text-white">{pageTitle}</h1>

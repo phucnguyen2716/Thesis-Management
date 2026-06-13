@@ -186,95 +186,230 @@ public class DriveSyncJob
         using var scope = _scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
+        // Check if any files marked as downloaded are missing from the local disk
+        var existingDownloads = await db.DriveFileRecords
+            .Where(r => r.IsActive && !string.IsNullOrEmpty(r.LocalPdfPath))
+            .ToListAsync();
+
+        bool anyCleared = false;
+        foreach (var r in existingDownloads)
+        {
+            if (r.LocalPdfPath.StartsWith("/temporary_pdf/"))
+            {
+                var subPath = r.LocalPdfPath.Substring("/temporary_pdf/".Length);
+                var fullPath = Path.Combine(_tempPdfRoot, subPath.Replace('/', Path.DirectorySeparatorChar));
+                if (!File.Exists(fullPath))
+                {
+                    _logger.LogInformation("📄 [DriveSyncJob] File {FileName} is marked as downloaded but missing on disk at {Path}. Clearing LocalPdfPath to force re-download.", r.FileName, fullPath);
+                    r.LocalPdfPath = "";
+                    anyCleared = true;
+                }
+            }
+        }
+        if (anyCleared)
+        {
+            await db.SaveChangesAsync();
+        }
+
         var filesToDownload = await db.DriveFileRecords
             .Where(r => r.IsActive && string.IsNullOrEmpty(r.LocalPdfPath))
-            .Take(15)
+            .Take(400)
             .ToListAsync();
 
         foreach (var record in filesToDownload)
         {
-            var uid = string.IsNullOrEmpty(record.StudentUid) ? "unknown" : record.StudentUid;
-            var safeName = DrivePathParser.SanitizeFolderName(Path.GetFileNameWithoutExtension(record.FileName));
-            var workDir = Path.Combine(_tempPdfRoot, $"{uid}_{safeName}");
-            Directory.CreateDirectory(workDir);
-
-            var ext = Path.GetExtension(record.FileName).ToLowerInvariant();
-            var pdfPath = Path.Combine(workDir, Path.GetFileNameWithoutExtension(record.FileName) + ".pdf");
-            
-            if (ext == ".pdf")
+            try
             {
-                if (!File.Exists(pdfPath))
-                {
-                    var bytes = await _driveService.DownloadFileAsync(record.DriveFileId, AcademicCategory.Project);
-                    if (bytes == null || bytes.Length == 0)
-                    {
-                        var majorDisplay = GetMajorName(record.MajorKey);
-                        bytes = DriveSampleDataSeeder.BuildSamplePdf(majorDisplay, record.Subject, record.SubjectCode, uid, record.ProjectName, record.FileName);
-                    }
-                    await File.WriteAllBytesAsync(pdfPath, bytes);
-                }
+                await ProcessSingleFileAsync(record, db);
+                await db.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ [DriveSyncJob] Failed to download/convert file {FileName} ({FileId})", record.FileName, record.DriveFileId);
+            }
+        }
+    }
 
-                record.LocalPdfPath = $"/temporary_pdf/{uid}_{safeName}/{record.FileName}";
-                record.LastCheckedAt = DateTime.UtcNow;
-                _logger.LogInformation("📄 [DriveSyncJob] Downloaded PDF: {File} → {LocalPath}", record.FileName, record.LocalPdfPath);
+    public async Task ProcessSingleFileAsync(DriveFileRecord record, AppDbContext db)
+    {
+        var uid = string.IsNullOrEmpty(record.StudentUid) ? "unknown" : record.StudentUid;
+        var safeName = DrivePathParser.SanitizeFolderName(Path.GetFileNameWithoutExtension(record.FileName));
+        var workDir = Path.Combine(_tempPdfRoot, $"{uid}_{safeName}");
+        Directory.CreateDirectory(workDir);
+
+        var ext = Path.GetExtension(record.FileName).ToLowerInvariant();
+        var pdfPath = Path.Combine(workDir, Path.GetFileNameWithoutExtension(record.FileName) + ".pdf");
+        
+        if (ext == ".pdf")
+        {
+            byte[]? bytes = null;
+            if (!File.Exists(pdfPath))
+            {
+                bytes = await _driveService.DownloadFileAsync(record.DriveFileId, AcademicCategory.Project);
+                if (bytes == null || bytes.Length == 0)
+                {
+                    var majorDisplay = GetMajorName(record.MajorKey);
+                    bytes = DriveSampleDataSeeder.BuildSamplePdf(majorDisplay, record.Subject, record.SubjectCode, uid, record.ProjectName, record.FileName);
+                }
+                await File.WriteAllBytesAsync(pdfPath, bytes);
             }
             else
             {
-                // Word, Excel, PowerPoint, etc.
-                var inputPath = Path.Combine(workDir, record.FileName);
-                if (!File.Exists(inputPath))
-                {
-                    var bytes = await _driveService.DownloadFileAsync(record.DriveFileId, AcademicCategory.Project);
-                    if (bytes == null || bytes.Length == 0)
-                    {
-                        var majorDisplay = GetMajorName(record.MajorKey);
-                        if (ext is ".xlsx" or ".xls")
-                        {
-                            bytes = DriveSampleDataSeeder.BuildSampleXlsx(majorDisplay, record.Subject, record.SubjectCode, uid, record.ProjectName, record.FileName);
-                        }
-                        else
-                        {
-                            bytes = DriveSampleDataSeeder.BuildSampleDocx(majorDisplay, record.Subject, record.SubjectCode, uid, record.ProjectName, record.FileName);
-                        }
-                    }
-                    await File.WriteAllBytesAsync(inputPath, bytes);
-                }
+                bytes = await File.ReadAllBytesAsync(pdfPath);
+            }
 
-                // Try converting using LibreOffice
-                var convertedPdfPath = await _pdfConverter.ConvertToPdfAsync(inputPath, workDir);
-                if (convertedPdfPath != null && File.Exists(convertedPdfPath))
+            record.LocalPdfPath = $"/temporary_pdf/{uid}_{safeName}/{record.FileName}";
+            record.LastCheckedAt = DateTime.UtcNow;
+
+            // Also upload to Drive under Temporary_PDF so that all viewed files are duplicated there
+            try
+            {
+                if (bytes == null || bytes.Length == 0) bytes = await File.ReadAllBytesAsync(pdfPath);
+                await _driveService.UploadFileToFolderAsync("Temporary_PDF", record.FileName, bytes, "application/pdf", AcademicCategory.Project);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Could not upload PDF '{PdfName}' to Temporary_PDF folder", record.FileName);
+            }
+
+            _logger.LogInformation("📄 [DriveSyncJob] Downloaded and replicated PDF: {File} → {LocalPath}", record.FileName, record.LocalPdfPath);
+        }
+        else
+        {
+            // Word, Excel, PowerPoint, etc.
+            var inputPath = Path.Combine(workDir, record.FileName);
+            if (!File.Exists(inputPath))
+            {
+                var bytes = await _driveService.DownloadFileAsync(record.DriveFileId, AcademicCategory.Project);
+                if (bytes == null || bytes.Length == 0)
                 {
-                    pdfPath = convertedPdfPath;
-                }
-                else
-                {
-                    // If LibreOffice conversion failed (not installed or error), build fallback PDF
-                    _logger.LogWarning("⚠️ [DriveSyncJob] PDF conversion failed/not supported for {File}. Generating fallback PDF...", record.FileName);
                     var majorDisplay = GetMajorName(record.MajorKey);
-                    var fallbackBytes = DriveSampleDataSeeder.BuildSamplePdf(majorDisplay, record.Subject, record.SubjectCode, uid, record.ProjectName, record.FileName);
-                    await File.WriteAllBytesAsync(pdfPath, fallbackBytes);
+                    if (ext is ".xlsx" or ".xls")
+                    {
+                        bytes = DriveSampleDataSeeder.BuildSampleXlsx(majorDisplay, record.Subject, record.SubjectCode, uid, record.ProjectName, record.FileName);
+                    }
+                    else
+                    {
+                        bytes = DriveSampleDataSeeder.BuildSampleDocx(majorDisplay, record.Subject, record.SubjectCode, uid, record.ProjectName, record.FileName);
+                    }
                 }
+                await File.WriteAllBytesAsync(inputPath, bytes);
+            }
 
-                var pdfName = Path.GetFileName(pdfPath);
-                record.LocalPdfPath = $"/temporary_pdf/{uid}_{safeName}/{pdfName}";
-                record.LastCheckedAt = DateTime.UtcNow;
+            // Try converting using LibreOffice
+            var convertedPdfPath = await _pdfConverter.ConvertToPdfAsync(inputPath, workDir);
+            if (convertedPdfPath != null && File.Exists(convertedPdfPath))
+            {
+                pdfPath = convertedPdfPath;
+            }
+            else
+            {
+                // If LibreOffice conversion failed (not installed or error), build fallback PDF
+                _logger.LogWarning("⚠️ [DriveSyncJob] PDF conversion failed/not supported for {File}. Generating fallback PDF...", record.FileName);
+                var majorDisplay = GetMajorName(record.MajorKey);
+                var fallbackBytes = DriveSampleDataSeeder.BuildSamplePdf(majorDisplay, record.Subject, record.SubjectCode, uid, record.ProjectName, record.FileName);
+                await File.WriteAllBytesAsync(pdfPath, fallbackBytes);
+            }
 
-                // Upload to Drive under Temporary_PDF if mock upload is needed
-                try
+            var pdfName = Path.GetFileName(pdfPath);
+            record.LocalPdfPath = $"/temporary_pdf/{uid}_{safeName}/{pdfName}";
+            record.LastCheckedAt = DateTime.UtcNow;
+
+            // Upload to Drive under Temporary_PDF if mock upload is needed
+            try
+            {
+                var pdfBytes = await File.ReadAllBytesAsync(pdfPath);
+                await _driveService.UploadFileToFolderAsync("Temporary_PDF", pdfName, pdfBytes, "application/pdf", AcademicCategory.Project);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Could not upload converted PDF '{PdfName}' to Temporary_PDF folder", pdfName);
+            }
+
+            _logger.LogInformation("📄 [DriveSyncJob] Converted/Fallback PDF: {File} → {Pdf}", record.FileName, record.LocalPdfPath);
+        }
+    }
+
+    public async Task<string> ConvertFileRecordOnDemandAsync(string driveFileId)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+        var record = await db.DriveFileRecords
+            .FirstOrDefaultAsync(r => r.DriveFileId == driveFileId && r.IsActive);
+
+        if (record == null)
+        {
+            _logger.LogWarning("⚠️ [DriveSyncJob] On-demand conversion requested for non-existent or inactive file ID: {FileId}", driveFileId);
+            return "";
+        }
+
+        if (!string.IsNullOrEmpty(record.LocalPdfPath))
+        {
+            return record.LocalPdfPath;
+        }
+
+        _logger.LogInformation("🔄 [DriveSyncJob] Starting on-demand conversion for {FileName} ({FileId})...", record.FileName, driveFileId);
+        
+        await ProcessSingleFileAsync(record, db);
+        await db.SaveChangesAsync();
+
+        // Now, update corresponding Thesis and ThesisSubmission records in DB
+        if (!string.IsNullOrEmpty(record.LocalPdfPath))
+        {
+            var student = await db.Users.FirstOrDefaultAsync(u => u.StudentId == record.StudentUid);
+            if (student != null)
+            {
+                var thesis = await db.Theses
+                    .Include(t => t.Submissions)
+                    .FirstOrDefaultAsync(t => t.StudentId == student.Id 
+                                              && t.SubjectCode == record.SubjectCode 
+                                              && t.Category == record.Category);
+
+                if (thesis != null)
                 {
-                    var pdfBytes = await File.ReadAllBytesAsync(pdfPath);
-                    await _driveService.UploadFileToFolderAsync("Temporary_PDF", pdfName, pdfBytes, "application/pdf", AcademicCategory.Project);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Could not upload converted PDF '{PdfName}' to Temporary_PDF folder", pdfName);
-                }
+                    // 1. Update the submission
+                    var sub = thesis.Submissions.FirstOrDefault(s => s.FileName == record.FileName);
+                    if (sub != null)
+                    {
+                        sub.FilePath = record.LocalPdfPath;
+                        db.Entry(sub).State = EntityState.Modified;
+                    }
+                    else
+                    {
+                        var newSub = new ThesisSubmission
+                        {
+                            ThesisId = thesis.Id,
+                            FileName = record.FileName,
+                            FilePath = record.LocalPdfPath,
+                            FileSize = record.FileSize ?? 0,
+                            Version = 1,
+                            SubmittedAt = EnsureUtc(record.DriveModifiedAt ?? DateTime.UtcNow)
+                        };
+                        db.ThesisSubmissions.Add(newSub);
+                    }
 
-                _logger.LogInformation("📄 [DriveSyncJob] Converted/Fallback PDF: {File} → {Pdf}", record.FileName, record.LocalPdfPath);
+                    // 2. Update the main thesis file path if appropriate
+                    var groupFiles = await db.DriveFileRecords
+                        .Where(r => r.IsActive && r.StudentUid == record.StudentUid && r.SubjectCode == record.SubjectCode && r.Category == record.Category)
+                        .ToListAsync();
+
+                    var mainFile = groupFiles.FirstOrDefault(r => r.FileName.Contains("Bao_cao", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrEmpty(r.LocalPdfPath))
+                                   ?? groupFiles.FirstOrDefault(r => !string.IsNullOrEmpty(r.LocalPdfPath))
+                                   ?? record;
+
+                    if (!string.IsNullOrEmpty(mainFile.LocalPdfPath))
+                    {
+                        thesis.FilePath = mainFile.LocalPdfPath;
+                        db.Entry(thesis).State = EntityState.Modified;
+                    }
+
+                    await db.SaveChangesAsync();
+                }
             }
         }
 
-        await db.SaveChangesAsync();
+        return record.LocalPdfPath;
     }
 
     private string GetMajorName(string? majorKey)
@@ -380,7 +515,7 @@ public class DriveSyncJob
 
             await db.SaveChangesAsync();
 
-            var existingSubmissions = thesis.Submissions.ToDictionary(s => s.FileName);
+            var existingSubmissions = thesis.Submissions.GroupBy(s => s.FileName).ToDictionary(g => g.Key, g => g.First());
             var activeFileNames = new HashSet<string>();
 
             foreach (var file in group)

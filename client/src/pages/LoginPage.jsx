@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Lock, Eye, EyeOff, Loader2, ChevronUp } from 'lucide-react';
 import { ensureAdminSeed, findUserByEmail, logLoginAttempt } from '../utils/adminStore';
-import { authService } from '../services/api';
+import { authService, thesisService } from '../services/api';
 import useLanguage from '../hooks/useLanguage';
 
 const LoginPage = () => {
@@ -15,6 +15,29 @@ const LoginPage = () => {
   const [showLangMenu, setShowLangMenu] = useState(false);
   const langMenuRef = useRef(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const googleToken = params.get('google_token');
+    const googleUser = params.get('google_user');
+    const oauthError = params.get('error');
+
+    if (googleToken && googleUser) {
+      try {
+        localStorage.setItem('token', googleToken);
+        localStorage.setItem('user', googleUser);
+        const userData = JSON.parse(googleUser);
+
+        if (userData.role === 'Admin') navigate('/admin');
+        else if (userData.role === 'Advisor') navigate('/lecturer');
+        else navigate('/');
+      } catch (e) {
+        console.error('Failed to parse google user data', e);
+      }
+    } else if (oauthError) {
+      setError(decodeURIComponent(oauthError));
+    }
+  }, [navigate]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -64,26 +87,14 @@ const LoginPage = () => {
     setLoading(true);
     setError('');
     try {
-      const res = await authService.googleLogin('mock-google-token');
-      const data = res.data;
-
-      localStorage.setItem('token', data.token);
-      localStorage.setItem(
-        'user',
-        JSON.stringify({
-          id: data.id,
-          fullName: data.fullName,
-          email: data.email,
-          role: data.role
-        })
-      );
-
-      if (data.role === 'Admin') navigate('/admin');
-      else if (data.role === 'Advisor') navigate('/lecturer');
-      else navigate('/');
+      const res = await thesisService.getAuthorizeUrl('login');
+      if (res.data && res.data.url) {
+        window.location.href = res.data.url;
+      } else {
+        throw new Error('Không lấy được link đăng nhập từ Google.');
+      }
     } catch (err) {
-      setError(err.response?.data?.message || 'Đăng nhập bằng Google thất bại.');
-    } finally {
+      setError(err.response?.data?.message || err.message || 'Đăng nhập bằng Google thất bại.');
       setLoading(false);
     }
   };

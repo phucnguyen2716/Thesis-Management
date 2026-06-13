@@ -204,38 +204,40 @@ public class DriveSampleDataSeeder : IDriveSampleDataSeeder
         return new DriveGenerateResult { Uploaded = uploaded, Failed = failed, Message = msg };
     }
 
+    public static string RemoveDiacritics(string text)
+    {
+        if (string.IsNullOrEmpty(text)) return text;
+        var normalizedString = text.Normalize(System.Text.NormalizationForm.FormD);
+        var stringBuilder = new StringBuilder();
+        foreach (var c in normalizedString)
+        {
+            var unicodeCategory = System.Globalization.CharUnicodeInfo.GetUnicodeCategory(c);
+            if (unicodeCategory != System.Globalization.UnicodeCategory.NonSpacingMark)
+            {
+                if (c == 'đ') stringBuilder.Append('d');
+                else if (c == 'Đ') stringBuilder.Append('D');
+                else stringBuilder.Append(c);
+            }
+        }
+        return stringBuilder.ToString().Normalize(System.Text.NormalizationForm.FormC);
+    }
+
     public static byte[] BuildSampleDocx(string major, string subject, string code, string uid, string project, string fileName)
     {
+        var cleanedMajor = RemoveDiacritics(major);
+        var cleanedSubject = RemoveDiacritics(subject);
+        var cleanedProject = RemoveDiacritics(project);
+        var cleanedFileName = RemoveDiacritics(fileName);
+
         var body = $"""
-            ĐỒ ÁN MÔN HỌC — eThesis
-            Chuyên ngành: {major}
-            Học phần: {subject} ({code})
+            BAO CAO DO AN MON HOC - eThesis
+            Hoc phan: {cleanedSubject} ({code})
             MSSV: {uid}
-            Tên đồ án: {project}
-            Tài liệu: {fileName}
+            Ten de tai: {cleanedProject}
+            Chuyen nganh: {cleanedMajor}
+            Tai lieu: {cleanedFileName}
 
-            CHƯƠNG 1. GIỚI THIỆU
-            1.1. Lý do chọn đề tài
-            Đề tài ứng dụng kiến thức {subject} vào bài toán thực tế tại UEF.
-
-            1.2. Mục tiêu
-            - Xây dựng hệ thống phần mềm hoàn chỉnh
-            - Áp dụng quy trình phát triển hiện đại (Agile/Scrum)
-            - Triển khai Full-Stack: React + ASP.NET Core + PostgreSQL
-
-            CHƯƠNG 2. CƠ SỞ LÝ THUYẾT
-            Trình bày các công nghệ và phương pháp liên quan đến {subject}.
-
-            CHƯƠNG 3. PHÂN TÍCH VÀ THIẾT KẾ
-            Use case, ERD, kiến trúc hệ thống, giao diện người dùng.
-
-            CHƯƠNG 4. CÀI ĐẶT VÀ KIỂM THỬ
-            Triển khai module, kiểm thử chức năng và hiệu năng.
-
-            CHƯƠNG 5. KẾT LUẬN
-            Tổng kết kết quả và hướng phát triển.
-
-            (eThesis — dữ liệu mẫu tự sinh cho Tra cứu / Lookup)
+            Tom tat: Do an nghien cuu va phat trien ung dung {cleanedProject}.
             """;
 
         return MinimalDocxBuilder.Create(body);
@@ -243,14 +245,29 @@ public class DriveSampleDataSeeder : IDriveSampleDataSeeder
 
     public static byte[] BuildSamplePdf(string major, string subject, string code, string uid, string project, string fileName)
     {
-        var body = $"eThesis - Do An Mon Hoc: {project} - MSSV: {uid} - Mon hoc: {subject} ({code}) - Nganh: {major} - File: {fileName}";
+        var cleanedMajor = RemoveDiacritics(major);
+        var cleanedSubject = RemoveDiacritics(subject);
+        var cleanedProject = RemoveDiacritics(project);
+        var cleanedFileName = RemoveDiacritics(fileName);
+
+        var body = $"""
+            eThesis Fallback PDF Report
+            File name: {cleanedFileName}
+            Student UID: {uid}
+            Subject: {cleanedSubject} ({code})
+            Major: {cleanedMajor}
+            Project: {cleanedProject}
+
+            Tom tat: Do an nghien cuu va phat trien ung dung {cleanedProject}.
+            """;
+
         return MinimalPdfBuilder.Create(body);
     }
 
     public static byte[] BuildSampleXlsx(string major, string subject, string code, string uid, string project, string fileName)
     {
         var body = $"eThesis - Bang tinh cho do an {project} (MSSV: {uid}) - Mon hoc {subject} ({code})";
-        return MinimalXlsxBuilder.Create("BangTinh", body);
+        return MinimalXlsxBuilder.Create("BangTinh", RemoveDiacritics(body));
     }
 }
 
@@ -302,41 +319,48 @@ internal static class MinimalPdfBuilder
 {
     public static byte[] Create(string text)
     {
-        var content = $"""
-            %PDF-1.4
-            1 0 obj
-            << /Type /Catalog /Pages 2 0 R >>
-            endobj
-            2 0 obj
-            << /Type /Pages /Kids [3 0 R] /Count 1 >>
-            endobj
-            3 0 obj
-            << /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >> >> >>
-            endobj
-            4 0 obj
-            << /Length {text.Length + 40} >>
-            stream
-            BT
-            /F1 12 Tf
-            70 750 Td
-            ({text}) Tj
-            ET
-            endstream
-            endobj
-            xref
-            0 5
-            0000000000 65535 f 
-            0000000009 00000 n 
-            0000000058 00000 n 
-            0000000115 00000 n 
-            0000000270 00000 n 
-            trailer
-            << /Size 5 /Root 1 0 R >>
-            startxref
-            370
-            %%EOF
-            """;
-        return Encoding.UTF8.GetBytes(content);
+        var streamContent = new StringBuilder();
+        streamContent.AppendLine("BT");
+        streamContent.AppendLine("/F1 12 Tf");
+        streamContent.AppendLine("70 750 Td");
+        streamContent.AppendLine("14 TL"); // Set leading to 14 points
+
+        var lines = text.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+        foreach (var line in lines)
+        {
+            var escapedLine = line.Replace("(", "\\(").Replace(")", "\\)");
+            streamContent.AppendLine($"({escapedLine}) '"); //apostrophe moves down and writes line
+        }
+        streamContent.AppendLine("ET");
+
+        var streamBytes = Encoding.UTF8.GetBytes(streamContent.ToString());
+
+        var pdf = new StringBuilder();
+        pdf.AppendLine("%PDF-1.4");
+        pdf.AppendLine("1 0 obj");
+        pdf.AppendLine("<< /Type /Catalog /Pages 2 0 R >>");
+        pdf.AppendLine("endobj");
+        pdf.AppendLine("2 0 obj");
+        pdf.AppendLine("<< /Type /Pages /Kids [3 0 R] /Count 1 >>");
+        pdf.AppendLine("endobj");
+        pdf.AppendLine("3 0 obj");
+        pdf.AppendLine("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >> >> >>");
+        pdf.AppendLine("endobj");
+        pdf.AppendLine("4 0 obj");
+        pdf.AppendLine($"<< /Length {streamBytes.Length} >>");
+        pdf.AppendLine("stream");
+
+        var headerBytes = Encoding.UTF8.GetBytes(pdf.ToString());
+
+        using var ms = new MemoryStream();
+        ms.Write(headerBytes, 0, headerBytes.Length);
+        ms.Write(streamBytes, 0, streamBytes.Length);
+
+        var footer = "\r\nendstream\r\nendobj\r\nxref\r\n0 5\r\n0000000000 65535 f \r\n0000000009 00000 n \r\n0000000058 00000 n \r\n0000000115 00000 n \r\n0000000270 00000 n \r\ntrailer\r\n<< /Size 5 /Root 1 0 R >>\r\nstartxref\r\n370\r\n%%EOF\r\n";
+        var footerBytes = Encoding.UTF8.GetBytes(footer);
+        ms.Write(footerBytes, 0, footerBytes.Length);
+
+        return ms.ToArray();
     }
 }
 

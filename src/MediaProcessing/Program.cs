@@ -10,6 +10,10 @@ using BuildingBlocks.SharedContracts.ShellScope;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Load local secrets if present
+builder.Configuration.AddJsonFile("appsettings.local.json", optional: true, reloadOnChange: true);
+builder.Configuration.AddJsonFile("appsettings.Secrets.json", optional: true, reloadOnChange: true);
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

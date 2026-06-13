@@ -15,6 +15,10 @@ using Hangfire.PostgreSql;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Load local secrets if present
+builder.Configuration.AddJsonFile("appsettings.local.json", optional: true, reloadOnChange: true);
+builder.Configuration.AddJsonFile("appsettings.Secrets.json", optional: true, reloadOnChange: true);
+
 // Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -83,6 +87,7 @@ builder.Services.AddScoped<IThesisService, ThesisService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
 builder.Services.AddScoped<ICommentService, CommentService>();
 builder.Services.AddScoped<ISocialService, SocialService>();
+builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddSingleton<IGoogleDriveStorageService, GoogleDriveStorageService>();
 builder.Services.AddSingleton<ILibreOfficePdfConverter, LibreOfficePdfConverter>();
@@ -206,6 +211,7 @@ using (var scope = app.Services.CreateScope())
                 context.Database.ExecuteSqlRaw(@"ALTER TABLE ""DriveFileRecords"" ADD COLUMN IF NOT EXISTS ""StudentUid"" VARCHAR(100) NOT NULL DEFAULT '';");
                 context.Database.ExecuteSqlRaw(@"ALTER TABLE ""DriveFileRecords"" ADD COLUMN IF NOT EXISTS ""ProjectName"" VARCHAR(1000) NOT NULL DEFAULT '';");
                 context.Database.ExecuteSqlRaw(@"ALTER TABLE ""DriveFileRecords"" ADD COLUMN IF NOT EXISTS ""LocalPdfPath"" VARCHAR(2000) NOT NULL DEFAULT '';");
+                context.Database.ExecuteSqlRaw(@"ALTER TABLE ""SocialPosts"" ADD COLUMN IF NOT EXISTS ""CloudinaryStatus"" VARCHAR(50) DEFAULT 'None';");
             }
             else
             {
@@ -214,6 +220,7 @@ using (var scope = app.Services.CreateScope())
                 try { context.Database.ExecuteSqlRaw("ALTER TABLE Theses ADD Subject NVARCHAR(500);"); } catch { }
                 try { context.Database.ExecuteSqlRaw("ALTER TABLE Theses ADD SubjectCode NVARCHAR(100);"); } catch { }
                 try { context.Database.ExecuteSqlRaw("ALTER TABLE Theses ADD Category NVARCHAR(50) DEFAULT 'Project';"); } catch { }
+                try { context.Database.ExecuteSqlRaw("ALTER TABLE SocialPosts ADD CloudinaryStatus NVARCHAR(50) DEFAULT 'None';"); } catch { }
             }
         }
         catch (Exception ex)
@@ -222,6 +229,70 @@ using (var scope = app.Services.CreateScope())
         }
 
         Console.WriteLine("Database initialized and seeded successfully.");
+
+        try
+        {
+            // Reset categories containing "Tin má»›i" to "Tin mới"
+            var corruptedPosts = context.SocialPosts.Where(p => p.Category == "Tin má»›i" || p.Category.Contains("má»›i")).ToList();
+            foreach (var cp in corruptedPosts)
+            {
+                cp.Category = "Tin mới";
+            }
+            if (corruptedPosts.Any())
+            {
+                context.SaveChanges();
+                Console.WriteLine($"Corrected category encoding for {corruptedPosts.Count} posts.");
+            }
+
+            // Update posts 1, 2, 3 with real image URLs if they still have the googleusercontent ones or empty
+            var post1 = context.SocialPosts.Find(1);
+            if (post1 != null && (post1.Image.Contains("googleusercontent.com") || post1.Image.Contains("photo-1523050854058-8df90110c9f1") || string.IsNullOrEmpty(post1.Image)))
+            {
+                post1.Image = "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4";
+                post1.CloudinaryStatus = "None";
+            }
+
+            var post2 = context.SocialPosts.Find(2);
+            if (post2 != null && (post2.Image.Contains("googleusercontent.com") || string.IsNullOrEmpty(post2.Image)))
+            {
+                post2.Image = "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?q=80&w=800&auto=format&fit=crop";
+                post2.CloudinaryStatus = "None";
+            }
+
+            var post3 = context.SocialPosts.Find(3);
+            if (post3 != null && (post3.Image.Contains("googleusercontent.com") || string.IsNullOrEmpty(post3.Image)))
+            {
+                post3.Image = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=800&auto=format&fit=crop";
+                post3.CloudinaryStatus = "None";
+            }
+
+            context.SaveChanges();
+
+            // Enqueue all Pending / None / Failed posts to Cloudinary
+            var socialPosts = context.SocialPosts
+                .Where(p => (p.CloudinaryStatus == "None" || p.CloudinaryStatus == "Failed" || p.CloudinaryStatus == "Pending") && !string.IsNullOrEmpty(p.Image))
+                .ToList();
+
+            if (socialPosts.Any())
+            {
+                Console.WriteLine($"Found {socialPosts.Count} posts to push to Cloudinary. Enqueuing Hangfire jobs...");
+                foreach (var post in socialPosts)
+                {
+                    post.CloudinaryStatus = "Pending";
+                }
+                context.SaveChanges();
+
+                var jobClient = services.GetRequiredService<IBackgroundJobClient>();
+                foreach (var post in socialPosts)
+                {
+                    jobClient.Enqueue<ISocialService>(s => s.UploadPostImageToCloudinaryAsync(post.Id));
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error updating posts/enqueuing Cloudinary jobs: {ex.Message}");
+        }
     }
     catch (Exception ex)
     {

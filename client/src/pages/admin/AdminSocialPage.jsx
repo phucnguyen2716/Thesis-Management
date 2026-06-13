@@ -1,12 +1,8 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import { socialService } from '../../services/api';
 import {
-  getAllSocialPosts,
-  createSocialPost,
-  updateSocialPost,
-  deleteSocialPost,
   SOCIAL_CATEGORIES,
   SOCIAL_CHANNELS,
-  ensureContentSeed,
 } from '../../utils/adminContentStore';
 
 // ─────────────────────────────────────────────────────────────
@@ -53,12 +49,19 @@ function NewsTab() {
   const [modal, setModal] = useState(null);
   const [form, setForm] = useState(emptyPost());
 
-  const load = useCallback(() => setPosts(getAllSocialPosts()), []);
+  const load = useCallback(async () => {
+    try {
+      const { data } = await socialService.getAll(false);
+      setPosts(data);
+    } catch (err) {
+      console.error("Failed to load social posts from backend", err);
+    }
+  }, []);
+
   useEffect(() => {
-    ensureContentSeed();
     load();
-    window.addEventListener('admin-content-updated', load);
-    return () => window.removeEventListener('admin-content-updated', load);
+    const interval = setInterval(load, 5000);
+    return () => clearInterval(interval);
   }, [load]);
 
   const filtered = useMemo(() => {
@@ -84,13 +87,20 @@ function NewsTab() {
       return { ...prev, channels: chs.includes(ch) ? chs.filter(c => c !== ch) : [...chs, ch] };
     });
   };
-  const handleSave = e => {
+  const handleSave = async e => {
     e.preventDefault();
     if (!form.title?.trim()) return;
-    if (modal.mode === 'create') createSocialPost(form);
-    else updateSocialPost(modal.id, form);
-    setModal(null);
-    load();
+    try {
+      if (modal.mode === 'create') {
+        await socialService.create(form);
+      } else {
+        await socialService.update(modal.id, form);
+      }
+      setModal(null);
+      load();
+    } catch (err) {
+      console.error("Failed to save post", err);
+    }
   };
 
   return (
@@ -137,16 +147,34 @@ function NewsTab() {
             <div className="p-4 flex-1 flex flex-col">
               <div className="flex justify-between gap-2 mb-2">
                 <span className="text-[10px] font-bold text-amber-400 uppercase">{p.category}</span>
-                <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${p.published ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-700 text-slate-400'}`}>
-                  {p.published ? 'Đã đăng' : 'Nháp'}
-                </span>
+                <div className="flex items-center gap-1.5">
+                  {p.image && (
+                    <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full flex items-center gap-1 border ${
+                      p.cloudinaryStatus === 'Uploaded' 
+                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
+                        : p.cloudinaryStatus === 'Pending' 
+                        ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20 animate-pulse' 
+                        : p.cloudinaryStatus === 'Failed' 
+                        ? 'bg-red-500/10 text-red-400 border-red-500/20' 
+                        : 'bg-slate-700/50 text-slate-400 border-slate-700'
+                    }`}>
+                      <span className="material-symbols-outlined text-[10px]">{
+                        p.cloudinaryStatus === 'Uploaded' ? 'cloud_done' : p.cloudinaryStatus === 'Pending' ? 'sync' : p.cloudinaryStatus === 'Failed' ? 'cloud_off' : 'cloud'
+                      }</span>
+                      {p.cloudinaryStatus === 'Uploaded' ? 'Cloudinary' : p.cloudinaryStatus === 'Pending' ? 'Đang đẩy...' : p.cloudinaryStatus === 'Failed' ? 'Lỗi đẩy' : 'Chưa đẩy'}
+                    </span>
+                  )}
+                  <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${p.published ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-700 text-slate-400'}`}>
+                    {p.published ? 'Đã đăng' : 'Nháp'}
+                  </span>
+                </div>
               </div>
               <h3 className="text-sm font-bold text-white line-clamp-2">{p.title}</h3>
               <p className="text-xs text-slate-400 mt-1 line-clamp-2 flex-1">{p.desc}</p>
-              <p className="text-[10px] text-slate-500 mt-2">{p.date} · {(p.channels || []).join(', ')}</p>
+              <p className="text-[10px] text-slate-500 mt-2">{p.date || new Date(p.createdAt).toLocaleDateString('vi-VN')} · {(p.channels || []).join(', ')}</p>
               <div className="flex gap-2 mt-3">
                 <button type="button" onClick={() => openEdit(p)} className="flex-1 py-1.5 rounded-lg bg-slate-700 text-xs font-bold text-white">Sửa</button>
-                <button type="button" onClick={() => { if (window.confirm('Xóa bài đăng?')) { deleteSocialPost(p.id); load(); } }} className="px-3 py-1.5 rounded-lg bg-red-900/40 text-xs font-bold text-red-300">Xóa</button>
+                <button type="button" onClick={async () => { if (window.confirm('Xóa bài đăng?')) { try { await socialService.delete(p.id); load(); } catch(e){} } }} className="px-3 py-1.5 rounded-lg bg-red-900/40 text-xs font-bold text-red-300">Xóa</button>
               </div>
             </div>
           </article>
@@ -473,7 +501,7 @@ const AdminSocialPage = () => {
   ];
 
   return (
-    <div className="max-w-6xl space-y-5">
+    <div className="w-full space-y-5">
       {/* Page header */}
       <div>
         <h1 className="text-2xl font-black text-white">Quản lý Social Media</h1>

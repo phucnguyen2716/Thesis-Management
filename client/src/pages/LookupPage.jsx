@@ -183,10 +183,11 @@ const LookupPage = () => {
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [dbTheses, setDbTheses] = useState([]);
   const [documentViewMode, setDocumentViewMode] = useState(() => localStorage.getItem('documentViewPreference') || '3d');
-  const [visibleCount, setVisibleCount] = useState(6);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
 
   useEffect(() => {
-    setVisibleCount(6);
+    setCurrentPage(1);
   }, [searchQuery, searchParams]);
 
   const handleSetViewMode = (mode) => {
@@ -298,7 +299,47 @@ const LookupPage = () => {
     return true;
   });
 
-  const displayedResults = filteredResults.slice(0, visibleCount);
+  const totalPages = Math.ceil(filteredResults.length / itemsPerPage);
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const displayedResults = filteredResults.slice(indexOfFirstItem, indexOfLastItem);
+
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisiblePages = 5;
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      pages.push(1);
+      
+      let start = Math.max(2, currentPage - 1);
+      let end = Math.min(totalPages - 1, currentPage + 1);
+      
+      if (currentPage <= 2) {
+        end = 3;
+      }
+      if (currentPage >= totalPages - 1) {
+        start = totalPages - 2;
+      }
+      
+      if (start > 2) {
+        pages.push('...');
+      }
+      
+      for (let i = start; i <= end; i++) {
+        pages.push(i);
+      }
+      
+      if (end < totalPages - 1) {
+        pages.push('...');
+      }
+      
+      pages.push(totalPages);
+    }
+    return pages;
+  };
 
   return (
     <div className="min-h-screen bg-surface-bright relative overflow-hidden">
@@ -679,14 +720,88 @@ const LookupPage = () => {
             </div>
           )}
 
-          {filteredResults.length > visibleCount && (
-            <div className="mt-12 md:mt-16 flex justify-center">
-              <button 
-                onClick={() => setVisibleCount(prev => prev + 6)}
-                className="px-8 md:px-10 py-3.5 md:py-4 bg-white border-2 border-outline-variant/50 rounded-[2rem] font-black text-[10px] uppercase tracking-[0.2em] hover:border-primary hover:text-primary transition-all shadow-sm cursor-pointer"
-              >
-                XEM THÊM KẾT QUẢ
-              </button>
+          {totalPages > 1 && (
+            <div className="mt-12 md:mt-16 flex flex-col sm:flex-row items-center justify-between gap-6 border-t border-outline-variant/10 pt-8 animate-in fade-in duration-300">
+              <span className="text-[11px] font-black uppercase tracking-wider text-on-surface-variant/70">
+                Hiển thị <span className="text-on-surface font-black">{indexOfFirstItem + 1} - {Math.min(indexOfLastItem, filteredResults.length)}</span> trên tổng số <span className="text-on-surface font-black">{filteredResults.length}</span> đề tài
+              </span>
+              
+              <div className="flex items-center gap-2">
+                {/* Previous Page Button */}
+                <button
+                  onClick={() => {
+                    setCurrentPage(prev => Math.max(prev - 1, 1));
+                    window.scrollTo({ top: 400, behavior: 'smooth' });
+                  }}
+                  disabled={currentPage === 1}
+                  className={`w-9 h-9 md:w-10 md:h-10 rounded-xl bg-white border border-outline-variant/60 flex items-center justify-center transition-all ${
+                    currentPage === 1 
+                      ? 'opacity-40 cursor-not-allowed pointer-events-none' 
+                      : `cursor-pointer ${
+                          tc 
+                            ? (thesisType === 'do-an' ? 'hover:border-blue-500 hover:text-blue-500' : thesisType === 'khoa-luan' ? 'hover:border-violet-500 hover:text-violet-500' : 'hover:border-amber-600 hover:text-amber-600')
+                            : 'hover:border-primary hover:text-primary'
+                        }`
+                  }`}
+                  title="Trang trước"
+                >
+                  <span className="material-symbols-outlined text-base">chevron_left</span>
+                </button>
+
+                {/* Page Numbers */}
+                {getPageNumbers().map((page, index) => {
+                  if (page === '...') {
+                    return (
+                      <span key={`dots-${index}`} className="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center text-xs font-bold text-on-surface-variant/40">
+                        ...
+                      </span>
+                    );
+                  }
+                  
+                  const isActive = currentPage === page;
+                  return (
+                    <button
+                      key={page}
+                      onClick={() => {
+                        setCurrentPage(page);
+                        window.scrollTo({ top: 400, behavior: 'smooth' });
+                      }}
+                      className={`w-9 h-9 md:w-10 md:h-10 rounded-xl text-xs font-bold transition-all border flex items-center justify-center cursor-pointer ${
+                        isActive 
+                          ? `${tc ? tc.chipActive : 'bg-primary text-white'} border-transparent shadow-sm scale-105` 
+                          : `bg-white border-outline-variant/60 text-on-surface ${
+                              tc 
+                                ? (thesisType === 'do-an' ? 'hover:border-blue-500 hover:text-blue-500' : thesisType === 'khoa-luan' ? 'hover:border-violet-500 hover:text-violet-500' : 'hover:border-amber-600 hover:text-amber-600')
+                                : 'hover:border-primary hover:text-primary'
+                            }`
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  );
+                })}
+
+                {/* Next Page Button */}
+                <button
+                  onClick={() => {
+                    setCurrentPage(prev => Math.min(prev + 1, totalPages));
+                    window.scrollTo({ top: 400, behavior: 'smooth' });
+                  }}
+                  disabled={currentPage === totalPages}
+                  className={`w-9 h-9 md:w-10 md:h-10 rounded-xl bg-white border border-outline-variant/60 flex items-center justify-center transition-all ${
+                    currentPage === totalPages 
+                      ? 'opacity-40 cursor-not-allowed pointer-events-none' 
+                      : `cursor-pointer ${
+                          tc 
+                            ? (thesisType === 'do-an' ? 'hover:border-blue-500 hover:text-blue-500' : thesisType === 'khoa-luan' ? 'hover:border-violet-500 hover:text-violet-500' : 'hover:border-amber-600 hover:text-amber-600')
+                            : 'hover:border-primary hover:text-primary'
+                        }`
+                  }`}
+                  title="Trang tiếp theo"
+                >
+                  <span className="material-symbols-outlined text-base">chevron_right</span>
+                </button>
+              </div>
             </div>
           )}
         </main>

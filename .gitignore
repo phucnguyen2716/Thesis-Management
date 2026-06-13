@@ -4,8 +4,6 @@
 *.key
 *.pem
 *.pub
-# Google Credentials
-src/MediaProcessing/google-credentials.json
 *.ppk
 *.pfx
 *.p12
@@ -84,8 +82,9 @@ desktop.ini
 # ==========================================
 # eThesis Specific / Local files
 # ==========================================
-src/PlatformAdmin/google-credentials.json
-src/PlatformAdmin/google-oauth-token.json
+# Google Credentials & Tokens
+google-credentials.json
+google-oauth-token.json
 src/PlatformAdmin/ethesis.db
 src/PlatformAdmin/temporary_pdf/
 src/PlatformAdmin/uploads/
@@ -94,4 +93,11 @@ mock_google_drive/
 .dotnet/
 .node/
 dotnet-install.ps1
+
+# Secrets & Local settings
+appsettings.Secrets.json
+appsettings.local.json
+*keys_note.txt
+*keys_note.md
+
 

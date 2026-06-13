@@ -12,6 +12,7 @@ namespace PlatformAdmin.DTOs.Social
         public string Desc { get; set; } = string.Empty;
         public string Content { get; set; } = string.Empty;
         public bool Published { get; set; }
+        public string CloudinaryStatus { get; set; } = "None";
         public DateTime CreatedAt { get; set; }
     }
 }

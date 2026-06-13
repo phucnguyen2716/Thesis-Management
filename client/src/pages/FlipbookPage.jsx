@@ -10,6 +10,7 @@ const FlipbookPage = () => {
   
   const [thesis, setThesis] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [converting, setConverting] = useState(false);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
   const [viewMode, setViewMode] = useState(() => {
     const modeParam = searchParams.get('mode');
@@ -98,13 +99,46 @@ const FlipbookPage = () => {
   ];
 
   useEffect(() => {
+    const fileParam = searchParams.get('file');
+
+    const handleGoogleDriveUrl = async (url, baseData) => {
+      setConverting(true);
+      try {
+        const convertRes = await thesisService.convertDriveFile(url);
+        if (convertRes.data && convertRes.data.success) {
+          const convertedPath = convertRes.data.localPath;
+          setThesis({
+            ...baseData,
+            pdfUrl: convertedPath
+          });
+          setViewMode('3d');
+        } else {
+          setThesis({ ...baseData, pdfUrl: url });
+          setViewMode('pdf');
+        }
+      } catch (err) {
+        console.error("Failed to convert Drive file:", err);
+        setThesis({ ...baseData, pdfUrl: url });
+        setViewMode('pdf');
+      } finally {
+        setConverting(false);
+        setLoading(false);
+      }
+    };
+
     // 1. Try to load from navigation state
     if (location.state) {
-      setThesis({
-        ...location.state,
-        pdfUrl: location.state.filePath || location.state.pdfUrl || "/Document%20Detail.pdf"
-      });
-      setLoading(false);
+      const pdfUrl = fileParam || location.state.filePath || location.state.pdfUrl || "/Document%20Detail.pdf";
+      const baseData = { ...location.state };
+      if (pdfUrl.includes("drive.google.com") || pdfUrl.includes("docs.google.com")) {
+        handleGoogleDriveUrl(pdfUrl, baseData);
+      } else {
+        setThesis({
+          ...baseData,
+          pdfUrl: pdfUrl
+        });
+        setLoading(false);
+      }
       return;
     }
 
@@ -113,10 +147,16 @@ const FlipbookPage = () => {
       try {
         const res = await thesisService.getById(id);
         if (res.data) {
-          setThesis({
-            ...res.data,
-            pdfUrl: res.data.filePath || "/Document%20Detail.pdf"
-          });
+          const pdfUrl = fileParam || res.data.filePath || "/Document%20Detail.pdf";
+          const baseData = { ...res.data };
+          if (pdfUrl.includes("drive.google.com") || pdfUrl.includes("docs.google.com")) {
+            handleGoogleDriveUrl(pdfUrl, baseData);
+          } else {
+            setThesis({
+              ...baseData,
+              pdfUrl: pdfUrl
+            });
+          }
         } else {
           const mock = combinedMocks.find(m => m.id.toString() === id.toString());
           setThesis(mock || { id, title: "Đề tài nghiên cứu học thuật", studentName: "Sinh viên UEF", pdfUrl: "/Document%20Detail.pdf" });
@@ -131,7 +171,7 @@ const FlipbookPage = () => {
     };
 
     fetchThesis();
-  }, [id, location.state]);
+  }, [id, location.state, searchParams]);
 
   // Initialize the DearFlip viewer programmatically when loaded
   useEffect(() => {
@@ -161,7 +201,10 @@ const FlipbookPage = () => {
         };
         
         // Using the PDF source from thesis data dynamically
-        const pdfSource = thesis.pdfUrl || "/Document%20Detail.pdf";
+        let pdfSource = thesis.pdfUrl || "/Document%20Detail.pdf";
+        if (pdfSource && (pdfSource.startsWith("/temporary_pdf") || pdfSource.startsWith("/uploads"))) {
+          pdfSource = `http://localhost:5145${pdfSource}`;
+        }
         flipNode.setAttribute("source", pdfSource);
         flipNode.setAttribute("id", "df_manual_book");
         
@@ -185,6 +228,30 @@ const FlipbookPage = () => {
     const timer = setTimeout(initFlipbook, 150);
     return () => clearTimeout(timer);
   }, [loading, thesis, isMobile, viewMode]);
+
+  const getEmbedUrl = (url) => {
+    if (!url) return "/Document%20Detail.pdf";
+    if (url.includes("drive.google.com") || url.includes("docs.google.com")) {
+      const match = url.match(/\/d\/([^/]+)/);
+      if (match && match[1]) {
+        if (url.includes("docs.google.com/document")) {
+          return `https://docs.google.com/document/d/${match[1]}/preview`;
+        }
+        if (url.includes("docs.google.com/spreadsheets")) {
+          return `https://docs.google.com/spreadsheets/d/${match[1]}/preview`;
+        }
+        if (url.includes("docs.google.com/presentation")) {
+          return `https://docs.google.com/presentation/d/${match[1]}/preview`;
+        }
+        return `https://drive.google.com/file/d/${match[1]}/preview`;
+      }
+    }
+    if (url.startsWith("http")) return url;
+    if (url.startsWith("/temporary_pdf") || url.startsWith("/uploads")) {
+      return `http://localhost:5145${url}`;
+    }
+    return url;
+  };
 
   return (
     <div className="w-full h-screen bg-[#111115] text-white flex flex-col overflow-hidden select-none">
@@ -234,35 +301,49 @@ const FlipbookPage = () => {
           </div>
         </div>
 
-        {/* View Mode Switcher Toggle */}
-        <div className="flex bg-white/5 rounded-xl p-1 border border-white/10 shrink-0 mr-4">
-          <button
-            onClick={() => handleSwitchMode('3d')}
-            className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer border-none flex items-center gap-1.5 ${
-              viewMode === '3d'
-                ? 'bg-primary text-white shadow-sm'
-                : 'bg-transparent text-gray-400 hover:text-white'
-            }`}
-          >
-            <span className="material-symbols-outlined text-xs">menu_book</span>
-            3D Flipbook
-          </button>
-          <button
-            onClick={() => handleSwitchMode('pdf')}
-            className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer border-none flex items-center gap-1.5 ${
-              viewMode === 'pdf'
-                ? 'bg-primary text-white shadow-sm'
-                : 'bg-transparent text-gray-400 hover:text-white'
-            }`}
-          >
-            <span className="material-symbols-outlined text-xs">picture_as_pdf</span>
-            PDF Preview
-          </button>
-        </div>
+        {/* View Mode Switcher Toggle / Open in Drive Button */}
+        {thesis?.pdfUrl && !thesis.pdfUrl.includes("drive.google.com") && !thesis.pdfUrl.includes("docs.google.com") ? (
+          <div className="flex bg-white/5 rounded-xl p-1 border border-white/10 shrink-0 mr-4">
+            <button
+              onClick={() => handleSwitchMode('3d')}
+              className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer border-none flex items-center gap-1.5 ${
+                viewMode === '3d'
+                  ? 'bg-primary text-white shadow-sm'
+                  : 'bg-transparent text-gray-400 hover:text-white'
+              }`}
+            >
+              <span className="material-symbols-outlined text-xs">menu_book</span>
+              3D Flipbook
+            </button>
+            <button
+              onClick={() => handleSwitchMode('pdf')}
+              className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer border-none flex items-center gap-1.5 ${
+                viewMode === 'pdf'
+                  ? 'bg-primary text-white shadow-sm'
+                  : 'bg-transparent text-gray-400 hover:text-white'
+              }`}
+            >
+              <span className="material-symbols-outlined text-xs">picture_as_pdf</span>
+              PDF Preview
+            </button>
+          </div>
+        ) : (
+          thesis?.pdfUrl && (
+            <a
+              href={thesis.pdfUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-amber-500 hover:bg-amber-400 active:scale-95 transition-all text-xs font-bold uppercase tracking-wider text-[#111115] cursor-pointer shrink-0 mr-4 border-none"
+            >
+              <span className="material-symbols-outlined text-sm">open_in_new</span>
+              Mở trên Google Drive
+            </a>
+          )
+        )}
 
         <div className="hidden sm:flex items-center gap-2 shrink-0">
           <span className="px-2.5 py-1 bg-primary/20 text-primary border border-primary/20 text-[9px] font-black uppercase tracking-widest rounded-md hidden md:inline-block">
-            3D Flipbook Reader
+            {thesis?.pdfUrl && (thesis.pdfUrl.includes("drive.google.com") || thesis.pdfUrl.includes("docs.google.com")) ? "Google Drive Mode" : "3D Flipbook Reader"}
           </span>
           <span className="px-2.5 py-1 bg-white/5 text-gray-400 border border-white/5 text-[9px] font-black uppercase tracking-widest rounded-md">
             UEF Academic
@@ -272,20 +353,20 @@ const FlipbookPage = () => {
 
       {/* Flipbook Container Viewport */}
       <div className="flex-1 w-full bg-[#111115] relative">
-        {loading ? (
+        {converting ? (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
+            <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-primary font-black uppercase tracking-widest text-xs animate-pulse">Đang chuyển đổi tài liệu sang PDF...</p>
+            <p className="text-gray-400 text-[10px] font-bold">Vui lòng chờ trong giây lát (Sử dụng LibreOffice)...</p>
+          </div>
+        ) : loading ? (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
             <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
             <p className="text-gray-400 font-bold uppercase tracking-widest text-[10px]">Đang tạo cấu trúc sách 3D...</p>
           </div>
         ) : viewMode === 'pdf' ? (
           <iframe
-            src={
-              thesis.pdfUrl.startsWith("http")
-                ? thesis.pdfUrl
-                : (thesis.pdfUrl.startsWith("/temporary_pdf") || thesis.pdfUrl.startsWith("/uploads"))
-                  ? `http://localhost:5145${thesis.pdfUrl}`
-                  : thesis.pdfUrl
-            }
+            src={getEmbedUrl(thesis.pdfUrl)}
             className="w-full h-full border-none bg-[#111115]"
             title="PDF Preview"
           />

@@ -25,7 +25,8 @@ public class ThesisService : IThesisService
     private IQueryable<Thesis> BaseQuery() => _db.Theses
         .Include(t => t.Student)
         .Include(t => t.Advisor)
-        .Include(t => t.Reviews);
+        .Include(t => t.Reviews)
+        .Include(t => t.Submissions);
 
     private static ThesisDto Map(Thesis t) => new(
         t.Id, t.Title, t.Description, t.Status, t.FilePath,
@@ -38,7 +39,8 @@ public class ThesisService : IThesisService
         t.Major,
         t.Subject,
         t.SubjectCode,
-        t.Category
+        t.Category,
+        t.Submissions?.Select(s => new ThesisSubmissionDto(s.Id, s.FileName, s.FilePath, s.FileSize, s.SubmittedAt)).ToList()
     );
 
     public async Task<ThesisListResponse> GetAllAsync(int page, int pageSize, string? status, string? search, int? studentId, int? advisorId, string? category = null)
@@ -46,8 +48,20 @@ public class ThesisService : IThesisService
         var q = BaseQuery().AsQueryable();
         if (!string.IsNullOrEmpty(status)) q = q.Where(t => t.Status == status);
         if (!string.IsNullOrEmpty(search)) q = q.Where(t => t.Title.Contains(search) || t.Student.FullName.Contains(search));
-        if (studentId.HasValue) q = q.Where(t => t.StudentId == studentId);
-        if (advisorId.HasValue) q = q.Where(t => t.AdvisorId == advisorId);
+        
+        if (studentId.HasValue && advisorId.HasValue)
+        {
+            q = q.Where(t => t.StudentId == studentId || t.AdvisorId == advisorId || t.Status == "Approved");
+        }
+        else if (studentId.HasValue)
+        {
+            q = q.Where(t => t.StudentId == studentId || t.Status == "Approved");
+        }
+        else if (advisorId.HasValue)
+        {
+            q = q.Where(t => t.AdvisorId == advisorId || t.Status == "Approved");
+        }
+
         if (!string.IsNullOrEmpty(category)) q = q.Where(t => t.Category == category);
 
         var total = await q.CountAsync();

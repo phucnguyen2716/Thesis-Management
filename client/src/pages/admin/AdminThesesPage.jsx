@@ -90,7 +90,7 @@ const emptyForm = (categoryCode) => ({
 });
 
 // ─── Google Drive + Lookup panel (Hangfire tự đồng bộ) ───────────────────────
-const DriveLookupPanel = ({ status, onRefresh }) => (
+const DriveLookupPanel = ({ status, onRefresh, onTestConnection, testingConnection }) => (
   <div className="rounded-xl border border-emerald-800/40 bg-emerald-950/20 p-4 space-y-3">
     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
       <div className="flex items-start gap-3">
@@ -104,10 +104,17 @@ const DriveLookupPanel = ({ status, onRefresh }) => (
           </p>
         </div>
       </div>
-      <button type="button" onClick={onRefresh}
-        className="px-3 py-2 rounded-lg border border-slate-700 hover:bg-slate-800 text-slate-300 text-[10px] font-bold uppercase transition-colors shrink-0">
-        Làm mới
-      </button>
+      <div className="flex gap-2 shrink-0">
+        <button type="button" onClick={onTestConnection} disabled={testingConnection}
+          className="px-3 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-slate-950 text-[10px] font-bold uppercase transition-colors shrink-0 flex items-center gap-1.5">
+          {testingConnection && <div className="w-3 h-3 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />}
+          Test Connection
+        </button>
+        <button type="button" onClick={onRefresh}
+          className="px-3 py-2 rounded-lg border border-slate-700 hover:bg-slate-800 text-slate-300 text-[10px] font-bold uppercase transition-colors shrink-0">
+          Làm mới
+        </button>
+      </div>
     </div>
     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
       {[
@@ -155,6 +162,32 @@ const AdminThesesPage = () => {
   const [saving, setSaving] = useState(false);
 
   const [driveStatus, setDriveStatus] = useState(null);
+  const [testingConnection, setTestingConnection] = useState(false);
+  const [testResult, setTestResult] = useState(null);
+
+  const handleTestConnection = async () => {
+    setTestingConnection(true);
+    try {
+      const { data } = await thesisService.testDriveConnection();
+      setTestResult({
+        success: data.success,
+        message: data.message,
+        driveFileName: data.driveFileName,
+        driveFileId: data.driveFileId,
+        webViewLink: data.webViewLink,
+        relativePath: data.relativePath
+      });
+    } catch (err) {
+      console.error(err);
+      setTestResult({
+        success: false,
+        message: err.response?.data?.message || err.message
+      });
+    } finally {
+      setTestingConnection(false);
+      loadDriveStatus();
+    }
+  };
 
   const loadDriveStatus = async () => {
     try {
@@ -212,6 +245,21 @@ const AdminThesesPage = () => {
       return () => clearInterval(t);
     }
   }, [isProject]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const googleConnected = params.get('google_connected');
+    const oauthError = params.get('error');
+
+    if (googleConnected === 'true') {
+      alert('Kết nối Google Drive thành công! Dung lượng lưu trữ của bạn hiện đã được áp dụng.');
+      window.history.replaceState({}, document.title, window.location.pathname);
+      loadDriveStatus();
+    } else if (googleConnected === 'false') {
+      alert(`Kết nối Google Drive thất bại: ${oauthError || 'Unknown error'}`);
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
 
   const handleOpenCreate = () => {
     setForm(emptyForm(catConfig.code));
@@ -299,7 +347,7 @@ const AdminThesesPage = () => {
   };
 
   return (
-    <div className="max-w-6xl space-y-5">
+    <div className="w-full space-y-5">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
@@ -324,7 +372,12 @@ const AdminThesesPage = () => {
       )}
 
       {isProject && (
-        <DriveLookupPanel status={driveStatus} onRefresh={loadDriveStatus} />
+        <DriveLookupPanel 
+          status={driveStatus} 
+          onRefresh={loadDriveStatus} 
+          onTestConnection={handleTestConnection}
+          testingConnection={testingConnection}
+        />
       )}
 
       {/* Filter panel */}
@@ -436,6 +489,95 @@ const AdminThesesPage = () => {
               className="px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-900 text-xs font-bold text-slate-300 hover:bg-slate-800 disabled:opacity-50">
               Trang sau
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Connection Test Result */}
+      {testResult && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs">
+          <div className="w-full max-w-md rounded-2xl bg-slate-900 border border-slate-800 p-6 space-y-4 text-left shadow-2xl">
+            <div className="flex justify-between items-center pb-2 border-b border-slate-800">
+              <h2 className="text-base font-black uppercase tracking-wider text-amber-400 flex items-center gap-2">
+                <span className="material-symbols-outlined">
+                  {testResult.success ? 'check_circle' : 'error'}
+                </span>
+                Kết quả kiểm tra Drive
+              </h2>
+              <button type="button" onClick={() => setTestResult(null)}
+                className="material-symbols-outlined text-slate-400 hover:text-white">close</button>
+            </div>
+
+            <div className="space-y-3">
+              <div className={`p-4 rounded-xl border flex items-start gap-3 ${
+                testResult.success 
+                  ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' 
+                  : 'bg-red-500/10 border-red-500/20 text-red-400'
+              }`}>
+                <span className="material-symbols-outlined shrink-0 mt-0.5">
+                  {testResult.success ? 'cloud_done' : 'cloud_off'}
+                </span>
+                <div>
+                  <p className="font-bold text-sm">
+                    {testResult.success ? 'Kết nối thành công!' : 'Kết nối thất bại!'}
+                  </p>
+                  <p className="text-xs mt-1 text-slate-300 text-left whitespace-pre-wrap break-words">
+                    {testResult.message}
+                  </p>
+                </div>
+              </div>
+
+              {testResult.success && (
+                <div className="space-y-2.5 text-xs">
+                  <div className="p-3 rounded-lg bg-slate-950 border border-slate-800/80 space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-slate-500 font-semibold">Tên file test:</span>
+                      <span className="text-slate-300 font-mono select-all truncate max-w-[200px]" title={testResult.driveFileName}>
+                        {testResult.driveFileName}
+                      </span>
+                    </div>
+                    {testResult.driveFileId && (
+                      <div className="flex justify-between">
+                        <span className="text-slate-500 font-semibold">Drive File ID:</span>
+                        <span className="text-slate-300 font-mono select-all truncate max-w-[200px]" title={testResult.driveFileId}>
+                          {testResult.driveFileId}
+                        </span>
+                      </div>
+                    )}
+                    {testResult.relativePath && (
+                      <div className="flex justify-between">
+                        <span className="text-slate-500 font-semibold">Đường dẫn:</span>
+                        <span className="text-slate-300 select-all truncate max-w-[200px]" title={testResult.relativePath}>
+                          {testResult.relativePath}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {testResult.webViewLink && (
+                    <a 
+                      href={testResult.webViewLink} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="w-full py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-lg transition-colors flex items-center justify-center gap-1.5 shadow-md text-center"
+                    >
+                      <span className="material-symbols-outlined text-sm">open_in_new</span>
+                      Mở file trên Google Drive
+                    </a>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end pt-2 border-t border-slate-800">
+              <button 
+                type="button" 
+                onClick={() => setTestResult(null)}
+                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold uppercase rounded-lg transition-colors"
+              >
+                Đóng
+              </button>
+            </div>
           </div>
         </div>
       )}

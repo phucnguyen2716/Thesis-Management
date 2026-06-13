@@ -19,7 +19,7 @@ const AdminLoginAuditPage = () => {
     filter === 'all' ? logs : logs.filter(l => (filter === 'ok' ? l.success : !l.success));
 
   return (
-    <div className="max-w-6xl space-y-5">
+    <div className="w-full space-y-5">
       <div>
         <h1 className="text-2xl font-black text-white">Audit đăng nhập</h1>
         <p className="text-slate-400 text-sm">Lịch sử đăng nhập thành công / thất bại</p>

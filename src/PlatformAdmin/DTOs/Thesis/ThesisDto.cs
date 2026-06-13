@@ -1,5 +1,13 @@
 namespace PlatformAdmin.DTOs.Thesis;
 
+public record ThesisSubmissionDto(
+    int Id,
+    string FileName,
+    string FilePath,
+    long FileSize,
+    DateTime SubmittedAt
+);
+
 public record ThesisDto(
     int Id,
     string Title,
@@ -21,7 +29,8 @@ public record ThesisDto(
     string? Major = null,
     string? Subject = null,
     string? SubjectCode = null,
-    string Category = "Project"
+    string Category = "Project",
+    IEnumerable<ThesisSubmissionDto>? Submissions = null
 );
 
 public record CreateThesisRequest(

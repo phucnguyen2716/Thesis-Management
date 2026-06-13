@@ -76,6 +76,8 @@ namespace PlatformAdmin.Services
         private readonly string? _driveKey3_Thesis;  // For Theses (Khóa luận)
         
         private readonly bool _useMockConfig;
+        private readonly string? _clientId;
+        private readonly string? _clientSecret;
 
         public GoogleDriveStorageService(IConfiguration configuration, ILogger<GoogleDriveStorageService> logger)
         {
@@ -86,6 +88,8 @@ namespace PlatformAdmin.Services
             _driveKey3_Thesis = configuration["GoogleDrive:DriveKey3_Thesis"];
             
             _useMockConfig = configuration.GetValue<bool>("GoogleDrive:UseMock", true);
+            _clientId = configuration["GoogleDrive:ClientId"];
+            _clientSecret = configuration["GoogleDrive:ClientSecret"];
         }
 
         private DriveService GetDriveService(AcademicCategory category)
@@ -104,40 +108,7 @@ namespace PlatformAdmin.Services
                     break;
             }
 
-            DriveService service;
-            if (activeDriveKey.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
-            {
-                string credPath = Path.Combine(AppContext.BaseDirectory, activeDriveKey);
-                if (!File.Exists(credPath)) credPath = Path.Combine(Directory.GetCurrentDirectory(), activeDriveKey);
-                if (!File.Exists(credPath))
-                {
-                    string? dir = AppContext.BaseDirectory;
-                    while (dir != null)
-                    {
-                        string checkPath = Path.Combine(dir, activeDriveKey);
-                        if (File.Exists(checkPath)) { credPath = checkPath; break; }
-                        dir = Path.GetDirectoryName(dir);
-                    }
-                }
-#pragma warning disable CS0618
-                GoogleCredential credential = GoogleCredential.FromJson(File.ReadAllText(credPath))
-                    .CreateScoped(new[] { DriveService.ScopeConstants.DriveFile, DriveService.ScopeConstants.Drive });
-#pragma warning restore CS0618
-                service = new DriveService(new BaseClientService.Initializer()
-                {
-                    HttpClientInitializer = credential,
-                    ApplicationName = "Thesis-Management"
-                });
-            }
-            else
-            {
-                service = new DriveService(new BaseClientService.Initializer()
-                {
-                    ApiKey = activeDriveKey,
-                    ApplicationName = "Thesis-Management"
-                });
-            }
-            return service;
+            return CreateDriveServiceAsync(activeDriveKey).GetAwaiter().GetResult();
         }
 
         public async Task DeleteFolderAsync(string folderName, AcademicCategory category)
@@ -329,52 +300,7 @@ namespace PlatformAdmin.Services
 
             try
             {
-                DriveService service;
-                
-                if (activeDriveKey.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
-                {
-                    string credPath = Path.Combine(AppContext.BaseDirectory, activeDriveKey);
-                    if (!File.Exists(credPath))
-                    {
-                        credPath = Path.Combine(Directory.GetCurrentDirectory(), activeDriveKey);
-                    }
-                    if (!File.Exists(credPath))
-                    {
-                        string? dir = AppContext.BaseDirectory;
-                        while (dir != null)
-                        {
-                            string checkPath = Path.Combine(dir, activeDriveKey);
-                            if (File.Exists(checkPath))
-                            {
-                                credPath = checkPath;
-                                break;
-                            }
-                            dir = Path.GetDirectoryName(dir);
-                        }
-                    }
-
-                    _logger.LogInformation("GoogleDrive: Loading Service Account credentials from: '{Path}'", credPath);
-
-#pragma warning disable CS0618
-                    GoogleCredential credential = GoogleCredential.FromJson(File.ReadAllText(credPath))
-                        .CreateScoped(new[] { DriveService.ScopeConstants.DriveFile, DriveService.ScopeConstants.Drive });
-#pragma warning restore CS0618
-
-                    service = new DriveService(new BaseClientService.Initializer()
-                    {
-                        HttpClientInitializer = credential,
-                        ApplicationName = "Thesis-Management"
-                    });
-                }
-                else
-                {
-                    _logger.LogInformation("GoogleDrive: Connecting to Google Drive using API Key...");
-                    service = new DriveService(new BaseClientService.Initializer()
-                    {
-                        ApiKey = activeDriveKey,
-                        ApplicationName = "Thesis-Management"
-                    });
-                }
+                DriveService service = await CreateDriveServiceAsync(activeDriveKey);
                 
                 var testReq = service.Files.List();
                 testReq.PageSize = 1;
@@ -446,6 +372,25 @@ namespace PlatformAdmin.Services
                     }
 
                     var uploadedFile = uploadRequest.ResponseBody;
+                    if (uploadedFile != null && !string.IsNullOrEmpty(uploadedFile.Id))
+                    {
+                        try
+                        {
+                            var permission = new Google.Apis.Drive.v3.Data.Permission
+                            {
+                                Role = "reader",
+                                Type = "anyone"
+                            };
+                            var permRequest = service.Permissions.Create(permission, uploadedFile.Id);
+                            permRequest.SupportsAllDrives = true;
+                            await permRequest.ExecuteAsync();
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning(ex, "Failed to set public read permission on uploaded file {FileId}", uploadedFile.Id);
+                        }
+                    }
+
                     string webUrl = uploadedFile?.WebViewLink ?? $"https://drive.google.com/file/d/{uploadedFile?.Id}";
 
                     _logger.LogInformation("GoogleDrive SUCCESS: File archived. Shareable URL: {Url}", webUrl);
@@ -516,46 +461,7 @@ namespace PlatformAdmin.Services
 
             try
             {
-                DriveService service;
-                if (activeDriveKey.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
-                {
-                    string credPath = Path.Combine(AppContext.BaseDirectory, activeDriveKey);
-                    if (!File.Exists(credPath))
-                    {
-                        credPath = Path.Combine(Directory.GetCurrentDirectory(), activeDriveKey);
-                    }
-                    if (!File.Exists(credPath))
-                    {
-                        string? dir = AppContext.BaseDirectory;
-                        while (dir != null)
-                        {
-                            string checkPath = Path.Combine(dir, activeDriveKey);
-                            if (File.Exists(checkPath))
-                            {
-                                credPath = checkPath;
-                                break;
-                            }
-                            dir = Path.GetDirectoryName(dir);
-                        }
-                    }
-
-                    GoogleCredential credential = GoogleCredential.FromJson(File.ReadAllText(credPath))
-                        .CreateScoped(new[] { DriveService.ScopeConstants.DriveFile, DriveService.ScopeConstants.Drive });
-
-                    service = new DriveService(new BaseClientService.Initializer()
-                    {
-                        HttpClientInitializer = credential,
-                        ApplicationName = "Thesis-Management"
-                    });
-                }
-                else
-                {
-                    service = new DriveService(new BaseClientService.Initializer()
-                    {
-                        ApiKey = activeDriveKey,
-                        ApplicationName = "Thesis-Management"
-                    });
-                }
+                DriveService service = await CreateDriveServiceAsync(activeDriveKey);
 
                 string? thesisStorageId = null;
                 var storageListReq = service.Files.List();
@@ -618,40 +524,7 @@ namespace PlatformAdmin.Services
 
             try
             {
-                DriveService service;
-                if (activeDriveKey.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
-                {
-                    string credPath = Path.Combine(AppContext.BaseDirectory, activeDriveKey);
-                    if (!File.Exists(credPath))
-                        credPath = Path.Combine(Directory.GetCurrentDirectory(), activeDriveKey);
-                    if (!File.Exists(credPath))
-                    {
-                        string? dir = AppContext.BaseDirectory;
-                        while (dir != null)
-                        {
-                            string checkPath = Path.Combine(dir, activeDriveKey);
-                            if (File.Exists(checkPath)) { credPath = checkPath; break; }
-                            dir = Path.GetDirectoryName(dir);
-                        }
-                    }
-
-                    GoogleCredential credential = GoogleCredential.FromJson(File.ReadAllText(credPath))
-                        .CreateScoped(new[] { DriveService.ScopeConstants.DriveFile, DriveService.ScopeConstants.Drive });
-
-                    service = new DriveService(new BaseClientService.Initializer()
-                    {
-                        HttpClientInitializer = credential,
-                        ApplicationName = "Thesis-Management"
-                    });
-                }
-                else
-                {
-                    service = new DriveService(new BaseClientService.Initializer()
-                    {
-                        ApiKey = activeDriveKey,
-                        ApplicationName = "Thesis-Management"
-                    });
-                }
+                DriveService service = await CreateDriveServiceAsync(activeDriveKey);
 
                 // Find the folder by name
                 var folderReq = service.Files.List();
@@ -937,13 +810,32 @@ namespace PlatformAdmin.Services
                     throw progress.Exception ?? new Exception("Upload failed");
 
                 var f = uploadRequest.ResponseBody;
+                if (f != null && !string.IsNullOrEmpty(f.Id))
+                {
+                    try
+                    {
+                        var permission = new Google.Apis.Drive.v3.Data.Permission
+                        {
+                            Role = "reader",
+                            Type = "anyone"
+                        };
+                        var permRequest = service.Permissions.Create(permission, f.Id);
+                        permRequest.SupportsAllDrives = true;
+                        await permRequest.ExecuteAsync();
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Failed to set public read permission on uploaded file {FileId}", f.Id);
+                    }
+                }
+
                 return new DriveFileInfo
                 {
                     Id = f?.Id ?? "",
                     Name = f?.Name ?? fileName,
                     MimeType = f?.MimeType ?? mimeType,
                     Size = f?.Size,
-                    WebViewLink = f?.WebViewLink ?? "",
+                    WebViewLink = !string.IsNullOrEmpty(f?.WebViewLink) ? f.WebViewLink : (f != null && !string.IsNullOrEmpty(f.Id) ? $"https://drive.google.com/file/d/{f.Id}/view?usp=drivesdk" : ""),
                     WebContentLink = f?.WebContentLink ?? "",
                     CreatedTime = f?.CreatedTimeDateTimeOffset?.UtcDateTime,
                     ModifiedTime = f?.ModifiedTimeDateTimeOffset?.UtcDateTime,
@@ -964,8 +856,116 @@ namespace PlatformAdmin.Services
             _ => _driveKey1_Project ?? ""
         };
 
+        private class OAuthTokenDto
+        {
+            [System.Text.Json.Serialization.JsonPropertyName("access_token")]
+            public string? AccessToken { get; set; }
+
+            [System.Text.Json.Serialization.JsonPropertyName("refresh_token")]
+            public string? RefreshToken { get; set; }
+
+            [System.Text.Json.Serialization.JsonPropertyName("expires_in")]
+            public long? ExpiresInSeconds { get; set; }
+
+            [System.Text.Json.Serialization.JsonPropertyName("token_type")]
+            public string? TokenType { get; set; }
+
+            [System.Text.Json.Serialization.JsonPropertyName("scope")]
+            public string? Scope { get; set; }
+        }
+
+        private async Task<DriveService?> CreateOAuthDriveServiceAsync()
+        {
+            string tokenPath = Path.Combine(Directory.GetCurrentDirectory(), "google-oauth-token.json");
+            if (!File.Exists(tokenPath))
+            {
+                tokenPath = Path.Combine(AppContext.BaseDirectory, "google-oauth-token.json");
+                if (!File.Exists(tokenPath)) return null;
+            }
+
+            try
+            {
+                var tokenContent = await File.ReadAllTextAsync(tokenPath);
+                var dto = System.Text.Json.JsonSerializer.Deserialize<OAuthTokenDto>(tokenContent);
+                if (dto == null || string.IsNullOrEmpty(dto.AccessToken)) return null;
+
+                var tokenResponse = new Google.Apis.Auth.OAuth2.Responses.TokenResponse
+                {
+                    AccessToken = dto.AccessToken,
+                    RefreshToken = dto.RefreshToken,
+                    ExpiresInSeconds = dto.ExpiresInSeconds,
+                    TokenType = dto.TokenType,
+                    Scope = dto.Scope,
+                    IssuedUtc = DateTime.UtcNow.AddSeconds(-(dto.ExpiresInSeconds ?? 3600)) // Safe fallback to trigger immediate refresh if needed
+                };
+
+                var clientId = _clientId;
+                var clientSecret = _clientSecret;
+
+                if (string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(clientSecret))
+                {
+                    _logger.LogError("❌ [GoogleDrive] OAuth ClientId or ClientSecret is not configured.");
+                    return null;
+                }
+
+                var flow = new Google.Apis.Auth.OAuth2.Flows.GoogleAuthorizationCodeFlow(new Google.Apis.Auth.OAuth2.Flows.GoogleAuthorizationCodeFlow.Initializer
+                {
+                    ClientSecrets = new ClientSecrets
+                    {
+                        ClientId = clientId,
+                        ClientSecret = clientSecret
+                    },
+                    Scopes = new[] { DriveService.ScopeConstants.Drive }
+                });
+
+                var credential = new UserCredential(flow, "user", tokenResponse);
+
+                // Auto refresh token if expired
+                if (credential.Token.IsExpired(Google.Apis.Util.SystemClock.Default))
+                {
+                    _logger.LogInformation("🔄 [GoogleDrive] OAuth token is expired. Refreshing token...");
+                    bool refreshed = await credential.RefreshTokenAsync(System.Threading.CancellationToken.None);
+                    if (refreshed)
+                    {
+                        var updatedDto = new OAuthTokenDto
+                        {
+                            AccessToken = credential.Token.AccessToken,
+                            RefreshToken = credential.Token.RefreshToken ?? dto.RefreshToken, // Keep old refresh token if not returned
+                            ExpiresInSeconds = credential.Token.ExpiresInSeconds,
+                            TokenType = credential.Token.TokenType,
+                            Scope = credential.Token.Scope
+                        };
+                        var serialized = System.Text.Json.JsonSerializer.Serialize(updatedDto);
+                        await File.WriteAllTextAsync(tokenPath, serialized);
+                        _logger.LogInformation("✅ [GoogleDrive] OAuth token refreshed and saved successfully.");
+                    }
+                    else
+                    {
+                        _logger.LogWarning("⚠️ [GoogleDrive] Failed to refresh OAuth token.");
+                    }
+                }
+
+                return new DriveService(new BaseClientService.Initializer
+                {
+                    HttpClientInitializer = credential,
+                    ApplicationName = "Thesis-Management"
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ [GoogleDrive] Failed to initialize OAuth DriveService from google-oauth-token.json");
+                return null;
+            }
+        }
+
         private async Task<DriveService> CreateDriveServiceAsync(string activeDriveKey)
         {
+            var oauthService = await CreateOAuthDriveServiceAsync();
+            if (oauthService != null)
+            {
+                return oauthService;
+            }
+
             if (activeDriveKey.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
             {
                 string credPath = ResolveCredentialPath(activeDriveKey);

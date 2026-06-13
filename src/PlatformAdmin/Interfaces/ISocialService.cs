@@ -10,5 +10,6 @@ namespace PlatformAdmin.Interfaces
         Task<SocialPostDto> CreatePostAsync(CreateSocialPostRequest request);
         Task<bool> UpdatePostAsync(int id, UpdateSocialPostRequest request);
         Task<bool> DeletePostAsync(int id);
+        Task UploadPostImageToCloudinaryAsync(int postId);
     }
 }

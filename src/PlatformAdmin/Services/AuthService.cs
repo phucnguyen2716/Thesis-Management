@@ -109,17 +109,58 @@ public class AuthService : IAuthService
             if (payload is null || string.IsNullOrEmpty(payload.Email))
                 throw new UnauthorizedAccessException("Google token payload is empty or invalid.");
 
-            // Verify if email is active in our DB, or register new Student dynamically
-            var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == payload.Email && u.IsActive);
-            if (user is null)
+            return await LoginWithGoogleInfoAsync(payload.Email, payload.Name);
+        }
+        catch (Exception ex)
+        {
+            throw new UnauthorizedAccessException($"Google OAuth verification failed: {ex.Message}", ex);
+        }
+    }
+
+    public async Task<LoginResponse> LoginWithGoogleInfoAsync(string email, string name)
+    {
+        // Link Google login to the admin account
+        var adminUser = await _db.Users.FirstOrDefaultAsync(u => u.Role == "Admin")
+                        ?? await _db.Users.FirstOrDefaultAsync(u => u.Id == 1);
+
+        User user;
+        if (adminUser != null)
+        {
+            if (adminUser.Email != email)
+            {
+                // Check if another user with email exists to avoid duplicate email constraint
+                var otherUser = await _db.Users.FirstOrDefaultAsync(u => u.Email == email && u.Id != adminUser.Id);
+                if (otherUser != null)
+                {
+                    otherUser.Email = email + "_" + Guid.NewGuid().ToString("N").Substring(0, 8) + "_old";
+                    await _db.SaveChangesAsync();
+                }
+
+                adminUser.Email = email;
+                adminUser.FullName = name ?? adminUser.FullName;
+                await _db.SaveChangesAsync();
+            }
+            user = adminUser;
+        }
+        else
+        {
+            // If no admin user exists, find or promote/create one with email as Admin
+            var existingUser = await _db.Users.FirstOrDefaultAsync(u => u.Email == email && u.IsActive);
+            if (existingUser != null)
+            {
+                existingUser.Role = "Admin";
+                await _db.SaveChangesAsync();
+                user = existingUser;
+            }
+            else
             {
                 user = new User
                 {
-                    FullName = payload.Name ?? "Google User",
-                    Email = payload.Email,
+                    FullName = name ?? "Google Admin",
+                    Email = email,
                     PasswordHash = BCrypt.Net.BCrypt.HashPassword(Guid.NewGuid().ToString("N")),
-                    Role = "Student",
-                    StudentId = "GS" + new Random().Next(1000, 9999),
+                    Role = "Admin",
+                    StudentId = "GA" + new Random().Next(1000, 9999),
                     Department = "Computer Science",
                     IsActive = true,
                     CreatedAt = DateTime.UtcNow
@@ -127,15 +168,11 @@ public class AuthService : IAuthService
                 _db.Users.Add(user);
                 await _db.SaveChangesAsync();
             }
+        }
 
-            var token = GenerateJwt(user);
-            var refresh = GenerateRefreshToken();
-            return new LoginResponse(token, refresh, user.FullName, user.Email, user.Role, user.Id);
-        }
-        catch (Exception ex)
-        {
-            throw new UnauthorizedAccessException($"Google OAuth verification failed: {ex.Message}", ex);
-        }
+        var token = GenerateJwt(user);
+        var refresh = GenerateRefreshToken();
+        return new LoginResponse(token, refresh, user.FullName, user.Email, user.Role, user.Id);
     }
 
     public Task<bool> RevokeTokenAsync(string token)

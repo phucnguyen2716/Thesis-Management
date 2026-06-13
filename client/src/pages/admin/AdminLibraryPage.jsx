@@ -344,7 +344,7 @@ const AdminLibraryPage = () => {
   });
 
   return (
-    <div className="max-w-6xl space-y-5 text-slate-100">
+    <div className="w-full space-y-5 text-slate-100">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:justify-between gap-3">
         <div>

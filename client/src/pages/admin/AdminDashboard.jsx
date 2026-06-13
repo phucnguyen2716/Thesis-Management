@@ -87,7 +87,7 @@ const AdminDashboard = () => {
   ];
 
   return (
-    <div className="max-w-6xl space-y-6">
+    <div className="w-full space-y-6">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-black text-white">Tổng quan hệ thống</h1>

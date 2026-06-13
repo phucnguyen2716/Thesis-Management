@@ -1014,27 +1014,52 @@ sequenceDiagram
 
 ---
 
-### 6. 📁 Tích hợp Lưu trữ Google Drive cho Đồ án Môn học (Google Drive Academic Storage)
+### 6. 📁 Tích hợp Google OAuth2 & Lưu trữ Google Drive (Google Drive Academic Storage & OAuth2)
 
-Phân hệ **MediaProcessing** hỗ trợ lưu trữ tệp tài liệu số hóa của Đồ án môn học trực tiếp lên đám mây **Google Drive** thông qua tài khoản dịch vụ **Google Service Account Credentials**.
+Hệ thống hỗ trợ lưu trữ tệp tài liệu số hóa của Đồ án môn học trực tiếp lên **Google Drive** của người dùng thông qua luồng **Google OAuth2** hợp nhất.
+
+#### 🔄 Quy trình xác thực hợp nhất (Unified Google OAuth2)
+- **Đăng nhập và cấp quyền:** Khi Admin/Người dùng đăng nhập bằng nút **"Đăng nhập bằng Google"**, hệ thống sẽ yêu cầu đồng thời cả quyền thông tin cá nhân (`openid`, `email`, `profile`) và quyền ghi tệp Google Drive (`https://www.googleapis.com/auth/drive`).
+- **Trao đổi và lưu trữ Token:** Backend tự động thực hiện trao đổi Authorization Code lấy Access Token & Refresh Token, sau đó lưu trữ token của Admin tại file `google-oauth-token.json` để phục vụ các tác vụ đồng bộ nền.
+- **Giải quyết giới hạn Hạn mức (Drive Storage Quota):** Thay vì sử dụng Service Account mặc định (có dung lượng 0 byte), hệ thống sử dụng Refresh Token để đồng bộ dữ liệu trực tiếp dưới quota của tài khoản Drive cá nhân hoặc workspace của Admin, giúp lưu trữ tài liệu hoàn toàn không giới hạn.
+- **Tự động liên kết tài khoản:** Địa chỉ email Google đăng nhập được tự động đối chiếu và liên kết với tài khoản Admin trong hệ thống cơ sở dữ liệu PostgreSQL.
 
 #### 📂 Cấu trúc Lưu trữ Phân cấp Tự động (Folder Hierarchy)
-Khi sinh viên hoặc giảng viên tải lên tệp tin Đồ án môn học, hệ thống tự động kết nối và tạo sơ đồ lưu trữ dạng cây ngăn nắp:
-
+Khi tài liệu được tải lên hoặc đồng bộ từ hệ thống, cấu trúc thư mục trên Drive được tạo tự động như sau:
 ```text
-Bộ nhớ dùng chung (Shared Drive)
-  └── ThesisStorage/ (Thư mục gốc chia sẻ)
-        └── [Tên Chuyên ngành]/ (Ví dụ: Công nghệ phần mềm)
-              └── [Tên Môn học] - [Mã Môn]/ (Ví dụ: Thiết kế phần mềm - SE104)
-                    └── [UID Sinh viên] - [Tên Đồ án]/ (Ví dụ: SV123456 - Project Management System)
-                          └── [File tài liệu PDF]
+CourseProjectStorage/ (Thư mục gốc)
+  └── [Chuyên ngành]/ (Ví dụ: Trí tuệ nhân tạo)
+        └── [Tên Môn học] ([Mã Môn])/ (Ví dụ: Phát triển ứng dụng trí tuệ nhân tạo (ITE1174E))
+              └── NhomXX_[Tên đề tài]_[Mã Sinh Viên]/ (Ví dụ: Nhom02_DoAn_SV2024101)
+                    └── [Các tệp tài liệu báo cáo PDF/Word mẫu]
 ```
 
-#### ⚙️ Cơ chế Xác thực & Phân quyền bảo mật
-- **Xác thực qua Service Account:** Hệ thống sử dụng khóa bảo mật Service Account lưu trữ tại `src/MediaProcessing/google-credentials.json` để tự động xác thực ứng dụng với Google API mà không yêu cầu người dùng cuối đăng nhập thủ công (zero-interaction).
-- **Hạn mức dung lượng (Storage Quota Bypass):** Theo chính sách Google Cloud, Service Account cá nhân có hạn mức dung lượng mặc định là 0 byte. Để lưu trữ thành công, thư mục gốc `ThesisStorage` được cấu hình nằm bên trong một **Shared Drive (Bộ nhớ dùng chung)** của tổ chức/trường đại học và phân quyền truy cập cho email của Service Account. Khi đó tệp tin tải lên sẽ được tính dung lượng vào Shared Drive thay vì Service Account.
-- **Bảo mật mã nguồn:** Tệp tin chứa khóa Service Account (`google-credentials.json`) được tự động cấu hình trong `.gitignore` để ngăn chặn việc rò rỉ thông tin bảo mật lên các kho mã nguồn công khai như GitHub.
+#### 🛡️ Kiểm tra kết nối & Đồng bộ hóa
+- **Kiểm tra kết nối (Test Connection):** Admin có thể click **"Test Connection"** trong trang quản trị Đề tài để tự động xuất dữ liệu PostgreSQL mẫu thành tệp văn bản và tải lên Drive nhằm kiểm nghiệm hạn ngạch và quyền ghi. Kết quả được trả về chi tiết qua một **Popup Modal** tùy chỉnh trực quan.
+- **Đồng bộ tự động:** Tiến trình Hangfire Background Job chạy định kỳ mỗi 1 phút để đồng bộ đệ quy hai chiều giữa Google Drive và PostgreSQL, đảm bảo dữ liệu luôn mới nhất.
+
+### 7. 📰 Phân hệ Social Media, Đẩy ảnh lên Cloudinary & Phân trang Thông minh
+
+Phân hệ Tin tức / Social Media trên portal sinh viên hỗ trợ hiển thị các thông báo, tin tức học thuật dưới dạng thẻ bài viết sinh động, tích hợp tiến trình xử lý ngầm tự động và phân trang tối ưu trải nghiệm người dùng.
+
+#### 📄 Phân trang Lookup Page (UEF Active Themed Pagination)
+- Thay vì sử dụng nút "XEM THÊM KẾT QUẢ" (Load More) dễ gây quá tải giao diện, trang Tra cứu Đề tài (`LookupPage.jsx`) được tích hợp hệ thống phân trang thông minh hiển thị tối đa 6 đề tài trên mỗi trang.
+- Giao diện bộ điều khiển phân trang (`1 ... 4 5 6 ... 10`) được thiết kế đồng điệu theo hệ thống nhận diện thương hiệu UEF. Màu sắc của các nút trang đang chọn (Active Page) sẽ thay đổi linh hoạt theo màu của Chuyên ngành hiện tại (ví dụ: Đỏ cho Mạng máy tính, Xanh cho Hệ thống thông tin, Tím cho Trí tuệ nhân tạo).
+- Thiết lập tự động đưa trang hiện tại về trang 1 khi người dùng thay đổi từ khóa tìm kiếm hoặc lọc chuyên ngành, đồng thời thực hiện cuộn mượt (smooth scroll) về đầu danh sách kết quả khi chuyển trang.
+
+#### ☁️ Hangfire Background Job đẩy ảnh lên Cloudinary
+- Khi Admin tạo mới hoặc cập nhật bài đăng social kèm hình ảnh minh họa, bài đăng sẽ được lưu vào cơ sở dữ liệu với trạng thái `CloudinaryStatus = "Pending"`.
+- Ngay lập tức, một tiến trình background job của Hangfire được đưa vào hàng đợi:
+  `BackgroundJob.Enqueue<ISocialService>(s => s.UploadPostImageToCloudinaryAsync(postId))`
+- Tiến trình ngầm sẽ tự động tải ảnh từ URL ban đầu, thực hiện nén và tải lên kho lưu trữ đám mây **Cloudinary** thật (sử dụng thư viện `CloudinaryDotNet`).
+- Sau khi tải lên thành công, URL hình ảnh của bài viết trong DB sẽ được cập nhật thành URL bảo mật từ Cloudinary (`https://res.cloudinary.com/...`) và cập nhật trạng thái `CloudinaryStatus = "Uploaded"`. Nếu lỗi, trạng thái sẽ chuyển sang `Failed`.
+- Form Admin bài viết social (`AdminSocialPage.jsx`) tự động chạy tác vụ thăm dò (polling) mỗi 5 giây để cập nhật trạng thái đẩy ảnh theo thời gian thực bằng các huy hiệu trạng thái sinh động (`Chưa đẩy`, `Đang đẩy...`, `Cloudinary`, `Lỗi đẩy`).
+
+#### 🔐 Bảo mật Thông tin Cấu hình & Tránh rò rỉ Git (.gitignore)
+- Toàn bộ API keys (Cloudinary API key/secret, Gemini AI key), khóa ký JWT bảo mật và mật khẩu PostgreSQL được tách biệt hoàn toàn khỏi tệp `appsettings.json` mặc định và lưu trữ tại tệp `appsettings.local.json` (hoặc `appsettings.Secrets.json`) trên thiết bị phát triển cục bộ.
+- Tệp `.gitignore` được cấu hình để loại bỏ hoàn toàn các tệp credentials Google Drive (`google-credentials.json`, `google-oauth-token.json`) và các tệp cấu hình chứa mã bảo mật cục bộ này khỏi các lần commit và push lên GitHub.
 
 ---
 
 *Chúc bạn có những trải nghiệm tuyệt vời và nghiên cứu khoa học hiệu quả cùng **eThesis**!* 🎓🚀
+
