@@ -18,7 +18,6 @@ const SEED_FAVORITES = [
     stats: { views: "1.2k", downloads: "450", rating: "4.9" },
     tags: ["#SmartCity", "#AI", "#GreenTech"],
     notes: "Cần tham khảo phần thuật toán tối ưu hóa cho đồ án sắp tới.",
-    image: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&q=80&w=1200",
     pdfUrl: "/Document%20Detail.pdf"
   },
   {
@@ -33,7 +32,6 @@ const SEED_FAVORITES = [
     stats: { views: "2.5k", downloads: "890", rating: "4.8" },
     tags: ["#Blockchain", "#AgriTech", "#Export"],
     notes: "Mô hình chuỗi cung ứng rất chi tiết.",
-    image: "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?auto=format&fit=crop&q=80&w=1200",
     pdfUrl: "/Document%20Detail.pdf"
   },
   {
@@ -48,7 +46,6 @@ const SEED_FAVORITES = [
     stats: { views: "3.1k", downloads: "1.2k", rating: "5.0" },
     tags: ["#UXUI", "#Accessibility", "#SocialImpact"],
     notes: "Phần khảo sát người dùng rất chuyên nghiệp.",
-    image: "https://images.unsplash.com/photo-1551650975-87deedd944c3?auto=format&fit=crop&q=80&w=1200",
     pdfUrl: "/Document%20Detail.pdf"
   }
 ];
@@ -160,6 +157,18 @@ const FavoritesPage = () => {
       const raw = localStorage.getItem('studentFavorites');
       if (raw) {
         favList = JSON.parse(raw);
+        let modified = false;
+        favList = favList.map(item => {
+          if (item.id && item.id.startsWith('fav-') && item.image && item.image.includes('unsplash.com')) {
+            const { image, ...rest } = item;
+            modified = true;
+            return rest;
+          }
+          return item;
+        });
+        if (modified) {
+          localStorage.setItem('studentFavorites', JSON.stringify(favList));
+        }
       } else {
         // First-time seeding
         localStorage.setItem('studentFavorites', JSON.stringify(SEED_FAVORITES));
