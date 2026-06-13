@@ -389,7 +389,7 @@ const FavoritesPage = () => {
             </div>
             <div>
               <h2 className="text-lg sm:text-2xl font-black text-on-surface tracking-tight uppercase leading-none">Hồ sơ sở thích khoa học</h2>
-              <p className="text-xs text-on-surface-variant font-medium mt-1">Phân tích hành vi thời gian thực (Xem = 1đ, Tải = 3đ, Lưu = 5đ) tạo gợi ý tối ưu.</p>
+              <p className="text-xs text-on-surface-variant font-medium mt-1">Hồ sơ phản ánh mức độ quan tâm học thuật được phân tích từ hành vi nghiên cứu của bạn.</p>
             </div>
           </div>
 
@@ -410,7 +410,7 @@ const FavoritesPage = () => {
                     <div key={item.key} className="space-y-1.5">
                       <div className="flex justify-between text-xs font-bold text-on-surface">
                         <span>{item.label}</span>
-                        <span className="text-primary">{item.pts}đ</span>
+                        <span className="text-primary">{item.pts > 0 ? `${percent}%` : '0%'}</span>
                       </div>
                       <div className="h-2 w-full bg-surface-container rounded-full overflow-hidden">
                         <div 
@@ -428,7 +428,7 @@ const FavoritesPage = () => {
             <div className="space-y-4">
               <h3 className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/40 flex items-center gap-1.5">
                 <span className="material-symbols-outlined text-sm">tag</span>
-                Thẻ chủ đề được đề xuất dựa trên điểm số
+                Chủ đề nghiên cứu quan tâm hàng đầu
               </h3>
               
               {sortedTags.length === 0 ? (
@@ -455,8 +455,7 @@ const FavoritesPage = () => {
                         key={tag.name} 
                         className={`px-3 py-1.5 rounded-xl text-xs uppercase tracking-wider transition-all duration-300 flex items-center gap-1 ${bgClass}`}
                       >
-                        {tag.name} 
-                        <span className="opacity-60 text-[9px] font-bold">({tag.pts}đ)</span>
+                        {tag.name}
                       </span>
                     );
                   })}
