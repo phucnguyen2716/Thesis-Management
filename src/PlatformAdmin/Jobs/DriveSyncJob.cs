@@ -514,15 +514,17 @@ public class DriveSyncJob
                 isNew = true;
             }
 
-            thesis.Title = projectName;
-            thesis.Description = $"Đề tài {projectName} thuộc học phần {subjectName} ({subjectCode}). Đồng bộ tự động từ Google Drive.";
-            thesis.Major = majorKey;
-            thesis.Subject = subjectName;
-
             var mainFile = group.FirstOrDefault(r => r.FileName.Contains("Bao_cao", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrEmpty(r.LocalPdfPath))
                            ?? group.FirstOrDefault(r => !string.IsNullOrEmpty(r.LocalPdfPath))
                            ?? group.FirstOrDefault(r => r.FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
                            ?? firstFile;
+
+            var finalProjectName = !string.IsNullOrEmpty(mainFile.ProjectName) ? mainFile.ProjectName : projectName;
+
+            thesis.Title = finalProjectName;
+            thesis.Description = $"Đề tài {finalProjectName} thuộc học phần {subjectName} ({subjectCode}). Đồng bộ tự động từ Google Drive.";
+            thesis.Major = majorKey;
+            thesis.Subject = subjectName;
 
             thesis.FilePath = !string.IsNullOrEmpty(mainFile.LocalPdfPath) ? mainFile.LocalPdfPath : mainFile.WebViewLink;
 
