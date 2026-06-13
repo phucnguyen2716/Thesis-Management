@@ -41,6 +41,7 @@ namespace PlatformAdmin.Services
 
         Task<List<DriveFileInfo>> ListFilesFromFolderAsync(string folderName, AcademicCategory category);
         Task<List<DriveFileInfo>> ListCourseProjectFilesRecursiveAsync();
+        Task<List<DriveFileInfo>> ListAcademicFilesRecursiveAsync(AcademicCategory category);
         Task<byte[]?> DownloadFileAsync(string fileId, AcademicCategory category);
         Task<DriveFileInfo?> UploadFileToFolderAsync(string folderName, string fileName, byte[] content, string mimeType, AcademicCategory category);
         Task<int> CountFilesInCourseProjectStorageAsync();
@@ -266,8 +267,8 @@ namespace PlatformAdmin.Services
                 }
                 else
                 {
-                    destFolder = Path.Combine(mockDriveRoot, category.ToString(), parentFolderName, groupFolderName);
-                    _logger.LogInformation("GoogleDrive [Mock]: Saving file '{File}' to simulated path '{Category}/{Parent}/{Sub}'", fileName, category, parentFolderName, groupFolderName);
+                    destFolder = Path.Combine(mockDriveRoot, category.ToString(), parentFolderName);
+                    _logger.LogInformation("GoogleDrive [Mock]: Saving file '{File}' to simulated path '{Category}/{Parent}'", fileName, category, parentFolderName);
                 }
 
                 try
@@ -338,7 +339,7 @@ namespace PlatformAdmin.Services
                 else
                 {
                     string parentId = await GetOrCreateFolderAsync(service, parentFolderName, null);
-                    targetFolderId = await GetOrCreateFolderAsync(service, groupFolderName, parentId);
+                    targetFolderId = parentId; // Direct upload to Major folder!
                 }
 
                 _logger.LogInformation("GoogleDrive: Uploading academic file '{File}' ({Size} bytes) into path '{Parent}/{Sub}/{FileName}'...", 
@@ -616,12 +617,20 @@ namespace PlatformAdmin.Services
             };
         }
 
-        public async Task<List<DriveFileInfo>> ListCourseProjectFilesRecursiveAsync()
+        public Task<List<DriveFileInfo>> ListCourseProjectFilesRecursiveAsync()
         {
-            if (_useMockConfig || string.IsNullOrEmpty(_driveKey1_Project))
+            return ListAcademicFilesRecursiveAsync(AcademicCategory.Project);
+        }
+
+        public async Task<List<DriveFileInfo>> ListAcademicFilesRecursiveAsync(AcademicCategory category)
+        {
+            string activeDriveKey = GetDriveKey(category);
+            string expectedRoot = category == AcademicCategory.Project ? "CourseProjectStorage" : category.ToString();
+
+            if (_useMockConfig || string.IsNullOrEmpty(activeDriveKey))
             {
                 var results = new List<DriveFileInfo>();
-                var mockDriveRoot = Path.Combine(Directory.GetCurrentDirectory(), "mock_google_drive", "CourseProjectStorage");
+                var mockDriveRoot = Path.Combine(Directory.GetCurrentDirectory(), "mock_google_drive", expectedRoot);
                 if (Directory.Exists(mockDriveRoot))
                 {
                     var files = Directory.GetFiles(mockDriveRoot, "*.*", SearchOption.AllDirectories);
@@ -633,72 +642,45 @@ namespace PlatformAdmin.Services
                         var relPath = Path.GetRelativePath(Path.Combine(Directory.GetCurrentDirectory(), "mock_google_drive"), file);
                         relPath = relPath.Replace('\\', '/');
 
-                        var parts = relPath.Split('/');
-                        string major = parts.Length > 1 ? parts[1] : "";
-                        string subjectWithCode = parts.Length > 2 ? parts[2] : "";
-                        string folderName = parts.Length > 3 ? parts[3] : "";
-                        string fileName = parts.Length > 4 ? parts[4] : "";
-
-                        string subject = subjectWithCode;
-                        string code = "";
-                        if (subjectWithCode.Contains('(') && subjectWithCode.Contains(')'))
-                        {
-                            int idxOpen = subjectWithCode.LastIndexOf('(');
-                            int idxClose = subjectWithCode.LastIndexOf(')');
-                            subject = subjectWithCode.Substring(0, idxOpen).Trim();
-                            code = subjectWithCode.Substring(idxOpen + 1, idxClose - idxOpen - 1).Trim();
-                        }
-
-                        string studentUid = "";
-                        string projectName = "";
-                        if (folderName.Contains('_'))
-                        {
-                            int lastUnderscore = folderName.LastIndexOf('_');
-                            projectName = folderName.Substring(0, lastUnderscore).Replace('_', ' ');
-                            studentUid = folderName.Substring(lastUnderscore + 1);
-                        }
+                        var parsed = DrivePathParser.ParseAcademicPath(relPath, category);
+                        if (parsed.Major == null) continue;
 
                         results.Add(new DriveFileInfo
                         {
-                            Id = $"mock-{i}",
+                            Id = $"mock-{category}-{i}",
                             Name = fileInfo.Name,
                             MimeType = GetMimeType(fileInfo.Name),
                             Size = fileInfo.Length,
-                            WebViewLink = $"https://drive.google.com/file/d/mock-{i}/view",
-                            WebContentLink = $"https://drive.google.com/uc?id=mock-{i}",
+                            WebViewLink = $"https://drive.google.com/file/d/mock-{category}-{i}/view",
+                            WebContentLink = $"https://drive.google.com/uc?id=mock-{category}-{i}",
                             CreatedTime = fileInfo.CreationTimeUtc,
                             ModifiedTime = fileInfo.LastWriteTimeUtc,
                             RelativePath = relPath,
-                            Major = major,
-                            MajorKey = GetMajorKey(major),
-                            Subject = subject,
-                            SubjectCode = code,
-                            StudentUid = studentUid,
-                            ProjectName = projectName
+                            Major = parsed.Major,
+                            MajorKey = parsed.MajorKey ?? "",
+                            Subject = parsed.Subject ?? "",
+                            SubjectCode = parsed.SubjectCode ?? "",
+                            StudentUid = parsed.StudentUid ?? "",
+                            ProjectName = parsed.ProjectName ?? ""
                         });
                     }
-                }
-
-                if (results.Count == 0)
-                {
-                    return new List<DriveFileInfo>();
                 }
                 return results;
             }
 
             try
             {
-                var service = await CreateDriveServiceAsync(_driveKey1_Project);
-                var rootId = await FindFolderByNameAsync(service, "CourseProjectStorage", null);
+                var service = await CreateDriveServiceAsync(activeDriveKey);
+                var rootId = await FindFolderByNameAsync(service, expectedRoot, null);
                 if (rootId == null) return new List<DriveFileInfo>();
 
                 var results = new List<DriveFileInfo>();
-                await ListFolderRecursiveAsync(service, rootId, "CourseProjectStorage", results);
+                await ListFolderRecursiveAsync(service, rootId, expectedRoot, results, category);
                 return results;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "ListCourseProjectFilesRecursiveAsync failed");
+                _logger.LogError(ex, "ListAcademicFilesRecursiveAsync failed for category {Category}", category);
                 return new List<DriveFileInfo>();
             }
         }
@@ -1015,7 +997,7 @@ namespace PlatformAdmin.Services
             return response.Files?.FirstOrDefault()?.Id;
         }
 
-        private async Task ListFolderRecursiveAsync(DriveService service, string folderId, string currentPath, List<DriveFileInfo> results)
+        private async Task ListFolderRecursiveAsync(DriveService service, string folderId, string currentPath, List<DriveFileInfo> results, AcademicCategory category = AcademicCategory.Project)
         {
             string? pageToken = null;
             do
@@ -1036,7 +1018,7 @@ namespace PlatformAdmin.Services
                     var relPath = $"{currentPath}/{f.Name}";
                     if (f.MimeType == "application/vnd.google-apps.folder")
                     {
-                        await ListFolderRecursiveAsync(service, f.Id, relPath, results);
+                        await ListFolderRecursiveAsync(service, f.Id, relPath, results, category);
                         continue;
                     }
 
@@ -1055,7 +1037,7 @@ namespace PlatformAdmin.Services
                         RelativePath = relPath
                     };
 
-                    var meta = DrivePathParser.ParseCourseProjectPath(relPath);
+                    var meta = DrivePathParser.ParseAcademicPath(relPath, category);
                     info.Major = meta.Major ?? "";
                     info.MajorKey = meta.MajorKey ?? "";
                     info.Subject = meta.Subject ?? "";

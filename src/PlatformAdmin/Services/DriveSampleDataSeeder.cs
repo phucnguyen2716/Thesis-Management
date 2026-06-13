@@ -51,30 +51,29 @@ public class DriveSampleDataSeeder : IDriveSampleDataSeeder
         {
             var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
             var existingThesesCount = await db.Theses.CountAsync();
+            var userCache = await db.Users.ToDictionaryAsync(u => u.StudentId ?? u.Email);
+
+            var defaultAdvisor = await db.Users.FirstOrDefaultAsync(u => u.Role == "Advisor")
+                ?? new User
+                {
+                    FullName = "Dr. Nguyen Van A",
+                    Email = "advisor@ethesis.edu.vn",
+                    PasswordHash = global::BCrypt.Net.BCrypt.HashPassword("advisor123"),
+                    Role = "Advisor",
+                    Department = "Công nghệ thông tin",
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+            if (defaultAdvisor.Id == 0)
+            {
+                db.Users.Add(defaultAdvisor);
+                await db.SaveChangesAsync();
+            }
+
             if (existingThesesCount < 10)
             {
                 _logger.LogInformation("Database has only {Count} theses. Seeding all subjects and student groups into PostgreSQL...", existingThesesCount);
-                
-                // Keep track of added student UIDs to avoid duplicate user creation
-                var userCache = await db.Users.ToDictionaryAsync(u => u.StudentId ?? u.Email);
-
-                var defaultAdvisor = await db.Users.FirstOrDefaultAsync(u => u.Role == "Advisor")
-                    ?? new User
-                    {
-                        FullName = "Dr. Nguyen Van A",
-                        Email = "advisor@ethesis.edu.vn",
-                        PasswordHash = global::BCrypt.Net.BCrypt.HashPassword("advisor123"),
-                        Role = "Advisor",
-                        Department = "Công nghệ thông tin",
-                        IsActive = true,
-                        CreatedAt = DateTime.UtcNow
-                    };
-
-                if (defaultAdvisor.Id == 0)
-                {
-                    db.Users.Add(defaultAdvisor);
-                    await db.SaveChangesAsync();
-                }
 
                 foreach (var g in DriveSampleCatalog.EnumerateAllGroups())
                 {
@@ -119,79 +118,288 @@ public class DriveSampleDataSeeder : IDriveSampleDataSeeder
                     }
                 }
                 await db.SaveChangesAsync();
-                _logger.LogInformation("Successfully seeded database theses.");
+            }
+
+            // Seed Topic and Thesis database records if they don't exist
+            var hasTopics = await db.Theses.AnyAsync(t => t.Category == "Topic");
+            var hasTheses = await db.Theses.AnyAsync(t => t.Category == "Thesis");
+
+            if (!hasTopics || !hasTheses)
+            {
+                _logger.LogInformation("Seeding Topic and Thesis database records...");
+                int topicUidCounter = 2026300;
+                int thesisUidCounter = 2026400;
+
+                foreach (var major in DriveSampleCatalog.Majors)
+                {
+                    if (!hasTopics)
+                    {
+                        topicUidCounter++;
+                        var topicUid = $"SV{topicUidCounter}";
+                        if (!userCache.TryGetValue(topicUid, out var topicStudent))
+                        {
+                            topicStudent = new User
+                            {
+                                FullName = $"Sinh viên Chuyên đề {topicUid}",
+                                Email = $"{topicUid.ToLower()}@ethesis.edu.vn",
+                                PasswordHash = global::BCrypt.Net.BCrypt.HashPassword("student123"),
+                                Role = "Student",
+                                StudentId = topicUid,
+                                Department = "Công nghệ thông tin",
+                                IsActive = true,
+                                CreatedAt = DateTime.UtcNow
+                            };
+                            db.Users.Add(topicStudent);
+                            await db.SaveChangesAsync();
+                            userCache[topicUid] = topicStudent;
+                        }
+
+                        var topicExists = await db.Theses.AnyAsync(t => t.StudentId == topicStudent.Id && t.Category == "Topic");
+                        if (!topicExists)
+                        {
+                            var thesis = new Thesis
+                            {
+                                StudentId = topicStudent.Id,
+                                AdvisorId = defaultAdvisor.Id,
+                                Title = $"Nghiên cứu phát triển chuyên đề {major.DisplayName}",
+                                Description = $"Đề tài chuyên đề thuộc chuyên ngành {major.DisplayName}. Dữ liệu tự động tự sinh.",
+                                Major = major.MajorKey,
+                                Subject = "Chuyên đề tốt nghiệp",
+                                SubjectCode = "TOPIC101",
+                                Category = "Topic",
+                                Status = "Approved",
+                                CreatedAt = DateTime.UtcNow.AddDays(-20),
+                                UpdatedAt = DateTime.UtcNow
+                            };
+                            db.Theses.Add(thesis);
+                        }
+                    }
+
+                    if (!hasTheses)
+                    {
+                        thesisUidCounter++;
+                        var thesisUid = $"SV{thesisUidCounter}";
+                        if (!userCache.TryGetValue(thesisUid, out var thesisStudent))
+                        {
+                            thesisStudent = new User
+                            {
+                                FullName = $"Sinh viên Khóa luận {thesisUid}",
+                                Email = $"{thesisUid.ToLower()}@ethesis.edu.vn",
+                                PasswordHash = global::BCrypt.Net.BCrypt.HashPassword("student123"),
+                                Role = "Student",
+                                StudentId = thesisUid,
+                                Department = "Công nghệ thông tin",
+                                IsActive = true,
+                                CreatedAt = DateTime.UtcNow
+                            };
+                            db.Users.Add(thesisStudent);
+                            await db.SaveChangesAsync();
+                            userCache[thesisUid] = thesisStudent;
+                        }
+
+                        var thesisExists = await db.Theses.AnyAsync(t => t.StudentId == thesisStudent.Id && t.Category == "Thesis");
+                        if (!thesisExists)
+                        {
+                            var thesis = new Thesis
+                            {
+                                StudentId = thesisStudent.Id,
+                                AdvisorId = defaultAdvisor.Id,
+                                Title = $"Khóa luận tốt nghiệp chuyên sâu {major.DisplayName}",
+                                Description = $"Đề tài khóa luận tốt nghiệp thuộc chuyên ngành {major.DisplayName}. Dữ liệu tự động tự sinh.",
+                                Major = major.MajorKey,
+                                Subject = "Khóa luận tốt nghiệp",
+                                SubjectCode = "THESIS202",
+                                Category = "Thesis",
+                                Status = "Approved",
+                                CreatedAt = DateTime.UtcNow.AddDays(-25),
+                                UpdatedAt = DateTime.UtcNow
+                            };
+                            db.Theses.Add(thesis);
+                        }
+                    }
+                }
+                await db.SaveChangesAsync();
+                _logger.LogInformation("Successfully seeded Topic and Thesis database records.");
             }
         }
 
         var existing = await _drive.CountFilesInCourseProjectStorageAsync();
         const int minDemoFiles = 80;
 
-        if (!force && existing >= minDemoFiles)
+        var topicFilesList = await _drive.ListAcademicFilesRecursiveAsync(AcademicCategory.Topic);
+        var thesisFilesList = await _drive.ListAcademicFilesRecursiveAsync(AcademicCategory.Thesis);
+        bool needsTopicThesisSeed = topicFilesList.Count == 0 || thesisFilesList.Count == 0;
+
+        if (!force && existing >= minDemoFiles && !needsTopicThesisSeed)
         {
-            _logger.LogInformation("DriveSampleDataSeeder: Drive đã có {Count} file (>= {Min}) — bỏ qua.", existing, minDemoFiles);
+            _logger.LogInformation("DriveSampleDataSeeder: Drive đã có {Count} file (>= {Min}) và đã seed Topic/Thesis — bỏ qua.", existing, minDemoFiles);
             return new DriveGenerateResult
             {
                 Skipped = existing,
-                Message = $"Drive đã có đủ {existing} file demo."
+                Message = $"Drive đã có đủ {existing} file demo và Topic/Thesis đã được seed."
             };
         }
 
-        _logger.LogInformation("DriveSampleDataSeeder: Bắt đầu tạo dữ liệu mẫu (force={Force})...", force);
+        _logger.LogInformation("DriveSampleDataSeeder: Bắt đầu tạo dữ liệu mẫu (force={Force}, needsTopicThesisSeed={NeedsTopicThesisSeed})...", force, needsTopicThesisSeed);
 
-        // Đảm bảo cấu trúc thư mục học phần tồn tại
-        foreach (var major in DriveSampleCatalog.Majors)
+        int uploaded = 0, failed = 0;
+
+        if (force || existing < minDemoFiles)
         {
-            foreach (var subject in major.Subjects)
+            // Đảm bảo cấu trúc thư mục học phần tồn tại
+            foreach (var major in DriveSampleCatalog.Majors)
             {
-                try
+                foreach (var subject in major.Subjects)
                 {
-                    await _drive.GetOrCreateSubjectFolderAsync(
-                        AcademicCategory.Project, major.DisplayName, subject.Name, subject.Code);
+                    try
+                    {
+                        await _drive.GetOrCreateSubjectFolderAsync(
+                            AcademicCategory.Project, major.DisplayName, subject.Name, subject.Code);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Không tạo được thư mục {Subject}", subject.Name);
+                    }
                 }
-                catch (Exception ex)
+            }
+
+            foreach (var g in DriveSampleCatalog.EnumerateAllGroups())
+            {
+                foreach (var fileName in g.Files)
                 {
-                    _logger.LogWarning(ex, "Không tạo được thư mục {Subject}", subject.Name);
+                    try
+                    {
+                        byte[] content;
+                        if (fileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+                        {
+                            content = BuildSamplePdf(g.Major, g.Subject, g.Code, g.Uid, g.Project, fileName);
+                        }
+                        else if (fileName.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase))
+                        {
+                            content = BuildSampleXlsx(g.Major, g.Subject, g.Code, g.Uid, g.Project, fileName);
+                        }
+                        else
+                        {
+                            content = BuildSampleDocx(g.Major, g.Subject, g.Code, g.Uid, g.Project, fileName);
+                        }
+
+                        var result = await _drive.UploadAcademicPdfAsync(
+                            fileName, content, AcademicCategory.Project,
+                            g.Subject, g.Project, g.Code, g.Uid, g.Project, g.Major,
+                            documentFolderName: g.FolderName);
+
+                        if (result.Success) uploaded++;
+                        else
+                        {
+                            failed++;
+                            _logger.LogWarning("Upload thất bại: {File} — {Err}", fileName, result.ErrorMessage);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        failed++;
+                        _logger.LogWarning(ex, "Upload lỗi: {File}", fileName);
+                    }
                 }
             }
         }
 
-        int uploaded = 0, failed = 0;
-        foreach (var g in DriveSampleCatalog.EnumerateAllGroups())
+        // Seed Topic files directly under Chuyên ngành (Major)
+        if (force || topicFilesList.Count == 0)
         {
-            foreach (var fileName in g.Files)
+            int tUid = 2026300;
+            foreach (var major in DriveSampleCatalog.Majors)
             {
-                try
+                tUid++;
+                var studentUid = $"SV{tUid}";
+                var title = $"Nghiên cứu phát triển chuyên đề {major.DisplayName}";
+                
+                string[] topicFiles = new[] { 
+                    $"{studentUid}_Bao_cao_Chuyen_de.docx", 
+                    $"{studentUid}_Slide_ThuyetTrinh.pdf", 
+                    $"{studentUid}_Bang_tinh_Chi_phi.xlsx" 
+                };
+
+                foreach (var fileName in topicFiles)
                 {
-                    byte[] content;
-                    if (fileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+                    try
                     {
-                        content = BuildSamplePdf(g.Major, g.Subject, g.Code, g.Uid, g.Project, fileName);
-                    }
-                    else if (fileName.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase))
-                    {
-                        content = BuildSampleXlsx(g.Major, g.Subject, g.Code, g.Uid, g.Project, fileName);
-                    }
-                    else
-                    {
-                        content = BuildSampleDocx(g.Major, g.Subject, g.Code, g.Uid, g.Project, fileName);
-                    }
+                        byte[] content;
+                        if (fileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+                        {
+                            content = BuildSamplePdf(major.DisplayName, title, "N/A", studentUid, title, fileName);
+                        }
+                        else if (fileName.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase))
+                        {
+                            content = BuildSampleXlsx(major.DisplayName, title, "N/A", studentUid, title, fileName);
+                        }
+                        else
+                        {
+                            content = BuildSampleDocx(major.DisplayName, title, "N/A", studentUid, title, fileName);
+                        }
 
-                    var result = await _drive.UploadAcademicPdfAsync(
-                        fileName, content, AcademicCategory.Project,
-                        g.Subject, g.Project, g.Code, g.Uid, g.Project, g.Major,
-                        documentFolderName: g.FolderName);
+                        var result = await _drive.UploadAcademicPdfAsync(
+                            fileName, content, AcademicCategory.Topic,
+                            major.DisplayName, title, null, studentUid, title, major.DisplayName, null);
 
-                    if (result.Success) uploaded++;
-                    else
+                        if (result.Success) uploaded++;
+                        else failed++;
+                    }
+                    catch (Exception ex)
                     {
                         failed++;
-                        _logger.LogWarning("Upload thất bại: {File} — {Err}", fileName, result.ErrorMessage);
+                        _logger.LogWarning(ex, "Upload Topic lỗi: {File}", fileName);
                     }
                 }
-                catch (Exception ex)
+            }
+        }
+
+        // Seed Thesis files directly under Chuyên ngành (Major)
+        if (force || thesisFilesList.Count == 0)
+        {
+            int thUid = 2026400;
+            foreach (var major in DriveSampleCatalog.Majors)
+            {
+                thUid++;
+                var studentUid = $"SV{thUid}";
+                var title = $"Khóa luận tốt nghiệp chuyên sâu {major.DisplayName}";
+                
+                string[] thesisFiles = new[] { 
+                    $"{studentUid}_Khoa_luan_Tot_nghiep.docx", 
+                    $"{studentUid}_Slide_ThuyetTrinh.pdf", 
+                    $"{studentUid}_Bang_tinh_Chi_phi.xlsx" 
+                };
+
+                foreach (var fileName in thesisFiles)
                 {
-                    failed++;
-                    _logger.LogWarning(ex, "Upload lỗi: {File}", fileName);
+                    try
+                    {
+                        byte[] content;
+                        if (fileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+                        {
+                            content = BuildSamplePdf(major.DisplayName, title, "N/A", studentUid, title, fileName);
+                        }
+                        else if (fileName.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase))
+                        {
+                            content = BuildSampleXlsx(major.DisplayName, title, "N/A", studentUid, title, fileName);
+                        }
+                        else
+                        {
+                            content = BuildSampleDocx(major.DisplayName, title, "N/A", studentUid, title, fileName);
+                        }
+
+                        var result = await _drive.UploadAcademicPdfAsync(
+                            fileName, content, AcademicCategory.Thesis,
+                            major.DisplayName, title, null, studentUid, title, major.DisplayName, null);
+
+                        if (result.Success) uploaded++;
+                        else failed++;
+                    }
+                    catch (Exception ex)
+                    {
+                        failed++;
+                        _logger.LogWarning(ex, "Upload Thesis lỗi: {File}", fileName);
+                    }
                 }
             }
         }

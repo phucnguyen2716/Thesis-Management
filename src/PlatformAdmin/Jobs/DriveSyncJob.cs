@@ -49,6 +49,8 @@ public class DriveSyncJob
 
             await SyncFolderAsync("Temporary_PDF", AcademicCategory.Project);
             await SyncCourseProjectStorageAsync();
+            await SyncTopicStorageAsync();
+            await SyncThesisStorageAsync();
             await SyncThesesFromDriveRecordsAsync();
             await ProcessWordAndPdfFilesAsync();
         }
@@ -68,7 +70,7 @@ public class DriveSyncJob
     {
         var driveFiles = await _driveService.ListFilesFromFolderAsync(folderName, category);
         _logger.LogInformation("🔄 [DriveSyncJob] '{Folder}': {Count} files on Drive", folderName, driveFiles.Count);
-        await UpsertDriveFilesAsync(driveFiles, folderName, "Project");
+        await UpsertDriveFilesAsync(driveFiles, folderName, category.ToString());
     }
 
     private async Task SyncCourseProjectStorageAsync()
@@ -76,6 +78,20 @@ public class DriveSyncJob
         var driveFiles = await _driveService.ListCourseProjectFilesRecursiveAsync();
         _logger.LogInformation("🔄 [DriveSyncJob] CourseProjectStorage: {Count} files on Drive", driveFiles.Count);
         await UpsertDriveFilesAsync(driveFiles, "CourseProjectStorage", "Project");
+    }
+
+    private async Task SyncTopicStorageAsync()
+    {
+        var driveFiles = await _driveService.ListAcademicFilesRecursiveAsync(AcademicCategory.Topic);
+        _logger.LogInformation("🔄 [DriveSyncJob] Topic: {Count} files on Drive", driveFiles.Count);
+        await UpsertDriveFilesAsync(driveFiles, "Topic", "Topic");
+    }
+
+    private async Task SyncThesisStorageAsync()
+    {
+        var driveFiles = await _driveService.ListAcademicFilesRecursiveAsync(AcademicCategory.Thesis);
+        _logger.LogInformation("🔄 [DriveSyncJob] Thesis: {Count} files on Drive", driveFiles.Count);
+        await UpsertDriveFilesAsync(driveFiles, "Thesis", "Thesis");
     }
 
     private async Task UpsertDriveFilesAsync(List<DriveFileInfo> driveFiles, string sourceFolder, string category)
@@ -237,6 +253,12 @@ public class DriveSyncJob
         var workDir = Path.Combine(_tempPdfRoot, $"{uid}_{safeName}");
         Directory.CreateDirectory(workDir);
 
+        AcademicCategory cat = AcademicCategory.Project;
+        if (Enum.TryParse<AcademicCategory>(record.Category, true, out var parsedCat))
+        {
+            cat = parsedCat;
+        }
+
         var ext = Path.GetExtension(record.FileName).ToLowerInvariant();
         var pdfPath = Path.Combine(workDir, Path.GetFileNameWithoutExtension(record.FileName) + ".pdf");
         
@@ -245,7 +267,7 @@ public class DriveSyncJob
             byte[]? bytes = null;
             if (!File.Exists(pdfPath))
             {
-                bytes = await _driveService.DownloadFileAsync(record.DriveFileId, AcademicCategory.Project);
+                bytes = await _driveService.DownloadFileAsync(record.DriveFileId, cat);
                 if (bytes == null || bytes.Length == 0)
                 {
                     var majorDisplay = GetMajorName(record.MajorKey);
@@ -265,7 +287,7 @@ public class DriveSyncJob
             try
             {
                 if (bytes == null || bytes.Length == 0) bytes = await File.ReadAllBytesAsync(pdfPath);
-                await _driveService.UploadFileToFolderAsync("Temporary_PDF", record.FileName, bytes, "application/pdf", AcademicCategory.Project);
+                await _driveService.UploadFileToFolderAsync("Temporary_PDF", record.FileName, bytes, "application/pdf", cat);
             }
             catch (Exception ex)
             {
@@ -280,7 +302,7 @@ public class DriveSyncJob
             var inputPath = Path.Combine(workDir, record.FileName);
             if (!File.Exists(inputPath))
             {
-                var bytes = await _driveService.DownloadFileAsync(record.DriveFileId, AcademicCategory.Project);
+                var bytes = await _driveService.DownloadFileAsync(record.DriveFileId, cat);
                 if (bytes == null || bytes.Length == 0)
                 {
                     var majorDisplay = GetMajorName(record.MajorKey);
@@ -319,7 +341,7 @@ public class DriveSyncJob
             try
             {
                 var pdfBytes = await File.ReadAllBytesAsync(pdfPath);
-                await _driveService.UploadFileToFolderAsync("Temporary_PDF", pdfName, pdfBytes, "application/pdf", AcademicCategory.Project);
+                await _driveService.UploadFileToFolderAsync("Temporary_PDF", pdfName, pdfBytes, "application/pdf", cat);
             }
             catch (Exception ex)
             {
@@ -565,36 +587,72 @@ public class DriveSyncJob
             .Include(t => t.Student)
             .FirstOrDefaultAsync(t => t.Id == thesisId);
 
-        if (thesis == null || thesis.Category != "Project" || thesis.Student == null)
+        if (thesis == null || thesis.Student == null)
             return;
 
         var studentUid = thesis.Student.StudentId ?? $"SV{thesis.StudentId}";
         var majorKey = thesis.Major;
-        var subjectCode = thesis.SubjectCode ?? "SWE1209E";
-        var subjectName = thesis.Subject ?? "Đồ án môn học";
         var majorName = GetMajorName(majorKey);
 
-        var sanitizedTitle = DrivePathParser.SanitizeFolderName(thesis.Title);
-        var folderName = $"Nhom01_{sanitizedTitle}_{studentUid}";
-
-        var alreadyHasFiles = await db.DriveFileRecords
-            .AnyAsync(r => r.IsActive && r.StudentUid == studentUid && r.SubjectCode == subjectCode);
-
-        if (alreadyHasFiles)
+        AcademicCategory cat = AcademicCategory.Project;
+        if (Enum.TryParse<AcademicCategory>(thesis.Category, true, out var parsedCat))
         {
-            _logger.LogInformation("ℹ️ [DriveSyncJob] Drive folder for {Student} / {Subject} already exists, skipping seed upload.", studentUid, subjectCode);
-            return;
+            cat = parsedCat;
         }
 
-        _logger.LogInformation("🔄 [DriveSyncJob] Admin created new thesis. Uploading seed templates to Drive folder: {Folder}...", folderName);
+        if (cat == AcademicCategory.Project)
+        {
+            var subjectCode = thesis.SubjectCode ?? "SWE1209E";
+            var subjectName = thesis.Subject ?? "Đồ án môn học";
+            var sanitizedTitle = DrivePathParser.SanitizeFolderName(thesis.Title);
+            var folderName = $"Nhom01_{sanitizedTitle}_{studentUid}";
 
-        var docxBytes = DriveSampleDataSeeder.BuildSampleDocx(majorName, subjectName, subjectCode, studentUid, thesis.Title, "Bao_cao_DoAn.docx");
-        var pdfBytes = DriveSampleDataSeeder.BuildSamplePdf(majorName, subjectName, subjectCode, studentUid, thesis.Title, "Slide_ThuyetTrinh.pdf");
-        var xlsxBytes = DriveSampleDataSeeder.BuildSampleXlsx(majorName, subjectName, subjectCode, studentUid, thesis.Title, "Bang_tinh_chi_phi.xlsx");
+            var alreadyHasFiles = await db.DriveFileRecords
+                .AnyAsync(r => r.IsActive && r.StudentUid == studentUid && r.SubjectCode == subjectCode && r.Category == "Project");
 
-        await _driveService.UploadAcademicPdfAsync("Bao_cao_DoAn.docx", docxBytes, AcademicCategory.Project, subjectName, thesis.Title, subjectCode, studentUid, thesis.Title, majorName, folderName);
-        await _driveService.UploadAcademicPdfAsync("Slide_ThuyetTrinh.pdf", pdfBytes, AcademicCategory.Project, subjectName, thesis.Title, subjectCode, studentUid, thesis.Title, majorName, folderName);
-        await _driveService.UploadAcademicPdfAsync("Bang_tinh_chi_phi.xlsx", xlsxBytes, AcademicCategory.Project, subjectName, thesis.Title, subjectCode, studentUid, thesis.Title, majorName, folderName);
+            if (alreadyHasFiles)
+            {
+                _logger.LogInformation("ℹ️ [DriveSyncJob] Drive folder for {Student} / {Subject} already exists, skipping seed upload.", studentUid, subjectCode);
+                return;
+            }
+
+            _logger.LogInformation("🔄 [DriveSyncJob] Admin created new project thesis. Uploading seed templates to Drive folder: {Folder}...", folderName);
+
+            var docxBytes = DriveSampleDataSeeder.BuildSampleDocx(majorName, subjectName, subjectCode, studentUid, thesis.Title, "Bao_cao_DoAn.docx");
+            var pdfBytes = DriveSampleDataSeeder.BuildSamplePdf(majorName, subjectName, subjectCode, studentUid, thesis.Title, "Slide_ThuyetTrinh.pdf");
+            var xlsxBytes = DriveSampleDataSeeder.BuildSampleXlsx(majorName, subjectName, subjectCode, studentUid, thesis.Title, "Bang_tinh_chi_phi.xlsx");
+
+            await _driveService.UploadAcademicPdfAsync("Bao_cao_DoAn.docx", docxBytes, AcademicCategory.Project, subjectName, thesis.Title, subjectCode, studentUid, thesis.Title, majorName, folderName);
+            await _driveService.UploadAcademicPdfAsync("Slide_ThuyetTrinh.pdf", pdfBytes, AcademicCategory.Project, subjectName, thesis.Title, subjectCode, studentUid, thesis.Title, majorName, folderName);
+            await _driveService.UploadAcademicPdfAsync("Bang_tinh_chi_phi.xlsx", xlsxBytes, AcademicCategory.Project, subjectName, thesis.Title, subjectCode, studentUid, thesis.Title, majorName, folderName);
+        }
+        else
+        {
+            // Topic or Thesis (Special Subject / Graduation Thesis)
+            // Files are placed directly under Chuyên ngành (Major) folder: Category/Major/FileName
+            string docName = cat == AcademicCategory.Topic ? $"{studentUid}_Bao_cao_Chuyen_de.docx" : $"{studentUid}_Khoa_luan_Tot_nghiep.docx";
+            string slideName = $"{studentUid}_Slide_ThuyetTrinh.pdf";
+            string xlsName = $"{studentUid}_Bang_tinh_Chi_phi.xlsx";
+
+            var alreadyHasFiles = await db.DriveFileRecords
+                .AnyAsync(r => r.IsActive && r.StudentUid == studentUid && r.Category == thesis.Category);
+
+            if (alreadyHasFiles)
+            {
+                _logger.LogInformation("ℹ️ [DriveSyncJob] Drive files for {Student} ({Category}) already exist, skipping seed upload.", studentUid, thesis.Category);
+                return;
+            }
+
+            _logger.LogInformation("🔄 [DriveSyncJob] Admin created new {Category} thesis. Uploading seed templates directly under major folder...", thesis.Category);
+
+            var docxBytes = DriveSampleDataSeeder.BuildSampleDocx(majorName, thesis.Title, "N/A", studentUid, thesis.Title, docName);
+            var pdfBytes = DriveSampleDataSeeder.BuildSamplePdf(majorName, thesis.Title, "N/A", studentUid, thesis.Title, slideName);
+            var xlsxBytes = DriveSampleDataSeeder.BuildSampleXlsx(majorName, thesis.Title, "N/A", studentUid, thesis.Title, xlsName);
+
+            await _driveService.UploadAcademicPdfAsync(docName, docxBytes, cat, majorName, thesis.Title, null, studentUid, thesis.Title, majorName, null);
+            await _driveService.UploadAcademicPdfAsync(slideName, pdfBytes, cat, majorName, thesis.Title, null, studentUid, thesis.Title, majorName, null);
+            await _driveService.UploadAcademicPdfAsync(xlsName, xlsxBytes, cat, majorName, thesis.Title, null, studentUid, thesis.Title, majorName, null);
+        }
 
         await SyncAllAsync();
     }

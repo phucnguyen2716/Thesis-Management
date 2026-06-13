@@ -50,6 +50,7 @@ Hệ thống Admin quản lý **Đồ án** theo cấu trúc phân cấp: **Chuy
 
 ## 🗂️ Cấu trúc thư mục Google Drive
 
+### 1. Đồ án môn học (`CourseProjectStorage/`)
 ```
 CourseProjectStorage/
 ├── Trí tuệ nhân tạo/
@@ -63,6 +64,31 @@ CourseProjectStorage/
 └── An toàn không gian mạng/
     └── ...
 ```
+
+### 2. Chuyên đề (`Topic/`)
+```
+Topic/
+├── Trí tuệ nhân tạo/
+│   ├── SV2026301_Bao_cao_Chuyen_de.docx
+│   ├── SV2026301_Slide_ThuyetTrinh.pdf
+│   └── SV2026301_Bang_tinh_Chi_phi.xlsx
+├── Mạng máy tính/
+│   └── ...
+└── ...
+```
+
+### 3. Khóa luận (`Thesis/`)
+```
+Thesis/
+├── Trí tuệ nhân tạo/
+│   ├── SV2026401_Khoa_luan_Tot_nghiep.docx
+│   ├── SV2026401_Slide_ThuyetTrinh.pdf
+│   └── SV2026401_Bang_tinh_Chi_phi.xlsx
+├── Mạng máy tính/
+│   └── ...
+└── ...
+```
+
 
 ---
 
@@ -1026,6 +1052,8 @@ Hệ thống hỗ trợ lưu trữ tệp tài liệu số hóa của Đồ án m
 
 #### 📂 Cấu trúc Lưu trữ Phân cấp Tự động (Folder Hierarchy)
 Khi tài liệu được tải lên hoặc đồng bộ từ hệ thống, cấu trúc thư mục trên Drive được tạo tự động như sau:
+
+**1. Đối với Đồ án môn học (`CourseProjectStorage/`):**
 ```text
 CourseProjectStorage/ (Thư mục gốc)
   └── [Chuyên ngành]/ (Ví dụ: Trí tuệ nhân tạo)
@@ -1033,6 +1061,15 @@ CourseProjectStorage/ (Thư mục gốc)
               └── NhomXX_[Tên đề tài]_[Mã Sinh Viên]/ (Ví dụ: Nhom02_DoAn_SV2024101)
                     └── [Các tệp tài liệu báo cáo PDF/Word mẫu]
 ```
+
+**2. Đối với Chuyên đề (`Topic/`) & Khóa luận (`Thesis/`):**
+Cấu trúc thư mục được thiết kế phẳng hơn, lưu trữ trực tiếp các tệp tin theo Chuyên ngành mà không tạo thêm thư mục con (môn học hay nhóm sinh viên), định dạng tên tệp tin bắt đầu bằng mã số sinh viên để hệ thống tự động nhận diện:
+```text
+[Topic hoặc Thesis]/ (Thư mục gốc)
+  └── [Chuyên ngành]/ (Ví dụ: Trí tuệ nhân tạo)
+        └── [Mã Sinh Viên]_[Tên Tài Liệu].[docx/pdf/xlsx] (Ví dụ: SV2026301_Bao_cao_Chuyen_de.docx)
+```
+
 
 #### 🛡️ Kiểm tra kết nối & Đồng bộ hóa
 - **Kiểm tra kết nối (Test Connection):** Admin có thể click **"Test Connection"** trong trang quản trị Đề tài để tự động xuất dữ liệu PostgreSQL mẫu thành tệp văn bản và tải lên Drive nhằm kiểm nghiệm hạn ngạch và quyền ghi. Kết quả được trả về chi tiết qua một **Popup Modal** tùy chỉnh trực quan.
