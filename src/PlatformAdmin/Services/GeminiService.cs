@@ -6,6 +6,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using PlatformAdmin.DTOs.Thesis;
 
 namespace PlatformAdmin.Services
 {
@@ -300,6 +301,273 @@ namespace PlatformAdmin.Services
                 _logger.LogError(ex, "Failed to call Gemini API in Post-Filter. Falling back to safe mock execution.");
                 return SimulatePostFilter(generatedResponse);
             }
+        }
+
+        public async Task<ThesisPracticeEvaluationResult> EvaluateThesisPracticeAsync(string content, string thesisTitle, string chapterId, string chapterLabel, List<string> requiredSections)
+        {
+            _logger.LogInformation("Evaluating thesis practice content. Title: '{Title}', Chapter: '{Chapter}'", thesisTitle, chapterLabel);
+
+            if (_useMock)
+            {
+                return SimulatePracticeEvaluation(content, thesisTitle, chapterId, chapterLabel, requiredSections);
+            }
+
+            try
+            {
+                var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={_apiKey}";
+
+                var systemPrompt = $"You are an academic expert grading university graduation thesis drafts.\n" +
+                    $"Evaluate the logical coherence, semantic relevance, and scientific tone of the following student draft text.\n\n" +
+                    $"Thesis Topic Title: \"{thesisTitle}\"\n" +
+                    $"Chapter/Section: \"{chapterLabel}\" (ID: {chapterId})\n" +
+                    $"Required subsections/concepts: {string.Join(", ", requiredSections)}\n\n" +
+                    $"Student Content:\n{content}\n\n" +
+                    $"Evaluation Rules:\n" +
+                    $"1. Check if the text is gibberish (e.g. keyboard mashing 'asdfg', random letters), placeholder text like 'Lorem Ipsum', or completely unrelated to a university thesis/graduation project (e.g. talking about movies, daily life, recipes, cats, etc.). If it is gibberish or completely unrelated, you MUST set 'isGibberishOrNonsense' to true, and set 'contentScore' to 0.0 and 'originalityScore' to 0.0.\n" +
+                    $"2. If the text is valid, assess the logical structure and relevance to the thesis title. Assign 'contentScore' (0.0 to 10.0) based on depth, description of ideas, and if it satisfies the chapter requirements.\n" +
+                    $"3. Assign 'originalityScore' (0.0 to 10.0) based on the academic tone, research mindset, and scientific quality of the text.\n" +
+                    $"4. Provide at least 2 distinct, highly helpful feedback items in Vietnamese. Each feedback item must have a 'type' ('success' for strong logical/content points, 'warning' for deficiencies/missing parts, 'info' for general improvements), a short 'title' (in Vietnamese), and a helpful 'text' description (in Vietnamese).\n\n" +
+                    $"Return a JSON output with the exact schema:\n" +
+                    $"{{\n" +
+                    $"  \"contentScore\": 8.5,\n" +
+                    $"  \"originalityScore\": 7.5,\n" +
+                    $"  \"isGibberishOrNonsense\": false,\n" +
+                    $"  \"feedbackItems\": [\n" +
+                    $"    {{\n" +
+                    $"      \"type\": \"success\",\n" +
+                    $"      \"title\": \"Văn phong tốt\",\n" +
+                    $"      \"text\": \"Bài viết sử dụng thuật ngữ chính xác, cấu trúc logic mạch lạc.\"\n" +
+                    $"    }},\n" +
+                    $"    {{\n" +
+                    $"      \"type\": \"warning\",\n" +
+                    $"      \"title\": \"Thiếu lý thuyết\",\n" +
+                    $"      \"text\": \"Cần phân tích sâu hơn về công nghệ áp dụng.\"\n" +
+                    $"    }}\n" +
+                    $"  ]\n" +
+                    $"}}";
+
+                var requestBody = new
+                {
+                    contents = new[]
+                    {
+                        new { role = "user", parts = new[] { new { text = systemPrompt } } }
+                    },
+                    generationConfig = new
+                    {
+                        responseMimeType = "application/json"
+                    }
+                };
+
+                var response = await _httpClient.PostAsync(url, new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json"));
+                response.EnsureSuccessStatusCode();
+
+                var responseContent = await response.Content.ReadAsStringAsync();
+                using var doc = JsonDocument.Parse(responseContent);
+                var textResult = doc.RootElement
+                    .GetProperty("candidates")[0]
+                    .GetProperty("content")
+                    .GetProperty("parts")[0]
+                    .GetProperty("text")
+                    .GetString();
+
+                if (string.IsNullOrEmpty(textResult))
+                {
+                    return SimulatePracticeEvaluation(content, thesisTitle, chapterId, chapterLabel, requiredSections);
+                }
+
+                var parsed = JsonSerializer.Deserialize<ThesisPracticeEvaluationResult>(textResult, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                return parsed ?? SimulatePracticeEvaluation(content, thesisTitle, chapterId, chapterLabel, requiredSections);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to call Gemini API for thesis practice evaluation. Falling back to local heuristics.");
+                return SimulatePracticeEvaluation(content, thesisTitle, chapterId, chapterLabel, requiredSections);
+            }
+        }
+
+        private bool IsGibberishWord(string word)
+        {
+            if (word.Length > 20) return true;
+
+            // Character checks (English & Vietnamese vowels)
+            string vowels = "aeiouyăâêôơưáàảãạăắằẳẵặâấầẩẫậéèẻẽẹêếềểễệíìỉĩịóòỏõọôốồổỗộơớờởỡợúùủũụưứừửữựýỳỷỹỵđ";
+            bool hasVowel = false;
+            foreach (char c in word)
+            {
+                if (vowels.Contains(c))
+                {
+                    hasVowel = true;
+                    break;
+                }
+            }
+
+            if (word.Length >= 4 && !hasVowel) return true;
+            return false;
+        }
+
+        private bool IsRelevanceCheckPassed(string text, string thesisTitle)
+        {
+            if (string.IsNullOrWhiteSpace(thesisTitle) || thesisTitle == "Đồ án luyện tập") return true;
+
+            var stopwords = new HashSet<string>(new[] { "xây", "dựng", "hệ", "thống", "sử", "dụng", "công", "nghệ", "đồ", "án", "đề", "tài", "và", "của", "cho", "tại", "ở", "một", "những", "các", "với", "như", "được", "bởi", "về", "có", "là", "application", "system", "web", "app", "trên", "nền", "tảng" });
+            var titleWords = thesisTitle.ToLowerInvariant().Split(new[] { ' ', ',', '.', '-', '/', ':', ';' }, StringSplitOptions.RemoveEmptyEntries);
+            var keywords = new List<string>();
+
+            foreach (var w in titleWords)
+            {
+                if (w.Length > 2 && !stopwords.Contains(w))
+                {
+                    keywords.Add(w);
+                }
+            }
+
+            if (keywords.Count == 0) return true;
+
+            var lowerText = text.ToLowerInvariant();
+            foreach (var kw in keywords)
+            {
+                if (lowerText.Contains(kw))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private ThesisPracticeEvaluationResult SimulatePracticeEvaluation(string content, string thesisTitle, string chapterId, string chapterLabel, List<string> requiredSections)
+        {
+            var cleanText = System.Text.RegularExpressions.Regex.Replace(content, "<.*?>", string.Empty);
+            var words = cleanText.ToLowerInvariant().Split(new[] { ' ', '\r', '\n', '\t', '.', ',', '!', '?', ';', ':' }, StringSplitOptions.RemoveEmptyEntries);
+
+            var result = new ThesisPracticeEvaluationResult();
+
+            if (words.Length < 10)
+            {
+                result.IsGibberishOrNonsense = true;
+                result.ContentScore = 0;
+                result.OriginalityScore = 0;
+                result.FeedbackItems.Add(new PracticeFeedbackItem
+                {
+                    Type = "warning",
+                    Title = "Nội dung quá ngắn",
+                    Text = "Nội dung soạn thảo quá ngắn (dưới 10 từ). Vui lòng viết thêm nội dung cụ thể."
+                });
+                return result;
+            }
+
+            int gibberishCount = 0;
+            foreach (var w in words)
+            {
+                if (IsGibberishWord(w)) gibberishCount++;
+            }
+
+            bool hasGibberish = gibberishCount > 0 && ((double)gibberishCount / words.Length > 0.15);
+
+            bool hasConsecutiveRepetitions = false;
+            for (int i = 0; i < words.Length - 2; i++)
+            {
+                if (words[i] == words[i + 1] && words[i + 1] == words[i + 2])
+                {
+                    hasConsecutiveRepetitions = true;
+                    break;
+                }
+            }
+
+            bool isRelevant = IsRelevanceCheckPassed(cleanText, thesisTitle);
+
+            if (hasGibberish || hasConsecutiveRepetitions || !isRelevant)
+            {
+                result.IsGibberishOrNonsense = true;
+                result.ContentScore = 0.0;
+                result.OriginalityScore = 0.0;
+
+                if (hasGibberish)
+                {
+                    result.FeedbackItems.Add(new PracticeFeedbackItem
+                    {
+                        Type = "warning",
+                        Title = "Phát hiện nội dung vô nghĩa",
+                        Text = "Văn bản chứa các từ viết sai cấu trúc hoặc gõ phím ngẫu nhiên vô nghĩa (gibberish)."
+                    });
+                }
+                if (hasConsecutiveRepetitions)
+                {
+                    result.FeedbackItems.Add(new PracticeFeedbackItem
+                    {
+                        Type = "warning",
+                        Title = "Phát hiện lặp từ liên tục",
+                        Text = "Cảnh báo lặp đi lặp lại một từ nhiều lần liên tiếp để tăng số lượng chữ."
+                    });
+                }
+                if (!isRelevant)
+                {
+                    result.FeedbackItems.Add(new PracticeFeedbackItem
+                    {
+                        Type = "warning",
+                        Title = "Không liên quan đến đề tài",
+                        Text = $"Nội dung bài viết không khớp với chủ đề đề tài của bạn: \"{thesisTitle}\"."
+                    });
+                }
+                return result;
+            }
+
+            int minWords = 200;
+            if (chapterId == "master_ch") minWords = 900;
+            else if (chapterId == "intro") minWords = 200;
+            else if (chapterId == "chapter1") minWords = 300;
+            else if (chapterId == "chapter2") minWords = 350;
+            else if (chapterId == "chapter3") minWords = 300;
+            else if (chapterId == "conclusion") minWords = 150;
+
+            if (words.Length >= minWords)
+            {
+                result.ContentScore = Math.Min(10.0, 8.5 + (words.Length - minWords) / 150.0);
+                result.FeedbackItems.Add(new PracticeFeedbackItem
+                {
+                    Type = "success",
+                    Title = "Độ dài nội dung đạt yêu cầu",
+                    Text = $"Nội dung đã đạt độ dài chuẩn cho chương này ({words.Length}/{minWords} từ)."
+                });
+            }
+            else
+            {
+                result.ContentScore = Math.Round(((double)words.Length / minWords * 8.0) * 10) / 10;
+                result.FeedbackItems.Add(new PracticeFeedbackItem
+                {
+                    Type = "warning",
+                    Title = "Độ dài chưa đạt",
+                    Text = $"Nội dung chương này còn ngắn ({words.Length}/{minWords} từ). Cần viết cụ thể và chi tiết hơn."
+                });
+            }
+
+            string[] academicTerms = { "phân tích", "thiết kế", "hệ thống", "nghiên cứu", "thực nghiệm", "đánh giá", "blockchain", "ứng dụng", "mô hình", "phát triển", "quy trình", "cơ sở", "lý thuyết", "dữ liệu", "thông tin", "triển khai" };
+            int hits = 0;
+            foreach (var term in academicTerms)
+            {
+                if (cleanText.ToLowerInvariant().Contains(term)) hits++;
+            }
+
+            result.OriginalityScore = hits == 0 ? 3.0 : Math.Round((Math.Min(10.0, 4.0 + (hits / 5.0) * 6.0)) * 10) / 10;
+            if (hits >= 6)
+            {
+                result.FeedbackItems.Add(new PracticeFeedbackItem
+                {
+                    Type = "success",
+                    Title = "Văn phong học thuật tốt",
+                    Text = "Phần viết chứa nhiều thuật ngữ khoa học và chuyên môn chính xác."
+                });
+            }
+            else
+            {
+                result.FeedbackItems.Add(new PracticeFeedbackItem
+                {
+                    Type = "info",
+                    Title = "Cải thiện văn phong",
+                    Text = "Nên bổ sung thêm một số thuật ngữ lý thuyết và phân tích chuyên môn của đề tài."
+                });
+            }
+
+            return result;
         }
 
         #region Prompt Helpers & Simulation Engine

@@ -25,8 +25,13 @@ public static class DrivePathParser
     {
         var parts = relativePath.Replace('\\', '/').Split('/', StringSplitOptions.RemoveEmptyEntries);
         
-        string expectedRoot = category.ToString();
-        if (category == AcademicCategory.Project) expectedRoot = "CourseProjectStorage";
+        string expectedRoot = category switch
+        {
+            AcademicCategory.Project => "CourseProjectStorage",
+            AcademicCategory.Topic => "SpecializationReportStorage",
+            AcademicCategory.Thesis => "GraduationThesisStorage",
+            _ => category.ToString()
+        };
         
         if (parts.Length < 2 || !parts[0].Equals(expectedRoot, StringComparison.OrdinalIgnoreCase))
             return (null, null, null, null, null, null);
@@ -141,10 +146,17 @@ public static class DrivePathParser
             bool isGeneric = projectName.Contains("DoAn", StringComparison.OrdinalIgnoreCase) || 
                              projectName.Contains("Nhom", StringComparison.OrdinalIgnoreCase) ||
                              projectName.Contains("Bao cao", StringComparison.OrdinalIgnoreCase) ||
+                             projectName.Contains("Báo cáo", StringComparison.OrdinalIgnoreCase) ||
                              projectName.Contains("Slide", StringComparison.OrdinalIgnoreCase) ||
                              projectName.Contains("TaiLieu", StringComparison.OrdinalIgnoreCase) ||
                              projectName.Contains("HuongDan", StringComparison.OrdinalIgnoreCase) ||
-                             projectName.Contains("Đề tài SV", StringComparison.OrdinalIgnoreCase);
+                             projectName.Contains("Đề tài SV", StringComparison.OrdinalIgnoreCase) ||
+                             projectName.Contains("Khoa luan", StringComparison.OrdinalIgnoreCase) ||
+                             projectName.Contains("Khóa luận", StringComparison.OrdinalIgnoreCase) ||
+                             projectName.Contains("Chuyen de", StringComparison.OrdinalIgnoreCase) ||
+                             projectName.Contains("Chuyên đề", StringComparison.OrdinalIgnoreCase) ||
+                             projectName.Contains("Bang tinh", StringComparison.OrdinalIgnoreCase) ||
+                             projectName.Contains("Bảng tính", StringComparison.OrdinalIgnoreCase);
 
             if (isGeneric)
             {

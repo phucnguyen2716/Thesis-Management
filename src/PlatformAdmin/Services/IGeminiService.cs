@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using PlatformAdmin.DTOs.Thesis;
 
 namespace PlatformAdmin.Services
 {
@@ -20,6 +21,11 @@ namespace PlatformAdmin.Services
         /// Analyzes the generated AI response (Post-Filter) to ensure no violent or unsafe words are output.
         /// </summary>
         Task<PostFilterResult> AnalyzeResponseAsync(string generatedResponse);
+
+        /// <summary>
+        /// Evaluates a student's thesis draft for logic, semantics, relevance, and checks for gibberish.
+        /// </summary>
+        Task<ThesisPracticeEvaluationResult> EvaluateThesisPracticeAsync(string content, string thesisTitle, string chapterId, string chapterLabel, List<string> requiredSections);
     }
 
     public class PreFilterResult

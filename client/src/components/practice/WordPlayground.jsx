@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { thesisService } from '../../services/api';
 import { countWords, loadPracticeDraft, savePracticeDraft } from '../../utils/thesisPracticeStorage';
 import {
   loadTemplates,
@@ -43,6 +44,86 @@ const TOOLBAR_GROUPS = [
   },
 ];
 
+const extractChapterContent = (html, text, templateId) => {
+  if (templateId === 'master_ch') {
+    return { html, text };
+  }
+
+  const chapters = [
+    { id: 'intro', keywords: ['mở đầu', 'mo dau'] },
+    { id: 'chapter1', keywords: ['chương 1', 'chuong 1'] },
+    { id: 'chapter2', keywords: ['chương 2', 'chuong 2'] },
+    { id: 'chapter3', keywords: ['chương 3', 'chuong 3'] },
+    { id: 'conclusion', keywords: ['kết luân', 'kết luận', 'ket luan'] }
+  ];
+
+  // Kiểm tra xem có bất kỳ tiêu đề chương nào khác xuất hiện trong tài liệu không
+  const lowerText = text.toLowerCase();
+  const foundChapters = chapters.filter(ch => 
+    ch.keywords.some(kw => lowerText.includes(kw))
+  );
+
+  // Nếu tài liệu rất ngắn hoặc không chứa tiêu đề chương nào khác, coi như toàn bộ tài liệu là của chương đang chọn
+  if (foundChapters.length <= 1) {
+    return { html, text };
+  }
+
+  try {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(`<div>${html}</div>`, 'text/html');
+    const container = doc.body.firstChild;
+    const childNodes = Array.from(container.childNodes);
+
+    let currentChapter = 'intro'; // Mặc định phần đầu thuộc Mở đầu
+    const chapterNodesMap = {
+      intro: [],
+      chapter1: [],
+      chapter2: [],
+      chapter3: [],
+      conclusion: []
+    };
+
+    for (const node of childNodes) {
+      const nodeText = (node.textContent || '').toLowerCase().trim();
+      
+      // Kiểm tra xem node này có chứa tiêu đề chương mới không
+      let matchedChapter = null;
+      for (const ch of chapters) {
+        if (ch.keywords.some(kw => nodeText.startsWith(kw) || nodeText.includes(kw))) {
+          // Chỉ coi là tiêu đề chương nếu nó là heading hoặc in đậm hoặc dòng ngắn
+          const isHeading = ['H1', 'H2', 'H3'].includes(node.nodeName);
+          const isBold = node.querySelector?.('strong, b') || node.nodeName === 'STRONG' || node.nodeName === 'B';
+          const isShort = nodeText.length < 60;
+          if (isHeading || isBold || isShort) {
+            matchedChapter = ch.id;
+            break;
+          }
+        }
+      }
+
+      if (matchedChapter) {
+        currentChapter = matchedChapter;
+      }
+
+      chapterNodesMap[currentChapter].push(node);
+    }
+
+    const selectedNodes = chapterNodesMap[templateId] || [];
+    if (selectedNodes.length > 0) {
+      const tempDiv = document.createElement('div');
+      selectedNodes.forEach(n => tempDiv.appendChild(n.cloneNode(true)));
+      
+      const extractedHtml = tempDiv.innerHTML;
+      const extractedText = tempDiv.innerText || tempDiv.textContent || '';
+      return { html: extractedHtml, text: extractedText };
+    }
+  } catch (e) {
+    console.error('Lỗi khi phân tách chương:', e);
+  }
+
+  return { html, text };
+};
+
 const WordPlayground = () => {
   const editorRef = useRef(null);
   const saveTimer = useRef(null);
@@ -58,6 +139,7 @@ const WordPlayground = () => {
 
   // States mới cho việc quản lý mẫu và AI chấm điểm
   const [templates, setTemplates] = useState([]);
+  const [mySubmissions, setMySubmissions] = useState([]);
   const [selectedChapterFilter, setSelectedChapterFilter] = useState('Tất cả');
   const [activeTemplateId, setActiveTemplateId] = useState('master_ch');
   const [isMultilevelActive, setIsMultilevelActive] = useState(false);
@@ -65,9 +147,9 @@ const WordPlayground = () => {
   const [gradingStep, setGradingStep] = useState('');
   const [showGradeModal, setShowGradeModal] = useState(false);
   const [gradeResult, setGradeResult] = useState(null);
-  const [mySubmissions, setMySubmissions] = useState([]);
   const [selectedImage, setSelectedImage] = useState(null);
   const [imgToolbarPos, setImgToolbarPos] = useState({ top: 0, left: 0 });
+  const [customAlert, setCustomAlert] = useState(null); // { type, title, message }
 
   const syncStats = useCallback(() => {
     const html = editorRef.current?.innerHTML || '';
@@ -281,7 +363,11 @@ const WordPlayground = () => {
     const text = editorRef.current?.innerText || '';
     try {
       await navigator.clipboard.writeText(text);
-      alert('Đã sao chép nội dung văn bản vào bộ nhớ tạm!');
+      setCustomAlert({
+        type: 'success',
+        title: 'Sao chép thành công',
+        message: 'Đã sao chép nội dung văn bản vào bộ nhớ tạm!'
+      });
     } catch {
       /* ignore */
     }
@@ -465,13 +551,35 @@ const WordPlayground = () => {
 
   // Logic AI chấm điểm giả lập cực kỳ chi tiết
   const runAiGrading = () => {
+    const html = editorRef.current?.innerHTML || '';
+    const text = editorRef.current?.innerText || '';
+    
+    // Lấy template tương ứng với selectedChapterFilter (đảm bảo chấm đúng chương đang chọn)
+    const template = (templates && templates.find(t => t.chapterTag === selectedChapterFilter))
+      || (templates && templates.find(t => t.id === activeTemplateId)) 
+      || DEFAULT_TEMPLATES.find(t => t.chapterTag === selectedChapterFilter)
+      || DEFAULT_TEMPLATES.find(t => t.id === activeTemplateId)
+      || DEFAULT_TEMPLATES[0];
+
+    const extracted = extractChapterContent(html, text, template.id);
+    const wordCount = countWords(extracted.html);
+
+    if (wordCount < 5) {
+      setCustomAlert({
+        type: 'warning',
+        title: 'Nội dung quá ngắn',
+        message: `Chương/phần đang chọn (${template.label}) chưa có nội dung soạn thảo hoặc quá ngắn. Vui lòng viết nội dung cho phần này trước khi yêu cầu chấm điểm!`
+      });
+      return;
+    }
+
     setIsGrading(true);
     let step = 0;
     const steps = [
       'Đang quét văn bản và phân tích số từ...',
       'Đang kiểm tra định dạng phông chữ Times New Roman...',
       'Đang phân tích cấu trúc các đề mục chương...',
-      'Đang quét tiểu mục con bắt buộc (1.1, 1.3, 1.11, 2.1...)...',
+      `Đang quét tiểu mục con bắt buộc của ${template.label}...`,
       'Đang kiểm tra mật độ từ khóa khoa học và tính hàn lâm...',
       'Đang lập báo cáo đề xuất cải tiến và tổng hợp điểm số...'
     ];
@@ -488,178 +596,293 @@ const WordPlayground = () => {
     }, 450);
   };
 
-  const performEvaluation = () => {
-    const html = editorRef.current?.innerHTML || '';
-    const text = editorRef.current?.innerText || '';
-    const wordCount = countWords(html);
+  const performEvaluation = async () => {
+    try {
+      const html = editorRef.current?.innerHTML || '';
+      const text = editorRef.current?.innerText || '';
 
-    // Lấy template hiện hành
-    const template = templates.find(t => t.id === activeTemplateId) || templates[0];
+      // Lấy template tương ứng với selectedChapterFilter (đảm bảo chấm đúng chương đang chọn)
+      const template = (templates && templates.find(t => t.chapterTag === selectedChapterFilter))
+        || (templates && templates.find(t => t.id === activeTemplateId)) 
+        || (templates && templates[0]) 
+        || DEFAULT_TEMPLATES.find(t => t.chapterTag === selectedChapterFilter)
+        || DEFAULT_TEMPLATES.find(t => t.id === activeTemplateId)
+        || DEFAULT_TEMPLATES[0];
 
-    // Khởi tạo các điểm tiêu chí
-    let contentScore = 5.0;
-    let methodScore = 6.0;
-    let originalityScore = 7.0;
-    let presentationScore = 6.0;
-    const feedback = [];
+      // Phân tách chương để chấm điểm đúng chương đó
+      const extracted = extractChapterContent(html, text, template.id);
+      const extractedHtml = extracted.html;
+      const extractedText = extracted.text;
+      const wordCount = countWords(extractedHtml);
 
-    // 1. Chấm điểm Nội dung (Đếm từ)
-    if (wordCount >= template.minWords) {
-      contentScore = Math.min(10.0, 8.5 + (wordCount - template.minWords) / 150);
-      feedback.push({
-        type: 'success',
-        title: 'Nội dung dồi dào',
-        text: `Đạt yêu cầu độ dài tối thiểu (${wordCount}/${template.minWords} từ). Cung cấp đủ thông tin phân tích.`
-      });
-    } else {
-      contentScore = Math.max(3.0, (wordCount / template.minWords) * 7.5);
-      feedback.push({
-        type: 'warning',
-        title: 'Độ dài chưa đạt',
-        text: `Văn bản hơi ngắn (${wordCount}/${template.minWords} từ). Bạn cần viết cụ thể, mở rộng lý thuyết và phân tích để bài viết có chiều sâu khoa học.`
-      });
-    }
+      // Khởi tạo các điểm tiêu chí
+      let contentScore = 0.0;
+      let methodScore = 0.0;
+      let originalityScore = 0.0;
+      let presentationScore = 0.0;
+      const feedback = [];
 
-    // 2. Chấm điểm Cấu trúc (Bắt buộc)
-    const missingSections = [];
-    const foundSections = [];
-    template.requiredSections?.forEach(sec => {
-      const regex = new RegExp(sec.replace('.', '\\.'), 'i');
-      if (regex.test(text)) {
-        foundSections.push(sec);
-      } else {
-        missingSections.push(sec);
-      }
-    });
+      // Kiểm tra xem nội dung hiện tại có trùng khớp hoàn toàn với template gốc không
+      const tempDivCompare = document.createElement('div');
+      tempDivCompare.innerHTML = template.html || '';
+      const cleanTemplateText = tempDivCompare.innerText.replace(/\s+/g, ' ').trim();
+      const cleanCurrentText = text.replace(/\s+/g, ' ').trim();
+      const isUnchanged = cleanCurrentText === cleanTemplateText;
 
-    if (missingSections.length === 0) {
-      methodScore = 9.5;
-      feedback.push({
-        type: 'success',
-        title: 'Cấu trúc hoàn hảo',
-        text: 'Văn bản của bạn chứa đầy đủ tất cả đề mục bắt buộc theo barem khung của giảng viên.'
-      });
-    } else {
-      methodScore = Math.max(4.0, 9.5 - missingSections.length * 1.5);
-      feedback.push({
-        type: 'warning',
-        title: 'Thiếu tiêu đề bắt buộc',
-        text: `Thiếu các tiêu đề bắt buộc: ${missingSections.join(', ')}. Hãy gõ thêm để đảm bảo tính cấu trúc.`
-      });
-    }
-
-    // Kiểm tra thêm định dạng số phân cấp nhỏ (như 1.11, 1.12, 1.3)
-    const needsMultiLevel = template.id !== 'intro' && template.id !== 'conclusion';
-    if (needsMultiLevel) {
-      const regexMulti = /\b\d+\.\d+\b/g;
-      const multiHeadings = text.match(regexMulti) || [];
-      if (multiHeadings.length > 0) {
-        const uniqueHeadings = [...new Set(multiHeadings)];
-        methodScore = Math.min(10.0, methodScore + 0.5);
+      if (isUnchanged) {
         feedback.push({
-          type: 'success',
-          title: 'Sử dụng tiểu mục con tốt',
-          text: `Phát hiện các mục lục nhỏ phân cấp: ${uniqueHeadings.slice(0, 4).join(', ')}... Bố cục chi tiết và rất chuyên nghiệp.`
+          type: 'warning',
+          title: 'Nội dung chưa thay đổi',
+          text: 'Bạn chưa thay đổi bất kỳ nội dung nào từ mẫu gợi ý. Hãy tự viết hoặc chỉnh sửa nội dung theo đề tài của bạn để bắt đầu tính điểm.'
         });
       } else {
-        feedback.push({
-          type: 'info',
-          title: 'Khuyên dùng mục lục con',
-          text: 'Nên chia nhỏ đoạn văn thành các đề mục con như 1.1, 1.2, 1.3 hoặc các tiểu mục nhỏ 1.11, 1.12 để người đọc dễ theo dõi.'
+        // Cần gọi API backend để đánh giá tính học thuật, logic & ngữ nghĩa (Gemini)
+        let aiResult = null;
+        try {
+          const response = await thesisService.evaluatePractice({
+            content: extractedText,
+            thesisTitle: title || 'Đồ án luyện tập',
+            chapterId: template.id,
+            chapterLabel: template.label,
+            requiredSections: template.requiredSections || []
+          });
+          aiResult = response.data;
+        } catch (apiError) {
+          console.error("Lỗi gọi API đánh giá AI. Sẽ sử dụng phân tích heuristics local.", apiError);
+        }
+
+        if (aiResult) {
+          contentScore = aiResult.contentScore;
+          originalityScore = aiResult.originalityScore;
+
+          // Đưa các feedback từ AI vào danh sách feedback chung
+          if (aiResult.feedbackItems && aiResult.feedbackItems.length > 0) {
+            aiResult.feedbackItems.forEach(item => {
+              feedback.push({
+                type: item.type,
+                title: item.title,
+                text: item.text
+              });
+            });
+          }
+
+          if (aiResult.isGibberishOrNonsense) {
+            feedback.push({
+              type: 'warning',
+              title: 'Cảnh báo chất lượng nội dung',
+              text: 'Nội dung bài viết có dấu hiệu là chữ vô nghĩa (gibberish), lặp từ hoặc hoàn toàn không liên quan đến đề tài tốt nghiệp.'
+            });
+          }
+        } else {
+          // Local heuristics fallback (if API fails or is offline)
+          // 1. Chấm điểm Nội dung (Đếm từ)
+          if (wordCount >= template.minWords) {
+            contentScore = Math.min(10.0, 8.5 + (wordCount - template.minWords) / 150);
+            feedback.push({
+              type: 'success',
+              title: 'Nội dung dồi dào',
+              text: `Đạt yêu cầu độ dài tối thiểu (${wordCount}/${template.minWords} từ) cho phần này.`
+            });
+          } else {
+            contentScore = Math.round(((wordCount / template.minWords) * 8.0) * 10) / 10;
+            feedback.push({
+              type: 'warning',
+              title: 'Độ dài chưa đạt',
+              text: `Nội dung phần này hơi ngắn (${wordCount}/${template.minWords} từ). Hãy viết cụ thể, mở rộng phân tích để bài viết có chiều sâu khoa học.`
+            });
+          }
+
+          // 2. Chấm điểm Tính mới / Khoa học (Originality)
+          const academicWords = ['phân tích', 'thiết kế', 'hệ thống', 'nghiên cứu', 'thực nghiệm', 'đánh giá', 'blockchain', 'ứng dụng', 'mô hình', 'phát triển', 'quy trình', 'cơ sở', 'lý thuyết'];
+          let hits = 0;
+          academicWords.forEach(w => {
+            if (extractedText.toLowerCase().includes(w)) hits++;
+          });
+
+          originalityScore = hits === 0 ? 0.0 : Math.round((Math.min(10.0, 3.0 + (hits / 5) * 7.0)) * 10) / 10;
+          if (hits >= 6) {
+            feedback.push({
+              type: 'success',
+              title: 'Văn phong học thuật tốt',
+              text: 'Phần này chứa nhiều thuật ngữ khoa học chuyên môn chính xác.'
+            });
+          } else {
+            feedback.push({
+              type: 'info',
+              title: 'Cải thiện hành văn',
+              text: 'Nên bổ sung thêm các thuật ngữ phân tích chuyên sâu khoa học trong phần này.'
+            });
+          }
+
+          // Kiểm tra gõ phím bậy bạ
+          const cleanTextForWords = extractedText.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?"']/g, " ");
+          const wordsArray = cleanTextForWords.toLowerCase().split(/\s+/).filter(w => w.length > 0);
+          const uniqueWords = new Set(wordsArray);
+          const uniqueRatio = wordsArray.length > 0 ? (uniqueWords.size / wordsArray.length) : 0;
+          const hasTooLongWords = wordsArray.some(w => w.length > 20);
+          
+          let hasConsecutiveRepetitions = false;
+          for (let i = 0; i < wordsArray.length - 2; i++) {
+            if (wordsArray[i] === wordsArray[i+1] && wordsArray[i+1] === wordsArray[i+2]) {
+              hasConsecutiveRepetitions = true;
+              break;
+            }
+          }
+
+          const viConnectives = ['và', 'là', 'của', 'để', 'trong', 'cho', 'các', 'những', 'với', 'như', 'được', 'bởi', 'tại', 'về', 'có', 'một', 'đó'];
+          const hasViConnectives = wordsArray.some(w => viConnectives.includes(w));
+
+          let qualityScorePenalty = 0;
+          if (wordsArray.length > 15 && uniqueRatio < 0.4) {
+            qualityScorePenalty += 5.0;
+            feedback.push({ type: 'warning', title: 'Cảnh báo chất lượng', text: 'Nội dung có dấu hiệu lặp từ hoặc copy-paste liên tục.' });
+          }
+          if (hasTooLongWords) {
+            qualityScorePenalty += 4.0;
+            feedback.push({ type: 'warning', title: 'Cảnh báo chất lượng', text: 'Phát hiện các từ dài bất thường (vượt quá 20 ký tự), có thể gõ phím ngẫu nhiên.' });
+          }
+          if (hasConsecutiveRepetitions) {
+            qualityScorePenalty += 3.0;
+            feedback.push({ type: 'warning', title: 'Cảnh báo chất lượng', text: 'Phát hiện cụm từ lặp đi lặp lại liên tiếp nhiều lần.' });
+          }
+          if (wordsArray.length > 10 && !hasViConnectives) {
+            qualityScorePenalty += 5.0;
+            feedback.push({ type: 'warning', title: 'Cảnh báo chất lượng', text: 'Văn bản thiếu các từ nối tiếng Việt thông dụng, có thể là nội dung vô nghĩa.' });
+          }
+
+          if (qualityScorePenalty > 0) {
+            contentScore = Math.max(0.0, contentScore - qualityScorePenalty);
+            originalityScore = Math.max(0.0, originalityScore - qualityScorePenalty);
+          }
+        }
+
+        // 3. Chấm điểm Cấu trúc (Bắt buộc)
+        const missingSections = [];
+        const foundSections = [];
+        template.requiredSections?.forEach(sec => {
+          const regex = new RegExp(sec.replace('.', '\\.'), 'i');
+          if (regex.test(extractedText)) {
+            foundSections.push(sec);
+          } else {
+            missingSections.push(sec);
+          }
         });
+
+        const totalSections = template.requiredSections?.length || 1;
+        const foundCount = foundSections.length;
+        methodScore = Math.round(((foundCount / totalSections) * 10.0) * 10) / 10;
+
+        if (missingSections.length === 0) {
+          feedback.push({
+            type: 'success',
+            title: 'Cấu trúc hoàn hảo',
+            text: `Phần này chứa đầy đủ tất cả đề mục bắt buộc theo khung của giảng viên.`
+          });
+        } else {
+          feedback.push({
+            type: 'warning',
+            title: 'Thiếu tiêu đề bắt buộc',
+            text: `Thiếu các tiêu đề bắt buộc trong phần này: ${missingSections.join(', ')}. Hãy bổ sung thêm.`
+          });
+        }
+
+        // Kiểm tra thêm định dạng số phân cấp nhỏ (như 1.11, 1.12, 1.3)
+        const needsMultiLevel = template.id !== 'intro' && template.id !== 'conclusion';
+        if (needsMultiLevel) {
+          const regexMulti = /\b\d+\.\d+\b/g;
+          const multiHeadings = extractedText.match(regexMulti) || [];
+          if (multiHeadings.length > 0) {
+            const uniqueHeadings = [...new Set(multiHeadings)];
+            methodScore = Math.min(10.0, methodScore + 0.5);
+            feedback.push({
+              type: 'success',
+              title: 'Sử dụng tiểu mục con tốt',
+              text: `Phát hiện các mục lục nhỏ phân cấp trong chương: ${uniqueHeadings.slice(0, 4).join(', ')}...`
+            });
+          }
+        }
+
+        // 4. Chấm điểm Trình bày (Định dạng)
+        const hasTimesNewRoman = extractedHtml.includes('Times New Roman') || 
+          (editorRef.current && editorRef.current.style && typeof editorRef.current.style.fontFamily === 'string' && editorRef.current.style.fontFamily.includes('Times New Roman'));
+        const hasJustify = extractedHtml.includes('justify') || extractedHtml.includes('text-align: justify');
+        const hasLists = extractedHtml.includes('<ol>') || extractedHtml.includes('<ul>');
+
+        if (hasTimesNewRoman) presentationScore += 4.0;
+        if (hasJustify) presentationScore += 4.0;
+        if (hasLists || isMultilevelActive) presentationScore += 2.0;
+
+        if (!hasTimesNewRoman) {
+          feedback.push({
+            type: 'warning',
+            title: 'Sai Phông chữ chuẩn',
+            text: 'Chưa sử dụng phông chữ "Times New Roman" chuẩn cho phần này.'
+          });
+        }
+
+        if (!hasJustify) {
+          feedback.push({
+            type: 'warning',
+            title: 'Chưa căn đều hai bên',
+            text: 'Văn bản chưa được căn đều hai bên (Justify). Hãy nhấn nút "Căn đều" trên thanh công cụ.'
+          });
+        }
+
+        if (presentationScore >= 8.5) {
+          feedback.push({
+            type: 'success',
+            title: 'Định dạng trình bày tốt',
+            text: 'Căn lề đều đặn và sử dụng phông chữ chuẩn Microsoft Word.'
+          });
+        }
+
+        // Nếu Gemini xác định là bài viết bậy bạ/vô nghĩa, ta ép điểm nội dung, cấu trúc và tính mới về 0!
+        if (aiResult?.isGibberishOrNonsense) {
+          contentScore = 0.0;
+          originalityScore = 0.0;
+          methodScore = 0.0;
+        }
       }
-    }
 
-    // 3. Chấm điểm Trình bày (Định dạng)
-    const hasTimesNewRoman = html.includes('Times New Roman') || editorRef.current?.style.fontFamily.includes('Times New Roman');
-    const hasJustify = html.includes('justify') || html.includes('text-align: justify');
-    const hasLists = html.includes('<ol>') || html.includes('<ul>');
+      const overallScore = Math.round(((contentScore + methodScore + originalityScore + presentationScore) / 4) * 10) / 10;
+      const user = JSON.parse(localStorage.getItem('user') || '{"fullName": "Sinh viên Demo"}');
 
-    if (hasTimesNewRoman) {
-      presentationScore += 2.0;
-    } else {
-      feedback.push({
-        type: 'warning',
-        title: 'Sai Phông chữ chuẩn',
-        text: 'Văn bản chưa sử dụng phông chữ "Times New Roman" chuẩn. Hãy bôi đen toàn bộ và chọn định dạng Font.'
+      const newSubmission = {
+        id: `prc-${Date.now()}`,
+        title: title || 'Đồ án luyện tập',
+        studentName: user.fullName || 'Sinh viên Demo',
+        studentId: user.studentId || 'UEF-2021-DEMO',
+        templateId: template.id,
+        templateLabel: template.label,
+        html: html,
+        words: countWords(html),
+        aiScore: overallScore,
+        aiRubric: {
+          content: Math.round(contentScore * 10) / 10,
+          method: Math.round(methodScore * 10) / 10,
+          originality: Math.round(originalityScore * 10) / 10,
+          presentation: Math.round(presentationScore * 10) / 10
+        },
+        aiFeedback: feedback,
+        teacherGraded: false,
+        teacherGrade: null,
+        teacherFeedback: '',
+        updatedAt: Date.now()
+      };
+
+      const saved = savePracticeSubmission(newSubmission);
+      setGradeResult(saved);
+      setIsGrading(false);
+      setShowGradeModal(true);
+    } catch (error) {
+      console.error('Lỗi khi thực hiện chấm điểm AI:', error);
+      setIsGrading(false);
+      setCustomAlert({
+        type: 'error',
+        title: 'Lỗi chấm điểm',
+        message: 'Đã xảy ra lỗi trong quá trình chấm điểm AI. Vui lòng kiểm tra lại nội dung bài làm hoặc cấu trúc của bạn.'
       });
     }
-
-    if (hasJustify) {
-      presentationScore += 2.0;
-    } else {
-      feedback.push({
-        type: 'warning',
-        title: 'Chưa căn đều hai bên',
-        text: 'Văn bản của bạn chưa được căn đều hai bên (Justify). Hãy nhấn nút "Căn đều" trên thanh công cụ để định dạng ngay ngắn.'
-      });
-    }
-
-    if (hasLists || isMultilevelActive) {
-      presentationScore += 1.0;
-    }
-
-    presentationScore = Math.min(10.0, Math.max(4.0, presentationScore));
-    if (presentationScore >= 8.5) {
-      feedback.push({
-        type: 'success',
-        title: 'Định dạng chuẩn chỉ',
-        text: 'Đạt điểm tối đa về căn lề, kiểu phông chữ Times New Roman và cấu trúc định dạng chuẩn Microsoft Word.'
-      });
-    }
-
-    // 4. Chấm điểm Tính mới / Khoa học (Originality)
-    const academicWords = ['phân tích', 'thiết kế', 'hệ thống', 'nghiên cứu', 'thực nghiệm', 'đánh giá', 'blockchain', 'ứng dụng', 'mô hình', 'phát triển', 'quy trình', 'cơ sở', 'lý thuyết'];
-    let hits = 0;
-    academicWords.forEach(w => {
-      if (text.toLowerCase().includes(w)) hits++;
-    });
-
-    originalityScore = Math.min(10.0, 6.0 + (hits / academicWords.length) * 4.0);
-    if (hits >= 6) {
-      feedback.push({
-        type: 'success',
-        title: 'Văn phong học thuật tốt',
-        text: 'Văn bản chứa nhiều thuật ngữ khoa học chuyên môn chính xác. Thể hiện tư duy nghiên cứu rõ ràng.'
-      });
-    } else {
-      feedback.push({
-        type: 'info',
-        title: 'Cải thiện hành văn',
-        text: 'Nên bổ sung thêm các thuật ngữ phân tích chuyên sâu, mô tả các công nghệ ứng dụng cụ thể thay vì dùng từ ngữ đời thường.'
-      });
-    }
-
-    const overallScore = Math.round(((contentScore + methodScore + originalityScore + presentationScore) / 4) * 10) / 10;
-    const user = JSON.parse(localStorage.getItem('user') || '{"fullName": "Sinh viên Demo"}');
-
-    const newSubmission = {
-      id: `prc-${Date.now()}`,
-      title: title || 'Đồ án luyện tập',
-      studentName: user.fullName || 'Sinh viên Demo',
-      studentId: user.studentId || 'UEF-2021-DEMO',
-      templateId: template.id,
-      templateLabel: template.label,
-      html: html,
-      words: wordCount,
-      aiScore: overallScore,
-      aiRubric: {
-        content: Math.round(contentScore * 10) / 10,
-        method: Math.round(methodScore * 10) / 10,
-        originality: Math.round(originalityScore * 10) / 10,
-        presentation: Math.round(presentationScore * 10) / 10
-      },
-      aiFeedback: feedback,
-      teacherGraded: false,
-      teacherGrade: null,
-      teacherFeedback: '',
-      updatedAt: Date.now()
-    };
-
-    const saved = savePracticeSubmission(newSubmission);
-    setGradeResult(saved);
-    setIsGrading(false);
-    setShowGradeModal(true);
   };
 
   const latestSub = mySubmissions[0];
@@ -1023,29 +1246,29 @@ const WordPlayground = () => {
 
       {/* Detailed Evaluation Modal */}
       {showGradeModal && gradeResult && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 md:p-6 overflow-y-auto animate-fade-in">
-          <div className="bg-white rounded-[2rem] border border-outline-variant shadow-2xl w-full max-w-3xl overflow-hidden max-h-[90vh] flex flex-col animate-in scale-in-95 duration-300">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-fade-in">
+          <div className="bg-white rounded-[1.5rem] border border-outline-variant shadow-2xl w-full max-w-2xl overflow-hidden max-h-[92vh] flex flex-col animate-in scale-in-95 duration-300">
             {/* Modal Header */}
-            <div className="bg-gradient-to-r from-slate-900 via-[#185abd] to-slate-900 p-6 text-white flex justify-between items-center shadow">
+            <div className="bg-gradient-to-r from-slate-900 via-[#185abd] to-slate-900 p-4 md:p-5 text-white flex justify-between items-center shadow">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-yellow-400 rounded-xl flex items-center justify-center text-slate-900 shadow">
-                  <span className="material-symbols-outlined text-2xl font-bold">auto_awesome</span>
+                <div className="w-9 h-9 bg-yellow-400 rounded-xl flex items-center justify-center text-slate-900 shadow">
+                  <span className="material-symbols-outlined text-xl font-bold">auto_awesome</span>
                 </div>
                 <div>
-                  <h3 className="font-black text-sm uppercase tracking-[0.2em]">Báo cáo đánh giá AI</h3>
-                  <p className="text-[10px] font-bold text-white/70 uppercase mt-0.5">{gradeResult.title}</p>
+                  <h3 className="font-black text-xs md:text-sm uppercase tracking-[0.2em]">Báo cáo đánh giá AI</h3>
+                  <p className="text-[9px] md:text-[10px] font-bold text-white/70 uppercase mt-0.5">{gradeResult.title}</p>
                 </div>
               </div>
               <button 
                 onClick={() => setShowGradeModal(false)}
                 className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors focus:outline-none"
               >
-                <span className="material-symbols-outlined text-lg">close</span>
+                <span className="material-symbols-outlined text-base">close</span>
               </button>
             </div>
 
             {/* Modal Body */}
-            <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-6">
+            <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4">
               {/* Giảng viên đã chấm đè */}
               {gradeResult.teacherGraded && (
                 <div className="p-5 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-start gap-4 shadow-sm">
@@ -1076,40 +1299,40 @@ const WordPlayground = () => {
               )}
 
               {/* Bảng điểm AI chính */}
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
                 {/* Vòng tròn điểm số */}
-                <div className="md:col-span-5 flex flex-col items-center justify-center p-6 bg-slate-50 rounded-2xl border border-slate-100 shadow-inner">
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Điểm AI Đề xuất</span>
-                  <div className="relative w-32 h-32 flex items-center justify-center bg-white rounded-full shadow-lg border-4 border-[#185abd]/10">
+                <div className="md:col-span-4 flex flex-col items-center justify-center p-4 bg-slate-50 rounded-2xl border border-slate-100 shadow-inner">
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Điểm AI Đề xuất</span>
+                  <div className="relative w-24 h-24 flex items-center justify-center bg-white rounded-full shadow-md border-4 border-[#185abd]/10">
                     <div className="absolute inset-0 rounded-full border-4 border-yellow-400 border-r-transparent animate-[spin_3s_linear_infinite]" />
                     <div className="text-center">
-                      <span className="text-4xl font-black tracking-tight text-slate-900">{gradeResult.aiScore}</span>
-                      <span className="text-xs font-semibold text-slate-400 block mt-1">/ 10</span>
+                      <span className="text-3xl font-black tracking-tight text-slate-900">{gradeResult.aiScore}</span>
+                      <span className="text-[10px] font-semibold text-slate-400 block mt-0.5">/ 10</span>
                     </div>
                   </div>
-                  <p className="text-[10px] font-black text-[#185abd] uppercase tracking-wider mt-4 px-3 py-1 bg-[#185abd]/10 rounded-full">
+                  <p className="text-[9px] font-black text-[#185abd] uppercase tracking-wider mt-3 px-2.5 py-0.5 bg-[#185abd]/10 rounded-full">
                     {gradeResult.aiScore >= 8.5 ? 'Xuất sắc' : gradeResult.aiScore >= 7.0 ? 'Khá tốt' : 'Cần cải thiện'}
                   </p>
                 </div>
 
                 {/* Chi tiết 4 tiêu chí của AI */}
-                <div className="md:col-span-7 space-y-3.5">
-                  <h4 className="text-xs font-black text-slate-700 uppercase tracking-widest">Chi tiết tiêu chí</h4>
+                <div className="md:col-span-8 space-y-2.5">
+                  <h4 className="text-[10px] font-black text-slate-700 uppercase tracking-widest">Chi tiết tiêu chí</h4>
                   {[
                     { label: 'Cấu trúc & Đề mục (Method)', val: gradeResult.aiRubric.method, icon: 'schema', color: 'bg-blue-500' },
                     { label: 'Nội dung & Độ dài (Content)', val: gradeResult.aiRubric.content, icon: 'article', color: 'bg-emerald-500' },
                     { label: 'Định dạng & Trình bày (Presentation)', val: gradeResult.aiRubric.presentation, icon: 'border_color', color: 'bg-purple-500' },
                     { label: 'Văn phong chuyên môn (Originality)', val: gradeResult.aiRubric.originality, icon: 'lightbulb', color: 'bg-amber-500' }
                   ].map((rub, idx) => (
-                    <div key={idx} className="space-y-1">
-                      <div className="flex justify-between items-center text-xs">
-                        <span className="font-bold text-slate-700 flex items-center gap-1.5">
-                          <span className={`material-symbols-outlined text-sm text-white p-0.5 rounded ${rub.color}`}>{rub.icon}</span>
+                    <div key={idx} className="space-y-0.5">
+                      <div className="flex justify-between items-center text-[11px]">
+                        <span className="font-bold text-slate-700 flex items-center gap-1">
+                          <span className={`material-symbols-outlined text-xs text-white p-0.5 rounded ${rub.color}`}>{rub.icon}</span>
                           {rub.label}
                         </span>
                         <span className="font-black text-[#185abd]">{rub.val} / 10</span>
                       </div>
-                      <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                      <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
                         <div className={`h-full ${rub.color} rounded-full`} style={{ width: `${rub.val * 10}%` }} />
                       </div>
                     </div>
@@ -1118,16 +1341,16 @@ const WordPlayground = () => {
               </div>
 
               {/* Đề xuất chi tiết từ AI */}
-              <div className="space-y-3">
-                <h4 className="text-xs font-black text-slate-700 uppercase tracking-widest flex items-center gap-1">
-                  <span className="material-symbols-outlined text-amber-500 text-sm">tips_and_updates</span>
+              <div className="space-y-2">
+                <h4 className="text-[10px] font-black text-slate-700 uppercase tracking-widest flex items-center gap-1">
+                  <span className="material-symbols-outlined text-amber-500 text-xs">tips_and_updates</span>
                   Đề xuất chỉnh sửa của Gemini AI
                 </h4>
-                <div className="space-y-2.5">
+                <div className="space-y-2">
                   {gradeResult.aiFeedback.map((f, i) => (
                     <div 
                       key={i} 
-                      className={`p-3.5 rounded-xl border text-xs flex items-start gap-3 transition-all ${
+                      className={`p-3 rounded-xl border text-[11px] flex items-start gap-2.5 transition-all ${
                         f.type === 'success' 
                           ? 'bg-emerald-50/50 border-emerald-100 text-slate-700' 
                           : f.type === 'warning' 
@@ -1135,14 +1358,14 @@ const WordPlayground = () => {
                             : 'bg-blue-50/50 border-blue-100 text-slate-700'
                       }`}
                     >
-                      <span className={`material-symbols-outlined text-base shrink-0 mt-0.5 ${
+                      <span className={`material-symbols-outlined text-sm shrink-0 mt-0.5 ${
                         f.type === 'success' ? 'text-emerald-600' : f.type === 'warning' ? 'text-red-500' : 'text-blue-500'
                       }`}>
                         {f.type === 'success' ? 'check_circle' : f.type === 'warning' ? 'warning' : 'info'}
                       </span>
                       <div>
-                        <p className="font-bold text-slate-900 text-xs mb-0.5">{f.title}</p>
-                        <p className="leading-relaxed font-medium">{f.text}</p>
+                        <p className="font-bold text-slate-900 text-[11px] mb-0.5">{f.title}</p>
+                        <p className="leading-relaxed font-semibold">{f.text}</p>
                       </div>
                     </div>
                   ))}
@@ -1151,18 +1374,56 @@ const WordPlayground = () => {
             </div>
 
             {/* Modal Footer */}
-            <div className="p-6 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-4 shrink-0">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                Đã ghi nhận bài nộp thử của bạn vào hệ thống lớp học.
+            <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-4 shrink-0">
+              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+                Đã ghi nhận bài nộp thử vào hệ thống.
               </span>
               <button
                 type="button"
                 onClick={() => setShowGradeModal(false)}
-                className="px-6 py-2.5 bg-slate-950 hover:bg-slate-900 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-colors shadow"
+                className="px-5 py-2 bg-slate-950 hover:bg-slate-900 text-white rounded-lg text-xs font-black uppercase tracking-widest transition-colors shadow"
               >
                 Đồng ý & Đóng
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Alert Modal */}
+      {customAlert && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[150] flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-white rounded-[2rem] border border-outline-variant shadow-2xl max-w-sm w-full p-6 animate-in scale-in-95 duration-200 text-center">
+            <div className={`w-14 h-14 rounded-2xl mx-auto flex items-center justify-center mb-4 shadow ${
+              customAlert.type === 'success' 
+                ? 'bg-emerald-100 text-emerald-600' 
+                : customAlert.type === 'warning' 
+                  ? 'bg-amber-100 text-amber-600' 
+                  : 'bg-rose-100 text-rose-600'
+            }`}>
+              <span className="material-symbols-outlined text-2xl">
+                {customAlert.type === 'success' ? 'check_circle' : customAlert.type === 'warning' ? 'warning' : 'error'}
+              </span>
+            </div>
+            <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider mb-2">
+              {customAlert.title}
+            </h3>
+            <p className="text-xs text-slate-600 leading-relaxed font-semibold mb-6">
+              {customAlert.message}
+            </p>
+            <button
+              type="button"
+              onClick={() => setCustomAlert(null)}
+              className={`w-full py-2.5 rounded-xl text-xs font-black uppercase tracking-wider text-white transition-all shadow ${
+                customAlert.type === 'success' 
+                  ? 'bg-emerald-600 hover:bg-emerald-500' 
+                  : customAlert.type === 'warning' 
+                    ? 'bg-amber-500 hover:bg-amber-400' 
+                    : 'bg-rose-600 hover:bg-rose-500'
+              }`}
+            >
+              Đồng ý & Đóng
+            </button>
           </div>
         </div>
       )}

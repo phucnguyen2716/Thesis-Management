@@ -80,18 +80,18 @@ public class DriveSyncJob
         await UpsertDriveFilesAsync(driveFiles, "CourseProjectStorage", "Project");
     }
 
-    private async Task SyncTopicStorageAsync()
+    public async Task SyncTopicStorageAsync()
     {
         var driveFiles = await _driveService.ListAcademicFilesRecursiveAsync(AcademicCategory.Topic);
         _logger.LogInformation("🔄 [DriveSyncJob] Topic: {Count} files on Drive", driveFiles.Count);
-        await UpsertDriveFilesAsync(driveFiles, "Topic", "Topic");
+        await UpsertDriveFilesAsync(driveFiles, "SpecializationReportStorage", "Topic");
     }
 
-    private async Task SyncThesisStorageAsync()
+    public async Task SyncThesisStorageAsync()
     {
         var driveFiles = await _driveService.ListAcademicFilesRecursiveAsync(AcademicCategory.Thesis);
         _logger.LogInformation("🔄 [DriveSyncJob] Thesis: {Count} files on Drive", driveFiles.Count);
-        await UpsertDriveFilesAsync(driveFiles, "Thesis", "Thesis");
+        await UpsertDriveFilesAsync(driveFiles, "GraduationThesisStorage", "Thesis");
     }
 
     private async Task UpsertDriveFilesAsync(List<DriveFileInfo> driveFiles, string sourceFolder, string category)
@@ -229,6 +229,7 @@ public class DriveSyncJob
 
         var filesToDownload = await db.DriveFileRecords
             .Where(r => r.IsActive && string.IsNullOrEmpty(r.LocalPdfPath))
+            .OrderBy(r => r.Category == "Thesis" ? 0 : r.Category == "Topic" ? 1 : 2)
             .Take(400)
             .ToListAsync();
 
@@ -448,7 +449,7 @@ public class DriveSyncJob
         };
     }
 
-    private async Task SyncThesesFromDriveRecordsAsync()
+    public async Task SyncThesesFromDriveRecordsAsync()
     {
         using var scope = _scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -514,7 +515,14 @@ public class DriveSyncJob
                 isNew = true;
             }
 
-            var mainFile = group.FirstOrDefault(r => r.FileName.Contains("Bao_cao", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrEmpty(r.LocalPdfPath))
+            var mainFile = group.FirstOrDefault(r => 
+                (r.FileName.Contains("Bao_cao", StringComparison.OrdinalIgnoreCase) || 
+                 r.FileName.Contains("Khoa_luan", StringComparison.OrdinalIgnoreCase) || 
+                 r.FileName.Contains("Chuyen_de", StringComparison.OrdinalIgnoreCase) ||
+                 r.FileName.Contains("Báo cáo", StringComparison.OrdinalIgnoreCase) || 
+                 r.FileName.Contains("Khóa luận", StringComparison.OrdinalIgnoreCase) || 
+                 r.FileName.Contains("Chuyên đề", StringComparison.OrdinalIgnoreCase)) 
+                && !string.IsNullOrEmpty(r.LocalPdfPath))
                            ?? group.FirstOrDefault(r => !string.IsNullOrEmpty(r.LocalPdfPath))
                            ?? group.FirstOrDefault(r => r.FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
                            ?? firstFile;

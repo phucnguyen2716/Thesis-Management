@@ -77,6 +77,134 @@ public static class DriveSampleCatalog
         ["ITE1174E"] = new[] { "AI_FaceDetect", "AI_Chatbot" },
     };
 
+    public static readonly Dictionary<string, string[]> TopicTitles = new()
+    {
+        ["ai"] = new[] {
+            "Nghiên cứu ứng dụng Học sâu trong nhận diện khuôn mặt",
+            "Xây dựng chatbot hỗ trợ tuyển sinh tự động bằng NLP",
+            "Phân tích dữ liệu y tế bằng mô hình học máy",
+            "Phân loại hành vi người dùng bằng thuật toán học máy",
+            "Phát hiện gian lận thẻ tín dụng sử dụng thuật toán Random Forest",
+            "Nhận dạng chữ viết tay tiếng Việt bằng mạng LSTM",
+            "Phân khúc khách hàng mục tiêu bằng phương pháp phân cụm",
+            "Xây dựng hệ thống gợi ý sản phẩm cho trang thương mại điện tử",
+            "Phân tích cảm xúc bình luận khách hàng bằng Naive Bayes",
+            "Nhận dạng biển số xe tự động từ luồng video camera giám sát"
+        },
+        ["networking"] = new[] {
+            "Nghiên cứu triển khai hệ thống mạng Software-Defined Networking (SDN)",
+            "Thiết lập hệ thống giám sát mạng Prometheus và Grafana",
+            "Mô phỏng mạng 5G và phân tích hiệu năng QoS",
+            "Xây dựng hệ thống cân bằng tải cho máy chủ dịch vụ Web",
+            "Triển khai giải pháp mạng riêng ảo VPN bảo mật cho doanh nghiệp",
+            "Cấu hình định tuyến động OSPF và BGP cho mạng diện rộng",
+            "Giám sát lưu lượng mạng bằng công cụ Wireshark và ntopng",
+            "Thiết kế hạ tầng mạng không dây mật độ cao cho trường đại học",
+            "Nghiên cứu công nghệ mạng IPv6 và lập kế hoạch chuyển đổi",
+            "Phân tích và tối ưu hóa băng thông mạng WAN doanh nghiệp"
+        },
+        ["is"] = new[] {
+            "Nghiên cứu giải pháp ERP trong quản lý doanh nghiệp vừa và nhỏ",
+            "Phân tích quy trình kinh doanh bằng mô hình BPMN",
+            "Xây dựng hệ thống quản lý kho thông minh",
+            "Phân tích và thiết kế hệ thống thông tin quản lý nhân sự",
+            "Giải pháp Business Intelligence (BI) cho báo cáo doanh thu",
+            "Xây dựng hệ thống quản lý quan hệ khách hàng CRM",
+            "Thiết kế kho dữ liệu Data Warehouse phục vụ phân tích kinh doanh",
+            "Nghiên cứu ứng dụng Blockchain trong quản lý chuỗi cung ứng",
+            "Xây dựng hệ thống quản lý tài liệu và quy trình nội bộ",
+            "Phát triển cổng thông tin dịch vụ hành chính công trực tuyến"
+        },
+        ["security"] = new[] {
+            "Đánh giá an toàn thông tin ứng dụng web bằng OWASP Top 10",
+            "Phân tích mã độc ransomware bằng kỹ thuật điều tra số",
+            "Nghiên cứu mô phỏng giải pháp Zero Trust Network Access (ZTNA)",
+            "Triển khai hệ thống tường lửa thế hệ mới Next-Generation Firewall",
+            "Phòng chống tấn công từ chối dịch vụ DDoS trên Web Server",
+            "Đánh giá lỗ hổng bảo mật hạ tầng mạng bằng Nessus",
+            "Xây dựng hệ thống quản lý định danh và truy cập IAM",
+            "Phân tích và phát hiện tấn công Phishing qua Email",
+            "Thiết lập hệ thống giám sát an ninh mạng với ELK Stack",
+            "Nghiên cứu và triển khai chuẩn bảo mật dữ liệu PCI DSS"
+        },
+        ["programming"] = new[] {
+            "Nghiên cứu phát triển ứng dụng Web Front-end với ReactJS",
+            "Thiết kế kiến trúc ứng dụng Web API với Clean Architecture",
+            "Xây dựng ứng dụng di động đa nền tảng Flutter",
+            "Tối ưu hóa hiệu năng render ứng dụng web với VueJS",
+            "Xây dựng ứng dụng đặt lịch hẹn trực tuyến bằng NestJS",
+            "Lập trình ứng dụng chia sẻ vị trí thời gian thực bằng WebSockets",
+            "Phát triển trang web thương mại điện tử với Next.js và TailwindCSS",
+            "Xây dựng API Gateway và quản lý phân quyền trong Microservices",
+            "Phát triển ứng dụng di động Android native bằng Kotlin",
+            "Xây dựng hệ thống quản lý học tập trực tuyến LMS với C#"
+        }
+    };
+
+    public static readonly Dictionary<string, string[]> ThesisTitles = new()
+    {
+        ["ai"] = new[] {
+            "Khóa luận tốt nghiệp chuyên sâu về Trí tuệ nhân tạo",
+            "Phát triển hệ thống lái xe tự hành dựa trên thị giác máy tính",
+            "Tối ưu hóa thuật toán đề xuất sản phẩm thời gian thực",
+            "Ứng dụng Generative AI trong việc tự động hóa tạo nội dung",
+            "Phân tích hình ảnh y tế phát hiện khối u phổi bằng Deep Learning",
+            "Dự báo lưu lượng giao thông đô thị bằng Graph Neural Networks",
+            "Hệ thống dịch thuật hai chiều Việt - Anh sử dụng Seq2Seq",
+            "Nhận dạng giọng nói tiếng Việt và chuyển đổi thành văn bản",
+            "Phát hiện gian lận tài chính quy mô lớn bằng học máy tăng cường",
+            "Tối ưu hóa lập lịch sản xuất tự động sử dụng thuật toán di truyền"
+        },
+        ["networking"] = new[] {
+            "Khóa luận tốt nghiệp chuyên sâu về Mạng máy tính",
+            "Xây dựng hạ tầng mạng ảo hóa SDN cho trung tâm dữ liệu",
+            "Giải pháp truyền dữ liệu an toàn đa kênh trong mạng di động",
+            "Nghiên cứu giải pháp SD-WAN tối ưu hóa kết nối đa chi nhánh",
+            "Thiết kế và triển khai hạ tầng mạng Hybrid Cloud bảo mật cao",
+            "Phân tích và tối ưu hóa định tuyến định hướng chất lượng dịch vụ QoS",
+            "Ứng dụng Network Functions Virtualization (NFV) trong biên mạng",
+            "Xây dựng hệ thống mạng cảm biến không dây IoT giám sát nông nghiệp",
+            "Nghiên cứu và mô phỏng giao thức định tuyến trong mạng VANET",
+            "Tối ưu hóa hiệu năng CDN tự phát triển cho luồng video trực tuyến"
+        },
+        ["is"] = new[] {
+            "Khóa luận tốt nghiệp chuyên sâu về Hệ thống thông tin DN",
+            "Triển khai giải pháp SAP ERP cho chuỗi cung ứng sản xuất",
+            "Xây dựng kho dữ liệu và công cụ Business Intelligence (BI) báo cáo",
+            "Nghiên cứu thiết kế kiến trúc Enterprise Architecture cho ngân hàng",
+            "Ứng dụng Big Data phân tích hành vi mua sắm trực tuyến",
+            "Xây dựng hệ thống đề xuất tài chính thông minh dựa trên lịch sử tín dụng",
+            "Phát triển hệ thống quản lý chuỗi cung ứng thông minh SCM",
+            "Số hóa quy trình nghiệp vụ hành chính doanh nghiệp bằng BPMS",
+            "Thiết kế giải pháp Master Data Management (MDM) cho tập đoàn",
+            "Xây dựng hệ thống chấm điểm tín dụng tự động cho tổ chức tài chính"
+        },
+        ["security"] = new[] {
+            "Khóa luận tốt nghiệp chuyên sâu về An toàn không gian mạng",
+            "Xây dựng hệ thống phát hiện xâm nhập IDS/IPS sử dụng học máy",
+            "Tối ưu hệ thống bảo mật SIEM và giám sát an ninh SOC",
+            "Thiết lập hệ thống bẫy mã độc Honeypot phân tích hành vi tin tặc",
+            "Giải pháp bảo vệ dữ liệu đám mây đa nền tảng Cloud Security",
+            "Nghiên cứu và xây dựng quy trình DevSecOps cho sản phẩm phần mềm",
+            "Ứng dụng mật mã học nâng cao trong bảo vệ giao dịch blockchain",
+            "Đánh giá lỗ hổng bảo mật hệ thống SCADA trong công nghiệp",
+            "Điều tra số và khôi phục dữ liệu sau sự cố tấn công mạng",
+            "Xây dựng kiến trúc bảo mật lớp ứng dụng chống tấn công nâng cao"
+        },
+        ["programming"] = new[] {
+            "Khóa luận tốt nghiệp chuyên sâu về Kỹ thuật lập trình",
+            "Xây dựng nền tảng E-commerce quy mô lớn với Microservices",
+            "Tối ưu hóa hiệu năng render ứng dụng web đa luồng WebAssembly",
+            "Thiết kế và xây dựng công cụ phát triển phần mềm tự động CI/CD",
+            "Phát triển ứng dụng Web Real-time cộng tác đa người dùng bằng WebRTC",
+            "Nghiên cứu và triển khai cơ chế đồng bộ dữ liệu Offline-First",
+            "Xây dựng hệ thống IoT Hub quản lý thiết bị thông minh quy mô lớn",
+            "Tối ưu hóa truy vấn cơ sở dữ liệu phi quan hệ cho ứng dụng mạng xã hội",
+            "Thiết kế framework phát triển ứng dụng di động tùy biến cao",
+            "Xây dựng hệ thống quản lý và xử lý hàng đợi tin nhắn chịu tải cao"
+        }
+    };
+
     public static string[] GetFilesForSubject(string code) => code switch
     {
         "ITE1279E" => new[] { "Bao_cao_DoAn.docx", "GameDesign_GDD.pdf", "Level_Design.docx", "Unity_README.pdf", "Asset_List.xlsx", "Demo_Script.docx" },

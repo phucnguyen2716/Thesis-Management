@@ -267,8 +267,9 @@ namespace PlatformAdmin.Services
                 }
                 else
                 {
-                    destFolder = Path.Combine(mockDriveRoot, category.ToString(), parentFolderName);
-                    _logger.LogInformation("GoogleDrive [Mock]: Saving file '{File}' to simulated path '{Category}/{Parent}'", fileName, category, parentFolderName);
+                    string rootFolder = category == AcademicCategory.Topic ? "SpecializationReportStorage" : "GraduationThesisStorage";
+                    destFolder = Path.Combine(mockDriveRoot, rootFolder, parentFolderName);
+                    _logger.LogInformation("GoogleDrive [Mock]: Saving file '{File}' to simulated path '{Category}/{Parent}'", fileName, rootFolder, parentFolderName);
                 }
 
                 try
@@ -338,8 +339,30 @@ namespace PlatformAdmin.Services
                 }
                 else
                 {
-                    string parentId = await GetOrCreateFolderAsync(service, parentFolderName, null);
-                    targetFolderId = parentId; // Direct upload to Major folder!
+                    string rootFolderName = category == AcademicCategory.Topic ? "SpecializationReportStorage" : "GraduationThesisStorage";
+                    _logger.LogInformation("GoogleDrive: Searching for shared '{RootFolderName}' folder...", rootFolderName);
+                    string? rootFolderId = null;
+                    var storageListReq = service.Files.List();
+                    storageListReq.SupportsAllDrives = true;
+                    storageListReq.IncludeItemsFromAllDrives = true;
+                    storageListReq.Q = $"mimeType = 'application/vnd.google-apps.folder' and name = '{rootFolderName}' and trashed = false";
+                    storageListReq.Fields = "files(id, name)";
+                    var storageRes = await storageListReq.ExecuteAsync();
+                    var storageFolder = storageRes.Files?.FirstOrDefault();
+                    
+                    if (storageFolder != null)
+                    {
+                        rootFolderId = storageFolder.Id;
+                        _logger.LogInformation("GoogleDrive: Found shared '{RootFolderName}' folder with ID: {Id}", rootFolderName, rootFolderId);
+                    }
+                    else
+                    {
+                        _logger.LogWarning("GoogleDrive: Shared '{RootFolderName}' folder not found. Creating it in the root directory.", rootFolderName);
+                        rootFolderId = await GetOrCreateFolderAsync(service, rootFolderName, null);
+                    }
+
+                    string parentId = await GetOrCreateFolderAsync(service, parentFolderName, rootFolderId);
+                    targetFolderId = parentId; // Direct upload to Major folder under root!
                 }
 
                 _logger.LogInformation("GoogleDrive: Uploading academic file '{File}' ({Size} bytes) into path '{Parent}/{Sub}/{FileName}'...", 
@@ -625,7 +648,13 @@ namespace PlatformAdmin.Services
         public async Task<List<DriveFileInfo>> ListAcademicFilesRecursiveAsync(AcademicCategory category)
         {
             string activeDriveKey = GetDriveKey(category);
-            string expectedRoot = category == AcademicCategory.Project ? "CourseProjectStorage" : category.ToString();
+            string expectedRoot = category switch
+            {
+                AcademicCategory.Project => "CourseProjectStorage",
+                AcademicCategory.Topic => "SpecializationReportStorage",
+                AcademicCategory.Thesis => "GraduationThesisStorage",
+                _ => category.ToString()
+            };
 
             if (_useMockConfig || string.IsNullOrEmpty(activeDriveKey))
             {

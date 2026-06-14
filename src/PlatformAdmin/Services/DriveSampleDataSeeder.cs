@@ -120,22 +120,26 @@ public class DriveSampleDataSeeder : IDriveSampleDataSeeder
                 await db.SaveChangesAsync();
             }
 
-            // Seed Topic and Thesis database records if they don't exist
-            var hasTopics = await db.Theses.AnyAsync(t => t.Category == "Topic");
-            var hasTheses = await db.Theses.AnyAsync(t => t.Category == "Thesis");
+            // Seed Topic and Thesis database records if they don't exist (need at least 50 of each)
+            var topicCount = await db.Theses.CountAsync(t => t.Category == "Topic");
+            var thesisCount = await db.Theses.CountAsync(t => t.Category == "Thesis");
 
-            if (!hasTopics || !hasTheses)
+            if (topicCount < 50 || thesisCount < 50)
             {
-                _logger.LogInformation("Seeding Topic and Thesis database records...");
-                int topicUidCounter = 2026300;
-                int thesisUidCounter = 2026400;
-
+                _logger.LogInformation("Seeding Topic and Thesis database records (Topic count={TopicCount}, Thesis count={ThesisCount})...", topicCount, thesisCount);
+                
+                int majorIndex = -1;
                 foreach (var major in DriveSampleCatalog.Majors)
                 {
-                    if (!hasTopics)
+                    majorIndex++;
+                    var topicTitles = DriveSampleCatalog.TopicTitles[major.MajorKey];
+                    var thesisTitles = DriveSampleCatalog.ThesisTitles[major.MajorKey];
+
+                    for (int k = 1; k <= 10; k++)
                     {
-                        topicUidCounter++;
-                        var topicUid = $"SV{topicUidCounter}";
+                        var topicUid = $"SV{2026300 + majorIndex * 10 + k}";
+                        var topicTitle = topicTitles[k - 1];
+
                         if (!userCache.TryGetValue(topicUid, out var topicStudent))
                         {
                             topicStudent = new User
@@ -161,24 +165,22 @@ public class DriveSampleDataSeeder : IDriveSampleDataSeeder
                             {
                                 StudentId = topicStudent.Id,
                                 AdvisorId = defaultAdvisor.Id,
-                                Title = $"Nghiên cứu phát triển chuyên đề {major.DisplayName}",
+                                Title = topicTitle,
                                 Description = $"Đề tài chuyên đề thuộc chuyên ngành {major.DisplayName}. Dữ liệu tự động tự sinh.",
                                 Major = major.MajorKey,
                                 Subject = "Chuyên đề tốt nghiệp",
                                 SubjectCode = "TOPIC101",
                                 Category = "Topic",
                                 Status = "Approved",
-                                CreatedAt = DateTime.UtcNow.AddDays(-20),
+                                CreatedAt = DateTime.UtcNow.AddDays(-20 + k),
                                 UpdatedAt = DateTime.UtcNow
                             };
                             db.Theses.Add(thesis);
                         }
-                    }
 
-                    if (!hasTheses)
-                    {
-                        thesisUidCounter++;
-                        var thesisUid = $"SV{thesisUidCounter}";
+                        var thesisUid = $"SV{2026400 + majorIndex * 10 + k}";
+                        var thesisTitle = thesisTitles[k - 1];
+
                         if (!userCache.TryGetValue(thesisUid, out var thesisStudent))
                         {
                             thesisStudent = new User
@@ -204,14 +206,14 @@ public class DriveSampleDataSeeder : IDriveSampleDataSeeder
                             {
                                 StudentId = thesisStudent.Id,
                                 AdvisorId = defaultAdvisor.Id,
-                                Title = $"Khóa luận tốt nghiệp chuyên sâu {major.DisplayName}",
+                                Title = thesisTitle,
                                 Description = $"Đề tài khóa luận tốt nghiệp thuộc chuyên ngành {major.DisplayName}. Dữ liệu tự động tự sinh.",
                                 Major = major.MajorKey,
                                 Subject = "Khóa luận tốt nghiệp",
                                 SubjectCode = "THESIS202",
                                 Category = "Thesis",
                                 Status = "Approved",
-                                CreatedAt = DateTime.UtcNow.AddDays(-25),
+                                CreatedAt = DateTime.UtcNow.AddDays(-25 + k),
                                 UpdatedAt = DateTime.UtcNow
                             };
                             db.Theses.Add(thesis);
@@ -221,6 +223,7 @@ public class DriveSampleDataSeeder : IDriveSampleDataSeeder
                 await db.SaveChangesAsync();
                 _logger.LogInformation("Successfully seeded Topic and Thesis database records.");
             }
+
         }
 
         var existing = await _drive.CountFilesInCourseProjectStorageAsync();
@@ -228,7 +231,7 @@ public class DriveSampleDataSeeder : IDriveSampleDataSeeder
 
         var topicFilesList = await _drive.ListAcademicFilesRecursiveAsync(AcademicCategory.Topic);
         var thesisFilesList = await _drive.ListAcademicFilesRecursiveAsync(AcademicCategory.Thesis);
-        bool needsTopicThesisSeed = topicFilesList.Count == 0 || thesisFilesList.Count == 0;
+        bool needsTopicThesisSeed = topicFilesList.Count < 150 || thesisFilesList.Count < 150;
 
         if (!force && existing >= minDemoFiles && !needsTopicThesisSeed)
         {
@@ -305,100 +308,125 @@ public class DriveSampleDataSeeder : IDriveSampleDataSeeder
         }
 
         // Seed Topic files directly under Chuyên ngành (Major)
-        if (force || topicFilesList.Count == 0)
+        if (force || topicFilesList.Count < 150)
         {
-            int tUid = 2026300;
+            int majorIndex = -1;
             foreach (var major in DriveSampleCatalog.Majors)
             {
-                tUid++;
-                var studentUid = $"SV{tUid}";
-                var title = $"Nghiên cứu phát triển chuyên đề {major.DisplayName}";
-                
-                string[] topicFiles = new[] { 
-                    $"{studentUid}_Bao_cao_Chuyen_de.docx", 
-                    $"{studentUid}_Slide_ThuyetTrinh.pdf", 
-                    $"{studentUid}_Bang_tinh_Chi_phi.xlsx" 
-                };
+                majorIndex++;
+                var topicTitles = DriveSampleCatalog.TopicTitles[major.MajorKey];
 
-                foreach (var fileName in topicFiles)
+                for (int k = 1; k <= 10; k++)
                 {
-                    try
+                    var studentUid = $"SV{2026300 + majorIndex * 10 + k}";
+                    var title = topicTitles[k - 1];
+
+                    // Check if file already exists in the list to avoid duplicate uploads
+                    var hasFiles = topicFilesList.Any(f => f.StudentUid == studentUid);
+                    if (hasFiles && !force)
                     {
-                        byte[] content;
-                        if (fileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
-                        {
-                            content = BuildSamplePdf(major.DisplayName, title, "N/A", studentUid, title, fileName);
-                        }
-                        else if (fileName.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase))
-                        {
-                            content = BuildSampleXlsx(major.DisplayName, title, "N/A", studentUid, title, fileName);
-                        }
-                        else
-                        {
-                            content = BuildSampleDocx(major.DisplayName, title, "N/A", studentUid, title, fileName);
-                        }
-
-                        var result = await _drive.UploadAcademicPdfAsync(
-                            fileName, content, AcademicCategory.Topic,
-                            major.DisplayName, title, null, studentUid, title, major.DisplayName, null);
-
-                        if (result.Success) uploaded++;
-                        else failed++;
+                        _logger.LogInformation("Topic files for student {StudentUid} already exist on Drive. Skipping.", studentUid);
+                        continue;
                     }
-                    catch (Exception ex)
+
+                    string[] topicFiles = new[] { 
+                        $"{studentUid}_Bao_cao_Chuyen_de.docx", 
+                        $"{studentUid}_Slide_ThuyetTrinh.pdf", 
+                        $"{studentUid}_Bang_tinh_Chi_phi.xlsx" 
+                    };
+
+                    foreach (var fileName in topicFiles)
                     {
-                        failed++;
-                        _logger.LogWarning(ex, "Upload Topic lỗi: {File}", fileName);
+                        try
+                        {
+                            byte[] content;
+                            if (fileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+                            {
+                                content = BuildSamplePdf(major.DisplayName, title, "N/A", studentUid, title, fileName);
+                            }
+                            else if (fileName.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase))
+                            {
+                                content = BuildSampleXlsx(major.DisplayName, title, "N/A", studentUid, title, fileName);
+                            }
+                            else
+                            {
+                                content = BuildSampleDocx(major.DisplayName, title, "N/A", studentUid, title, fileName);
+                            }
+
+                            var result = await _drive.UploadAcademicPdfAsync(
+                                fileName, content, AcademicCategory.Topic,
+                                major.DisplayName, title, null, studentUid, title, major.DisplayName, null);
+
+                            if (result.Success) uploaded++;
+                            else failed++;
+                        }
+                        catch (Exception ex)
+                        {
+                            failed++;
+                            _logger.LogWarning(ex, "Upload Topic lỗi: {File}", fileName);
+                        }
                     }
                 }
             }
         }
 
         // Seed Thesis files directly under Chuyên ngành (Major)
-        if (force || thesisFilesList.Count == 0)
+        if (force || thesisFilesList.Count < 150)
         {
-            int thUid = 2026400;
+            int majorIndex = -1;
             foreach (var major in DriveSampleCatalog.Majors)
             {
-                thUid++;
-                var studentUid = $"SV{thUid}";
-                var title = $"Khóa luận tốt nghiệp chuyên sâu {major.DisplayName}";
-                
-                string[] thesisFiles = new[] { 
-                    $"{studentUid}_Khoa_luan_Tot_nghiep.docx", 
-                    $"{studentUid}_Slide_ThuyetTrinh.pdf", 
-                    $"{studentUid}_Bang_tinh_Chi_phi.xlsx" 
-                };
+                majorIndex++;
+                var thesisTitles = DriveSampleCatalog.ThesisTitles[major.MajorKey];
 
-                foreach (var fileName in thesisFiles)
+                for (int k = 1; k <= 10; k++)
                 {
-                    try
+                    var studentUid = $"SV{2026400 + majorIndex * 10 + k}";
+                    var title = thesisTitles[k - 1];
+
+                    var hasFiles = thesisFilesList.Any(f => f.StudentUid == studentUid);
+                    if (hasFiles && !force)
                     {
-                        byte[] content;
-                        if (fileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
-                        {
-                            content = BuildSamplePdf(major.DisplayName, title, "N/A", studentUid, title, fileName);
-                        }
-                        else if (fileName.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase))
-                        {
-                            content = BuildSampleXlsx(major.DisplayName, title, "N/A", studentUid, title, fileName);
-                        }
-                        else
-                        {
-                            content = BuildSampleDocx(major.DisplayName, title, "N/A", studentUid, title, fileName);
-                        }
-
-                        var result = await _drive.UploadAcademicPdfAsync(
-                            fileName, content, AcademicCategory.Thesis,
-                            major.DisplayName, title, null, studentUid, title, major.DisplayName, null);
-
-                        if (result.Success) uploaded++;
-                        else failed++;
+                        _logger.LogInformation("Thesis files for student {StudentUid} already exist on Drive. Skipping.", studentUid);
+                        continue;
                     }
-                    catch (Exception ex)
+
+                    string[] thesisFiles = new[] { 
+                        $"{studentUid}_Khoa_luan_Tot_nghiep.docx", 
+                        $"{studentUid}_Slide_ThuyetTrinh.pdf", 
+                        $"{studentUid}_Bang_tinh_Chi_phi.xlsx" 
+                    };
+
+                    foreach (var fileName in thesisFiles)
                     {
-                        failed++;
-                        _logger.LogWarning(ex, "Upload Thesis lỗi: {File}", fileName);
+                        try
+                        {
+                            byte[] content;
+                            if (fileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+                            {
+                                content = BuildSamplePdf(major.DisplayName, title, "N/A", studentUid, title, fileName);
+                            }
+                            else if (fileName.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase))
+                            {
+                                content = BuildSampleXlsx(major.DisplayName, title, "N/A", studentUid, title, fileName);
+                            }
+                            else
+                            {
+                                content = BuildSampleDocx(major.DisplayName, title, "N/A", studentUid, title, fileName);
+                            }
+
+                            var result = await _drive.UploadAcademicPdfAsync(
+                                fileName, content, AcademicCategory.Thesis,
+                                major.DisplayName, title, null, studentUid, title, major.DisplayName, null);
+
+                            if (result.Success) uploaded++;
+                            else failed++;
+                        }
+                        catch (Exception ex)
+                        {
+                            failed++;
+                            _logger.LogWarning(ex, "Upload Thesis lỗi: {File}", fileName);
+                        }
                     }
                 }
             }
@@ -411,6 +439,7 @@ public class DriveSampleDataSeeder : IDriveSampleDataSeeder
         _logger.LogInformation("DriveSampleDataSeeder: {Message}", msg);
         return new DriveGenerateResult { Uploaded = uploaded, Failed = failed, Message = msg };
     }
+
 
     public static string RemoveDiacritics(string text)
     {
@@ -458,8 +487,9 @@ public class DriveSampleDataSeeder : IDriveSampleDataSeeder
         var cleanedProject = RemoveDiacritics(project);
         var cleanedFileName = RemoveDiacritics(fileName);
 
-        var body = $"""
-            eThesis Fallback PDF Report
+        var page1 = $"""
+            eThesis Fallback PDF Report - Page 1 (Cover Page)
+            ------------------------------------------------
             File name: {cleanedFileName}
             Student UID: {uid}
             Subject: {cleanedSubject} ({code})
@@ -469,6 +499,52 @@ public class DriveSampleDataSeeder : IDriveSampleDataSeeder
             Tom tat: Do an nghien cuu va phat trien ung dung {cleanedProject}.
             """;
 
+        var page2 = $"""
+            eThesis Fallback PDF Report - Page 2 (Literature Review)
+            ------------------------------------------------
+            Research Topic: {cleanedProject}
+            Student: {uid}
+            
+            1. Introduction
+            This research addresses key challenges in {cleanedMajor}. 
+            We investigate various methodologies and state-of-the-art architectures.
+            
+            2. Related Work
+            Prior studies in {cleanedSubject} have proposed several frameworks.
+            However, limitations in performance and security remain to be solved.
+            """;
+
+        var page3 = $"""
+            eThesis Fallback PDF Report - Page 3 (Methodology & Conclusion)
+            ------------------------------------------------
+            Research Topic: {cleanedProject}
+            Student: {uid}
+
+            3. Proposed Methodology
+            We design an integrated microservices system using secure cloud technologies.
+            The experimental results demonstrate a significant improvement in efficiency.
+
+            4. Conclusion
+            This graduation thesis / report successfully achieves its primary objectives.
+            Future work will focus on integrating advanced machine learning techniques.
+            """;
+
+        var page4 = $"""
+            eThesis Fallback PDF Report - Page 4 (Evaluation & References)
+            ------------------------------------------------
+            Research Topic: {cleanedProject}
+            Student: {uid}
+
+            5. Evaluation Results
+            The proposed system was evaluated against baseline configurations.
+            We observed a 15% reduction in request latency and 99.9% uptime.
+
+            6. References
+            [1] Author A, "Advanced Systems in {cleanedMajor}", Journal of eThesis, 2025.
+            [2] Author B, "Research and Applications in {cleanedSubject}", UEF Press, 2026.
+            """;
+
+        var body = $"{page1}\n---\n{page2}\n---\n{page3}\n---\n{page4}";
         return MinimalPdfBuilder.Create(body);
     }
 
@@ -527,46 +603,72 @@ internal static class MinimalPdfBuilder
 {
     public static byte[] Create(string text)
     {
-        var streamContent = new StringBuilder();
-        streamContent.AppendLine("BT");
-        streamContent.AppendLine("/F1 12 Tf");
-        streamContent.AppendLine("70 750 Td");
-        streamContent.AppendLine("14 TL"); // Set leading to 14 points
+        var pageDelimiters = new[] { "\n---\n", "\r\n---\r\n" };
+        var pagesText = text.Split(pageDelimiters, StringSplitOptions.RemoveEmptyEntries)
+                            .Select(p => p.Trim())
+                            .ToList();
 
-        var lines = text.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
-        foreach (var line in lines)
+        if (pagesText.Count == 0)
         {
-            var escapedLine = line.Replace("(", "\\(").Replace(")", "\\)");
-            streamContent.AppendLine($"({escapedLine}) '"); //apostrophe moves down and writes line
+            pagesText.Add("eThesis Empty Document");
         }
-        streamContent.AppendLine("ET");
 
-        var streamBytes = Encoding.UTF8.GetBytes(streamContent.ToString());
+        var streams = new List<byte[]>();
+        foreach (var pageText in pagesText)
+        {
+            var streamContent = new StringBuilder();
+            streamContent.AppendLine("BT");
+            streamContent.AppendLine("/F1 12 Tf");
+            streamContent.AppendLine("70 750 Td");
+            streamContent.AppendLine("14 TL"); // Set leading to 14 points
 
-        var pdf = new StringBuilder();
-        pdf.AppendLine("%PDF-1.4");
-        pdf.AppendLine("1 0 obj");
-        pdf.AppendLine("<< /Type /Catalog /Pages 2 0 R >>");
-        pdf.AppendLine("endobj");
-        pdf.AppendLine("2 0 obj");
-        pdf.AppendLine("<< /Type /Pages /Kids [3 0 R] /Count 1 >>");
-        pdf.AppendLine("endobj");
-        pdf.AppendLine("3 0 obj");
-        pdf.AppendLine("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >> >> >>");
-        pdf.AppendLine("endobj");
-        pdf.AppendLine("4 0 obj");
-        pdf.AppendLine($"<< /Length {streamBytes.Length} >>");
-        pdf.AppendLine("stream");
-
-        var headerBytes = Encoding.UTF8.GetBytes(pdf.ToString());
+            var lines = pageText.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+            foreach (var line in lines)
+            {
+                var escapedLine = line.Replace("(", "\\(").Replace(")", "\\)");
+                streamContent.AppendLine($"({escapedLine}) '"); // apostrophe moves down and writes line
+            }
+            streamContent.AppendLine("ET");
+            streams.Add(Encoding.UTF8.GetBytes(streamContent.ToString()));
+        }
 
         using var ms = new MemoryStream();
-        ms.Write(headerBytes, 0, headerBytes.Length);
-        ms.Write(streamBytes, 0, streamBytes.Length);
+        using (var writer = new StreamWriter(ms, new UTF8Encoding(false)))
+        {
+            writer.Write("%PDF-1.4\r\n");
 
-        var footer = "\r\nendstream\r\nendobj\r\nxref\r\n0 5\r\n0000000000 65535 f \r\n0000000009 00000 n \r\n0000000058 00000 n \r\n0000000115 00000 n \r\n0000000270 00000 n \r\ntrailer\r\n<< /Size 5 /Root 1 0 R >>\r\nstartxref\r\n370\r\n%%EOF\r\n";
-        var footerBytes = Encoding.UTF8.GetBytes(footer);
-        ms.Write(footerBytes, 0, footerBytes.Length);
+            // 1 0 obj: Catalog
+            writer.Write("1 0 obj\r\n<< /Type /Catalog /Pages 2 0 R >>\r\nendobj\r\n");
+
+            // 2 0 obj: Pages
+            var kidsStr = string.Join(" ", Enumerable.Range(0, pagesText.Count).Select(i => $"{(3 + i * 2)} 0 R"));
+            writer.Write($"2 0 obj\r\n<< /Type /Pages /Kids [{kidsStr}] /Count {pagesText.Count} >>\r\nendobj\r\n");
+            writer.Flush();
+
+            for (int i = 0; i < pagesText.Count; i++)
+            {
+                int pageObjId = 3 + i * 2;
+                int streamObjId = pageObjId + 1;
+
+                // Page object
+                writer.Write($"{pageObjId} 0 obj\r\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents {streamObjId} 0 R /Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >> >> >>\r\nendobj\r\n");
+
+                // Stream object
+                var streamBytes = streams[i];
+                writer.Write($"{streamObjId} 0 obj\r\n<< /Length {streamBytes.Length} >>\r\nstream\r\n");
+                writer.Flush();
+
+                ms.Write(streamBytes, 0, streamBytes.Length);
+
+                writer.Write("\r\nendstream\r\nendobj\r\n");
+                writer.Flush();
+            }
+
+            // Footer (xref and trailer)
+            writer.Write("xref\r\n0 1\r\n0000000000 65535 f \r\n");
+            writer.Write($"trailer\r\n<< /Size {(3 + pagesText.Count * 2)} /Root 1 0 R >>\r\nstartxref\r\n370\r\n%%EOF\r\n");
+            writer.Flush();
+        }
 
         return ms.ToArray();
     }

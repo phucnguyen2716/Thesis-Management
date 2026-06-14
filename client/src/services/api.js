@@ -57,6 +57,7 @@ export const thesisService = {
   addReview: (id, data) => api.post(`/thesis/${id}/reviews`, data),
   getComments: (id) => api.get(`/thesis/${id}/comments`),
   addComment: (id, data) => api.post(`/thesis/${id}/comments`, data),
+  evaluatePractice: (data) => api.post('/thesis/practice/evaluate', data),
 };
 
 export const chatbotService = {

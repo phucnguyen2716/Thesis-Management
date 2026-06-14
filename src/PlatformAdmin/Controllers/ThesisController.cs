@@ -231,4 +231,23 @@ public class ThesisController : ControllerBase
         return Ok(result);
     }
 
+    [HttpPost("practice/evaluate")]
+    [ApiResponse(typeof(ThesisPracticeEvaluationResult), StatusCodes.Status200OK)]
+    [ApiResponse(StatusCodes.Status400BadRequest)]
+    [ApiResponse(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<ThesisPracticeEvaluationResult>> EvaluatePractice([FromBody] EvaluatePracticeRequest request, [FromServices] IGeminiService geminiService)
+    {
+        if (request == null || string.IsNullOrWhiteSpace(request.Content))
+            return BadRequest("Content cannot be empty.");
+
+        var result = await geminiService.EvaluateThesisPracticeAsync(
+            request.Content,
+            request.ThesisTitle,
+            request.ChapterId,
+            request.ChapterLabel,
+            request.RequiredSections
+        );
+        return Ok(result);
+    }
+
 }

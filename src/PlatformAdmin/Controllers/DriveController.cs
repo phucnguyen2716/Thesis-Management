@@ -78,6 +78,24 @@ public class DriveController : ControllerBase
         });
     }
 
+    [HttpGet("force-sync-academic")]
+    [AllowAnonymous]
+    public async Task<IActionResult> ForceSyncAcademic()
+    {
+        try
+        {
+            await _syncJob.SyncTopicStorageAsync();
+            await _syncJob.SyncThesisStorageAsync();
+            await _syncJob.SyncThesesFromDriveRecordsAsync();
+            return Ok(new { Message = "Academic folders (Topic & Thesis) scanned and synced successfully!" });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { Error = ex.Message });
+        }
+    }
+
+
     [HttpPost("convert")]
     [AllowAnonymous]
     public async Task<IActionResult> ConvertDriveFile([FromQuery] string filePath)

@@ -280,8 +280,28 @@ namespace MediaProcessing.Services
                 }
                 else
                 {
-                    string parentId = await GetOrCreateFolderAsync(service, parentFolderName, null);
-                    targetFolderId = await GetOrCreateFolderAsync(service, documentFolderName, parentId);
+                    string rootFolderName = category == AcademicCategory.Topic ? "SpecializationReportStorage" : "GraduationThesisStorage";
+                    _logger.LogInformation("GoogleDrive: Searching for shared '{RootFolderName}' folder...", rootFolderName);
+                    string? rootFolderId = null;
+                    var storageListReq = service.Files.List();
+                    storageListReq.Q = $"mimeType = 'application/vnd.google-apps.folder' and name = '{rootFolderName}' and trashed = false";
+                    storageListReq.Fields = "files(id, name)";
+                    var storageRes = await storageListReq.ExecuteAsync();
+                    var storageFolder = storageRes.Files?.FirstOrDefault();
+                    
+                    if (storageFolder != null)
+                    {
+                        rootFolderId = storageFolder.Id;
+                        _logger.LogInformation("GoogleDrive: Found shared '{RootFolderName}' folder with ID: {Id}", rootFolderName, rootFolderId);
+                    }
+                    else
+                    {
+                        _logger.LogWarning("GoogleDrive: Shared '{RootFolderName}' folder not found. Creating it in the root directory.", rootFolderName);
+                        rootFolderId = await GetOrCreateFolderAsync(service, rootFolderName, null);
+                    }
+
+                    string parentId = await GetOrCreateFolderAsync(service, parentFolderName, rootFolderId);
+                    targetFolderId = parentId; // Direct upload to Major folder under root!
                 }
 
                 // 3. Upload file

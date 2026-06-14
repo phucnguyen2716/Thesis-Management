@@ -204,23 +204,25 @@ export const loadTemplates = () => {
     const raw = localStorage.getItem(TEMPLATE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      let modified = false;
-      const updated = parsed.map(t => {
-        const def = DEFAULT_TEMPLATES.find(d => d.id === t.id);
-        if (def && !t.chapterTag) {
-          modified = true;
-          return { ...t, chapterTag: def.chapterTag };
+      if (Array.isArray(parsed)) {
+        let modified = false;
+        const updated = parsed.map(t => {
+          const def = DEFAULT_TEMPLATES.find(d => d.id === t.id);
+          if (def && !t.chapterTag) {
+            modified = true;
+            return { ...t, chapterTag: def.chapterTag };
+          }
+          if (!t.chapterTag) {
+            modified = true;
+            return { ...t, chapterTag: 'Tất cả' };
+          }
+          return t;
+        });
+        if (modified) {
+          localStorage.setItem(TEMPLATE_KEY, JSON.stringify(updated));
         }
-        if (!t.chapterTag) {
-          modified = true;
-          return { ...t, chapterTag: 'Tất cả' };
-        }
-        return t;
-      });
-      if (modified) {
-        localStorage.setItem(TEMPLATE_KEY, JSON.stringify(updated));
+        return updated;
       }
-      return updated;
     }
   } catch {
     /* ignore */
@@ -246,7 +248,10 @@ export const saveTemplates = (templates) => {
 export const loadPracticeSubmissions = () => {
   try {
     const raw = localStorage.getItem(SUBMISSIONS_KEY);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed;
+    }
   } catch {
     /* ignore */
   }
