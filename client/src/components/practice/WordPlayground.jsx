@@ -663,18 +663,38 @@ const WordPlayground = () => {
       let presentationScore = 0.0;
       const feedback = [];
 
-      // Kiểm tra xem nội dung hiện tại có trùng khớp hoàn toàn với template gốc không
+      // Kiểm tra xem nội dung hiện tại có trùng khớp hoặc quá tương đồng với template gốc không
       const tempDivCompare = document.createElement('div');
       tempDivCompare.innerHTML = template.html || '';
       const cleanTemplateText = tempDivCompare.innerText.replace(/\s+/g, ' ').trim();
       const cleanCurrentText = text.replace(/\s+/g, ' ').trim();
       const isUnchanged = cleanCurrentText === cleanTemplateText;
 
-      if (isUnchanged) {
+      // Tính mức độ tương đồng từ vựng (Jaccard similarity) để chống copy nguyên mẫu gợi ý
+      const getJaccardSimilarity = (str1, str2) => {
+        const set1 = new Set(str1.toLowerCase().split(/\s+/).filter(w => w.length > 1));
+        const set2 = new Set(str2.toLowerCase().split(/\s+/).filter(w => w.length > 1));
+        const intersection = new Set([...set1].filter(x => set2.has(x)));
+        const union = new Set([...set1, ...set2]);
+        if (union.size === 0) return 0;
+        return intersection.size / union.size;
+      };
+
+      const similarity = getJaccardSimilarity(cleanCurrentText, cleanTemplateText);
+      const isTooSimilar = similarity > 0.65; // Giống trên 65% là coi như copy mẫu không sửa
+
+      if (isUnchanged || isTooSimilar) {
+        contentScore = 0.0;
+        originalityScore = 0.0;
+        methodScore = 0.0;
+        presentationScore = 0.0;
+
         feedback.push({
           type: 'warning',
-          title: 'Nội dung chưa thay đổi',
-          text: 'Bạn chưa thay đổi bất kỳ nội dung nào từ mẫu gợi ý. Hãy tự viết hoặc chỉnh sửa nội dung theo đề tài của bạn để bắt đầu tính điểm.'
+          title: isUnchanged ? 'Nội dung chưa thay đổi' : 'Sao chép văn bản mẫu',
+          text: isUnchanged
+            ? 'Bạn chưa thay đổi bất kỳ nội dung nào từ mẫu gợi ý. Hãy tự viết hoặc chỉnh sửa nội dung theo đề tài của bạn để bắt đầu tính điểm.'
+            : `Nội dung của bạn trùng khớp tới ${Math.round(similarity * 100)}% với mẫu gợi ý. Vui lòng tự viết nội dung chi tiết của đề tài để bắt đầu tính điểm!`
         });
       } else {
         // Cần gọi API backend để đánh giá tính học thuật, logic & ngữ nghĩa (Gemini)
@@ -874,6 +894,18 @@ const WordPlayground = () => {
             type: 'success',
             title: 'Định dạng trình bày tốt',
             text: 'Căn lề đều đặn và sử dụng phông chữ chuẩn Microsoft Word.'
+          });
+        }
+
+        // Áp dụng hình phạt nếu trùng lặp từ vựng ở mức vừa phải (0.35 - 0.65) để hạn chế lười viết
+        if (similarity > 0.35) {
+          const penalty = Math.round((similarity - 0.35) * 12 * 10) / 10;
+          contentScore = Math.max(0.0, Math.round((contentScore - penalty) * 10) / 10);
+          originalityScore = Math.max(0.0, Math.round((originalityScore - penalty) * 10) / 10);
+          feedback.push({
+            type: 'warning',
+            title: 'Trùng lặp mô tả mẫu gợi ý',
+            text: `Nội dung bài viết trùng khớp ${Math.round(similarity * 100)}% với văn bản mẫu. Hãy mô tả chi tiết và cụ thể hơn theo đề tài của bạn.`
           });
         }
 
