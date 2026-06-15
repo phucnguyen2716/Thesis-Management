@@ -7,10 +7,17 @@ import { PROFILE_PORTALS } from '../../utils/profileFileStorage';
 const DEFAULT_AVATAR =
   'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80';
 
-const ViewField = ({ label, value, className = '' }) => (
-  <div className={className}>
-    <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">{label}</p>
-    <p className="text-sm font-semibold text-on-surface mt-1 break-words">{value?.trim() ? value : '—'}</p>
+const ViewField = ({ label, value, icon, className = '' }) => (
+  <div className={`flex items-start gap-3 py-2.5 border-b border-outline-variant/20 last:border-0 ${className}`}>
+    {icon && (
+      <span className="material-symbols-outlined text-primary text-base shrink-0 mt-0.5">{icon}</span>
+    )}
+    <div className="min-w-0 flex-1">
+      <p className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest">{label}</p>
+      <p className="text-sm font-semibold text-on-surface mt-0.5 break-words leading-snug">
+        {value?.trim() ? value : <span className="text-on-surface-variant/40 font-normal italic">Chưa cập nhật</span>}
+      </p>
+    </div>
   </div>
 );
 
@@ -103,8 +110,15 @@ const StudentProfileForm = ({ showHeader = true, showVault = true }) => {
               />
             ) : (
               <div className="flex flex-col items-center gap-2">
-                <div className="w-20 h-20 rounded-2xl overflow-hidden border-2 border-primary/20 shadow-md">
+                <div
+                  className="w-24 h-24 rounded-2xl overflow-hidden border-2 border-primary/20 shadow-md cursor-pointer hover:opacity-90 transition-opacity relative group"
+                  onClick={() => setIsEditing(true)}
+                  title="Bấm để thay ảnh"
+                >
                   <img src={avatarSrc} alt="" className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <span className="material-symbols-outlined text-white text-xl">photo_camera</span>
+                  </div>
                 </div>
                 <p className="text-[10px] text-on-surface-variant font-medium">Ảnh đại diện</p>
               </div>
@@ -171,14 +185,23 @@ const StudentProfileForm = ({ showHeader = true, showVault = true }) => {
                 </label>
               </>
             ) : (
-              <>
-                <ViewField label="Họ và tên" value={form.fullName} className="sm:col-span-2" />
-                <ViewField label="Email UEF" value={form.email} />
-                <ViewField label="Mã sinh viên" value={form.studentId} />
-                <ViewField label="Khoa / Phòng ban" value={form.faculty} className="sm:col-span-2" />
-                <ViewField label="Số điện thoại" value={form.phone} />
-                <ViewField label="Giới thiệu" value={form.bio} className="sm:col-span-2" />
-              </>
+              <div className="divide-y divide-outline-variant/20">
+                <ViewField icon="badge" label="Họ và tên" value={form.fullName} />
+                <div className="grid grid-cols-1 sm:grid-cols-2">
+                  <ViewField icon="mail" label="Email UEF" value={form.email} />
+                  <ViewField icon="id_card" label="Mã sinh viên" value={form.studentId} />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2">
+                  <ViewField icon="corporate_fare" label="Khoa / Phòng ban" value={form.faculty} />
+                  <ViewField icon="call" label="Số điện thoại" value={form.phone} />
+                </div>
+                <div className="py-3">
+                  <p className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest mb-2">Giới thiệu</p>
+                  <p className="text-sm text-on-surface leading-relaxed whitespace-pre-wrap">
+                    {form.bio?.trim() || <span className="text-on-surface-variant/40 font-normal italic">Chưa có mô tả.</span>}
+                  </p>
+                </div>
+              </div>
             )}
           </div>
         </div>
