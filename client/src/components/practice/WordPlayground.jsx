@@ -1294,8 +1294,8 @@ const WordPlayground = () => {
 
       {/* Detailed Evaluation Modal */}
       {showGradeModal && gradeResult && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-fade-in">
-          <div className="bg-white rounded-[1.25rem] border border-outline-variant shadow-2xl w-full max-w-xl overflow-hidden max-h-[85vh] sm:max-h-[90vh] flex flex-col animate-in scale-in-95 duration-300">
+        <div className="fixed inset-0 md:left-[280px] md:top-[72px] bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-fade-in">
+          <div className="bg-white rounded-[1.25rem] border border-outline-variant shadow-2xl w-full max-w-md overflow-hidden max-h-[80vh] sm:max-h-[85vh] flex flex-col animate-in scale-in-95 duration-300">
             {/* Modal Header */}
             <div className="bg-gradient-to-r from-slate-900 via-[#185abd] to-slate-900 p-4 text-white flex justify-between items-center shadow">
               <div className="flex items-center gap-2.5">
@@ -1440,7 +1440,7 @@ const WordPlayground = () => {
 
       {/* Custom Alert Modal */}
       {customAlert && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[150] flex items-center justify-center p-4 animate-fade-in">
+        <div className="fixed inset-0 md:left-[280px] md:top-[72px] bg-slate-900/40 backdrop-blur-sm z-[150] flex items-center justify-center p-4 animate-fade-in">
           <div className="bg-white rounded-[2rem] border border-outline-variant shadow-2xl max-w-sm w-full p-6 animate-in scale-in-95 duration-200 text-center">
             <div className={`w-14 h-14 rounded-2xl mx-auto flex items-center justify-center mb-4 shadow ${
               customAlert.type === 'success' 
