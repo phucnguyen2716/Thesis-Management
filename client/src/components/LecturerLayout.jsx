@@ -101,7 +101,7 @@ const LecturerLayout = () => {
               <div className="w-8 h-8 rounded-full overflow-hidden border border-white/30">
                 <img alt="Avatar" className="w-full h-full object-cover" src={avatarSrc} />
               </div>
-              <div className="hidden xl:block text-left">
+              <div className="text-left">
                 <span className="text-xs font-bold text-white block leading-tight">{displayName}</span>
                 <span className="text-[9px] text-teal-200 font-medium">{displayTitle}</span>
               </div>
@@ -117,16 +117,32 @@ const LecturerLayout = () => {
           </button>
         </div>
 
-        <div className="lg:hidden flex items-center gap-1">
+        <div className="lg:hidden flex items-center gap-1.5">
           <button
             type="button"
             onClick={() => navigate('/')}
-            className="material-symbols-outlined text-white p-2"
+            className="material-symbols-outlined text-white p-2 hover:bg-white/10 rounded-lg transition-colors"
             title="Portal sinh viên"
           >
             {LECTURER_ICONS.studentPortal}
           </button>
-          <button type="button" onClick={handleLogout} className="material-symbols-outlined text-white p-2">
+          <Link
+            to="/lecturer/profile"
+            className="flex items-center gap-2 py-1 pl-1 pr-3 bg-white/10 hover:bg-white/20 rounded-full border border-white/10 active:scale-95 transition-all"
+          >
+            <div className="w-7 h-7 rounded-full overflow-hidden border border-white/30 shrink-0">
+              <img alt="Avatar" className="w-full h-full object-cover" src={avatarSrc} />
+            </div>
+            <div className="flex flex-col items-start min-w-0">
+              <span className="text-[11px] font-bold text-white leading-none truncate max-w-[80px]">
+                {displayName}
+              </span>
+              <span className="text-[8px] font-semibold text-teal-200 uppercase tracking-wider mt-0.5">
+                {displayTitle}
+              </span>
+            </div>
+          </Link>
+          <button type="button" onClick={handleLogout} className="material-symbols-outlined text-white p-2 hover:bg-white/10 rounded-lg transition-colors">
             logout
           </button>
         </div>
