@@ -545,15 +545,25 @@ const Layout = () => {
               </div>
             )}
           </div>
-          <button 
+          <button
             onClick={() => navigate('/profile')}
-            className="w-8 h-8 rounded-full overflow-hidden border border-white/20 active:scale-95 transition-all"
+            className="flex items-center gap-2 py-1 pl-1 pr-3 bg-white/10 hover:bg-white/20 rounded-full border border-white/10 active:scale-95 transition-all"
           >
-            <img
-              alt="Avatar"
-              className="w-full h-full object-cover"
-              src={user.avatarUrl?.trim() || DEFAULT_AVATAR}
-            />
+            <div className="w-8 h-8 rounded-full overflow-hidden border border-white/20 shrink-0">
+              <img
+                alt="Avatar"
+                className="w-full h-full object-cover"
+                src={user.avatarUrl?.trim() || DEFAULT_AVATAR}
+              />
+            </div>
+            <div className="flex flex-col items-start min-w-0">
+              <span className="text-[11px] font-bold text-on-primary leading-none truncate max-w-[90px]">
+                {user.fullName || 'Sinh viên'}
+              </span>
+              <span className="text-[8px] font-black text-on-primary/50 uppercase tracking-widest mt-0.5">
+                {user.role || 'Student'}
+              </span>
+            </div>
           </button>
         </div>
       </header>
