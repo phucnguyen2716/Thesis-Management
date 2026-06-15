@@ -3,10 +3,18 @@ import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { chatbotService } from '../services/api';
 import useLanguage from '../hooks/useLanguage';
 
+const DEFAULT_AVATAR = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80';
+
 const Layout = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem('user') || '{"role": "Student", "fullName": "Người dùng Demo"}');
+
+  const loadUser = () => {
+    try {
+      return JSON.parse(localStorage.getItem('user') || '{"role": "Student", "fullName": "Người dùng Demo"}');
+    } catch { return { role: 'Student', fullName: 'Người dùng Demo' }; }
+  };
+  const [user, setUser] = useState(loadUser);
 
   const { lang, toggleLanguage } = useLanguage();
 
@@ -38,6 +46,16 @@ const Layout = () => {
       return msg;
     }));
   }, [lang]);
+
+  useEffect(() => {
+    const refresh = () => setUser(loadUser());
+    window.addEventListener('student-profile-updated', refresh);
+    window.addEventListener('storage', refresh);
+    return () => {
+      window.removeEventListener('student-profile-updated', refresh);
+      window.removeEventListener('storage', refresh);
+    };
+  }, []);
 
   const formatTime = (dateStr) => {
     try {
@@ -402,7 +420,7 @@ const Layout = () => {
               <img
                 alt="User profile avatar"
                 className="w-full h-full object-cover"
-                src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80"
+                src={user.avatarUrl?.trim() || DEFAULT_AVATAR}
               />
             </div>
             <div className="flex flex-col">
@@ -534,7 +552,7 @@ const Layout = () => {
             <img
               alt="Avatar"
               className="w-full h-full object-cover"
-              src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80"
+              src={user.avatarUrl?.trim() || DEFAULT_AVATAR}
             />
           </button>
         </div>
