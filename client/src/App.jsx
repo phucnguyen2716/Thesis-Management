@@ -30,7 +30,7 @@ import LecturerControllerPage from './pages/lecturer/LecturerControllerPage';
 import LecturerThesesPage from './pages/lecturer/LecturerThesesPage';
 import LecturerReportsPage from './pages/lecturer/LecturerReportsPage';
 import LecturerProfilePage from './pages/lecturer/LecturerProfilePage';
-import LecturerLibraryPage from './pages/lecturer/LecturerLibraryPage';
+
 import LecturerPracticeManagerPage from './pages/lecturer/LecturerPracticeManagerPage';
 import LecturerEventProposalPage from './pages/lecturer/LecturerEventProposalPage';
 import AdminLayout from './components/AdminLayout';
@@ -39,7 +39,7 @@ import AdminUsersPage from './pages/admin/AdminUsersPage';
 import AdminLoginAuditPage from './pages/admin/AdminLoginAuditPage';
 import AdminSocialPage from './pages/admin/AdminSocialPage';
 import AdminThesesPage from './pages/admin/AdminThesesPage';
-import AdminLibraryPage from './pages/admin/AdminLibraryPage';
+
 
 function App() {
   return (
@@ -68,7 +68,7 @@ function App() {
           <Route path="audit" element={<AdminLoginAuditPage />} />
           <Route path="social" element={<AdminSocialPage />} />
           <Route path="theses/:category" element={<AdminThesesPage />} />
-          <Route path="library" element={<AdminLibraryPage />} />
+
         </Route>
 
         <Route
@@ -85,7 +85,7 @@ function App() {
           <Route path="theses" element={<LecturerThesesPage />} />
           <Route path="reports" element={<LecturerReportsPage />} />
           <Route path="profile" element={<LecturerProfilePage />} />
-          <Route path="library" element={<LecturerLibraryPage />} />
+
           <Route path="propose-event" element={<LecturerEventProposalPage />} />
         </Route>
         

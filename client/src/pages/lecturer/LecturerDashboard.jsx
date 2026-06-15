@@ -31,13 +31,7 @@ const LecturerDashboard = () => {
       path: '/lecturer/profile',
       accent: 'bg-teal-700',
     },
-    {
-      title: 'Thư viện tham khảo',
-      desc: 'Kho sách tham khảo, tài liệu nhiều chuyên ngành khác nhau.',
-      icon: LECTURER_ICONS.library,
-      path: '/lecturer/library',
-      accent: 'bg-indigo-700',
-    },
+
   ];
 
   return (

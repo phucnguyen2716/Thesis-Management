@@ -15,7 +15,7 @@ export const LECTURER_ICONS = {
   recheck: 'sync_saved_locally',
   queue: 'inbox_customize',
   ranking: 'social_leaderboard',
-  library: 'local_library',
+
   profile: 'badge',
 };
 

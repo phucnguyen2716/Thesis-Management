@@ -9,14 +9,14 @@ const NAV_ITEMS = [
   { label: 'Đề xuất sự kiện', icon: 'campaign', path: '/lecturer/propose-event' },
   { label: 'Báo cáo', icon: LECTURER_ICONS.reports, path: '/lecturer/reports' },
   { label: 'Hồ sơ', icon: LECTURER_ICONS.profile, path: '/lecturer/profile' },
-  { label: 'Thư viện', icon: LECTURER_ICONS.library, path: '/lecturer/library' },
+
 ];
 
 const BOTTOM_NAV = [
   { label: 'Trang chủ', icon: LECTURER_ICONS.home, path: '/lecturer', short: 'Trang chủ' },
   { label: 'Đồ án', icon: LECTURER_ICONS.theses, path: '/lecturer/theses', short: 'Đồ án' },
   { label: 'Sự kiện', icon: 'campaign', path: '/lecturer/propose-event', short: 'Sự kiện' },
-  { label: 'Thư viện', icon: LECTURER_ICONS.library, path: '/lecturer/library', short: 'Thư viện' },
+
   { label: 'Hồ sơ', icon: LECTURER_ICONS.profile, path: '/lecturer/profile', short: 'Hồ sơ' },
   { label: 'Báo cáo', icon: LECTURER_ICONS.reports, path: '/lecturer/reports', short: 'Báo cáo' },
 ];

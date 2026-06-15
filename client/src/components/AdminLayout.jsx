@@ -6,7 +6,7 @@ const NAV = [
   { label: 'Sinh viên', icon: 'school', path: '/admin/students' },
   { label: 'Giảng viên', icon: 'co_present', path: '/admin/advisors' },
   { label: 'Social media', icon: 'campaign', path: '/admin/social' },
-  { label: 'Thư viện', icon: 'local_library', path: '/admin/library' },
+
   {
     label: 'Quản lý đề tài',
     icon: 'inventory_2',
