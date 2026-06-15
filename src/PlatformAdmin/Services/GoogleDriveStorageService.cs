@@ -47,6 +47,7 @@ namespace PlatformAdmin.Services
         Task<int> CountFilesInCourseProjectStorageAsync();
         Task EnsureTemporaryPdfFolderAsync();
         Task DeleteFolderAsync(string folderName, AcademicCategory category);
+        Task DeleteFileAsync(string fileId, AcademicCategory category);
     }
 
     public class DriveFileInfo
@@ -160,6 +161,44 @@ namespace PlatformAdmin.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "GoogleDrive: Failed to delete folder '{Folder}'", folderName);
+            }
+        }
+
+        public async Task DeleteFileAsync(string fileId, AcademicCategory category)
+        {
+            string activeDriveKey = string.Empty;
+            switch (category)
+            {
+                case AcademicCategory.Project:
+                    activeDriveKey = _driveKey1_Project ?? string.Empty;
+                    break;
+                case AcademicCategory.Topic:
+                    activeDriveKey = _driveKey2_Topic ?? string.Empty;
+                    break;
+                case AcademicCategory.Thesis:
+                    activeDriveKey = _driveKey3_Thesis ?? string.Empty;
+                    break;
+            }
+
+            bool categoryUseMock = _useMockConfig || string.IsNullOrEmpty(activeDriveKey);
+
+            if (categoryUseMock)
+            {
+                _logger.LogInformation("GoogleDrive MOCK: Delete file '{FileId}'", fileId);
+                return;
+            }
+
+            try
+            {
+                var service = GetDriveService(category);
+                var deleteReq = service.Files.Delete(fileId);
+                deleteReq.SupportsAllDrives = true;
+                await deleteReq.ExecuteAsync();
+                _logger.LogInformation("GoogleDrive SUCCESS: File '{FileId}' deleted.", fileId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "GoogleDrive: Failed to delete file '{FileId}'", fileId);
             }
         }
 

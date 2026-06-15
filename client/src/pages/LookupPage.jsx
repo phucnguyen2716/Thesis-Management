@@ -199,11 +199,11 @@ const LookupPage = () => {
   useEffect(() => {
     const fetchDbTheses = async () => {
       try {
-        const { data } = await thesisService.getAll({ page: 1, pageSize: 100 });
+        const { data } = await thesisService.getAll({ page: 1, pageSize: 1000 });
         if (data && data.items) {
           const mapped = data.items.map(t => ({
             id: t.id,
-            type: t.category === 'Project' ? 'do-an' : t.category === 'Thesis' ? 'kho-luan' : 'chuyen-de',
+            type: t.category === 'Project' ? 'do-an' : t.category === 'Thesis' ? 'khoa-luan' : 'chuyen-de',
             major: t.major || '',
             subjectCode: t.subjectCode || '',
             title: t.title,

@@ -483,7 +483,7 @@ public class DriveSyncJob
                 {
                     FullName = $"Sinh viên {studentUid}",
                     Email = $"{studentUid.ToLower()}@ethesis.edu.vn",
-                    PasswordHash = global::BCrypt.Net.BCrypt.HashPassword("student123"),
+                    PasswordHash = global::BCrypt.Net.BCrypt.HashPassword("123"),
                     Role = "Student",
                     StudentId = studentUid,
                     Department = "Công nghệ thông tin",
@@ -642,7 +642,7 @@ public class DriveSyncJob
             // Files are placed directly under Chuyên ngành (Major) folder: Category/Major/FileName
             string docName = cat == AcademicCategory.Topic ? $"{studentUid}_Bao_cao_Chuyen_de.docx" : $"{studentUid}_Khoa_luan_Tot_nghiep.docx";
             string slideName = $"{studentUid}_Slide_ThuyetTrinh.pdf";
-            string xlsName = $"{studentUid}_Bang_tinh_Chi_phi.xlsx";
+            string readmeName = $"{studentUid}_README.docx";
 
             var alreadyHasFiles = await db.DriveFileRecords
                 .AnyAsync(r => r.IsActive && r.StudentUid == studentUid && r.Category == thesis.Category);
@@ -657,11 +657,11 @@ public class DriveSyncJob
 
             var docxBytes = DriveSampleDataSeeder.BuildSampleDocx(majorName, thesis.Title, "N/A", studentUid, thesis.Title, docName);
             var pdfBytes = DriveSampleDataSeeder.BuildSamplePdf(majorName, thesis.Title, "N/A", studentUid, thesis.Title, slideName);
-            var xlsxBytes = DriveSampleDataSeeder.BuildSampleXlsx(majorName, thesis.Title, "N/A", studentUid, thesis.Title, xlsName);
+            var readmeBytes = DriveSampleDataSeeder.BuildSampleDocx(majorName, thesis.Title, "N/A", studentUid, thesis.Title, readmeName);
 
             await _driveService.UploadAcademicPdfAsync(docName, docxBytes, cat, majorName, thesis.Title, null, studentUid, thesis.Title, majorName, null);
             await _driveService.UploadAcademicPdfAsync(slideName, pdfBytes, cat, majorName, thesis.Title, null, studentUid, thesis.Title, majorName, null);
-            await _driveService.UploadAcademicPdfAsync(xlsName, xlsxBytes, cat, majorName, thesis.Title, null, studentUid, thesis.Title, majorName, null);
+            await _driveService.UploadAcademicPdfAsync(readmeName, readmeBytes, cat, majorName, thesis.Title, null, studentUid, thesis.Title, majorName, null);
         }
 
         await SyncAllAsync();

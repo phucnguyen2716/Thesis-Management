@@ -51,14 +51,23 @@ public class DriveSampleDataSeeder : IDriveSampleDataSeeder
         {
             var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
             var existingThesesCount = await db.Theses.CountAsync();
-            var userCache = await db.Users.ToDictionaryAsync(u => u.StudentId ?? u.Email);
+            var allUsers = await db.Users.ToListAsync();
+            var userCache = new Dictionary<string, User>(StringComparer.OrdinalIgnoreCase);
+            foreach (var u in allUsers)
+            {
+                var key = u.StudentId ?? u.Email;
+                if (!string.IsNullOrEmpty(key))
+                {
+                    userCache[key] = u;
+                }
+            }
 
             var defaultAdvisor = await db.Users.FirstOrDefaultAsync(u => u.Role == "Advisor")
                 ?? new User
                 {
                     FullName = "Dr. Nguyen Van A",
                     Email = "advisor@ethesis.edu.vn",
-                    PasswordHash = global::BCrypt.Net.BCrypt.HashPassword("advisor123"),
+                    PasswordHash = global::BCrypt.Net.BCrypt.HashPassword("123"),
                     Role = "Advisor",
                     Department = "Công nghệ thông tin",
                     IsActive = true,
@@ -84,7 +93,7 @@ public class DriveSampleDataSeeder : IDriveSampleDataSeeder
                         {
                             FullName = $"Sinh viên {g.Uid}",
                             Email = $"{g.Uid.ToLower()}@ethesis.edu.vn",
-                            PasswordHash = global::BCrypt.Net.BCrypt.HashPassword("student123"),
+                            PasswordHash = global::BCrypt.Net.BCrypt.HashPassword("123"),
                             Role = "Student",
                             StudentId = g.Uid,
                             Department = "Công nghệ thông tin",
@@ -120,11 +129,11 @@ public class DriveSampleDataSeeder : IDriveSampleDataSeeder
                 await db.SaveChangesAsync();
             }
 
-            // Seed Topic and Thesis database records if they don't exist (need at least 50 of each)
+            // Seed Topic and Thesis database records if they don't exist (need at least 60 of each)
             var topicCount = await db.Theses.CountAsync(t => t.Category == "Topic");
             var thesisCount = await db.Theses.CountAsync(t => t.Category == "Thesis");
 
-            if (topicCount < 50 || thesisCount < 50)
+            if (topicCount < 60 || thesisCount < 60)
             {
                 _logger.LogInformation("Seeding Topic and Thesis database records (Topic count={TopicCount}, Thesis count={ThesisCount})...", topicCount, thesisCount);
                 
@@ -146,7 +155,7 @@ public class DriveSampleDataSeeder : IDriveSampleDataSeeder
                             {
                                 FullName = $"Sinh viên Chuyên đề {topicUid}",
                                 Email = $"{topicUid.ToLower()}@ethesis.edu.vn",
-                                PasswordHash = global::BCrypt.Net.BCrypt.HashPassword("student123"),
+                                PasswordHash = global::BCrypt.Net.BCrypt.HashPassword("123"),
                                 Role = "Student",
                                 StudentId = topicUid,
                                 Department = "Công nghệ thông tin",
@@ -187,7 +196,7 @@ public class DriveSampleDataSeeder : IDriveSampleDataSeeder
                             {
                                 FullName = $"Sinh viên Khóa luận {thesisUid}",
                                 Email = $"{thesisUid.ToLower()}@ethesis.edu.vn",
-                                PasswordHash = global::BCrypt.Net.BCrypt.HashPassword("student123"),
+                                PasswordHash = global::BCrypt.Net.BCrypt.HashPassword("123"),
                                 Role = "Student",
                                 StudentId = thesisUid,
                                 Department = "Công nghệ thông tin",
@@ -231,7 +240,7 @@ public class DriveSampleDataSeeder : IDriveSampleDataSeeder
 
         var topicFilesList = await _drive.ListAcademicFilesRecursiveAsync(AcademicCategory.Topic);
         var thesisFilesList = await _drive.ListAcademicFilesRecursiveAsync(AcademicCategory.Thesis);
-        bool needsTopicThesisSeed = topicFilesList.Count < 150 || thesisFilesList.Count < 150;
+        bool needsTopicThesisSeed = topicFilesList.Count < 180 || thesisFilesList.Count < 180;
 
         if (!force && existing >= minDemoFiles && !needsTopicThesisSeed)
         {
@@ -308,7 +317,7 @@ public class DriveSampleDataSeeder : IDriveSampleDataSeeder
         }
 
         // Seed Topic files directly under Chuyên ngành (Major)
-        if (force || topicFilesList.Count < 150)
+        if (force || topicFilesList.Count < 180)
         {
             int majorIndex = -1;
             foreach (var major in DriveSampleCatalog.Majors)
@@ -321,36 +330,40 @@ public class DriveSampleDataSeeder : IDriveSampleDataSeeder
                     var studentUid = $"SV{2026300 + majorIndex * 10 + k}";
                     var title = topicTitles[k - 1];
 
-                    // Check if file already exists in the list to avoid duplicate uploads
-                    var hasFiles = topicFilesList.Any(f => f.StudentUid == studentUid);
-                    if (hasFiles && !force)
+                    // Clean up old xlsx files on Google Drive for this student
+                    var oldXlsxFiles = topicFilesList.Where(f => f.StudentUid == studentUid && f.Name.EndsWith("_Bang_tinh_Chi_phi.xlsx", StringComparison.OrdinalIgnoreCase)).ToList();
+                    foreach (var oldFile in oldXlsxFiles)
                     {
-                        _logger.LogInformation("Topic files for student {StudentUid} already exist on Drive. Skipping.", studentUid);
-                        continue;
+                        _logger.LogInformation("Deleting obsolete XLSX file '{FileName}' for student {StudentUid} on Google Drive", oldFile.Name, studentUid);
+                        await _drive.DeleteFileAsync(oldFile.Id, AcademicCategory.Topic);
                     }
 
                     string[] topicFiles = new[] { 
                         $"{studentUid}_Bao_cao_Chuyen_de.docx", 
                         $"{studentUid}_Slide_ThuyetTrinh.pdf", 
-                        $"{studentUid}_Bang_tinh_Chi_phi.xlsx" 
+                        $"{studentUid}_README.docx" 
                     };
 
                     foreach (var fileName in topicFiles)
                     {
                         try
                         {
+                            // Avoid uploading existing file (except README which we want to update)
+                            var fileExists = topicFilesList.Any(f => f.StudentUid == studentUid && f.Name == fileName);
+                            bool forceThisFile = fileName.Contains("README", StringComparison.OrdinalIgnoreCase);
+                            if (fileExists && !force && !forceThisFile)
+                            {
+                                continue;
+                            }
+
                             byte[] content;
                             if (fileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
                             {
-                                content = BuildSamplePdf(major.DisplayName, title, "N/A", studentUid, title, fileName);
-                            }
-                            else if (fileName.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase))
-                            {
-                                content = BuildSampleXlsx(major.DisplayName, title, "N/A", studentUid, title, fileName);
+                                content = BuildSamplePdf(major.DisplayName, "Chuyên đề tốt nghiệp", "TOPIC101", studentUid, title, fileName);
                             }
                             else
                             {
-                                content = BuildSampleDocx(major.DisplayName, title, "N/A", studentUid, title, fileName);
+                                content = BuildSampleDocx(major.DisplayName, "Chuyên đề tốt nghiệp", "TOPIC101", studentUid, title, fileName);
                             }
 
                             var result = await _drive.UploadAcademicPdfAsync(
@@ -371,7 +384,7 @@ public class DriveSampleDataSeeder : IDriveSampleDataSeeder
         }
 
         // Seed Thesis files directly under Chuyên ngành (Major)
-        if (force || thesisFilesList.Count < 150)
+        if (force || thesisFilesList.Count < 180)
         {
             int majorIndex = -1;
             foreach (var major in DriveSampleCatalog.Majors)
@@ -384,35 +397,40 @@ public class DriveSampleDataSeeder : IDriveSampleDataSeeder
                     var studentUid = $"SV{2026400 + majorIndex * 10 + k}";
                     var title = thesisTitles[k - 1];
 
-                    var hasFiles = thesisFilesList.Any(f => f.StudentUid == studentUid);
-                    if (hasFiles && !force)
+                    // Clean up old xlsx files on Google Drive for this student
+                    var oldXlsxFiles = thesisFilesList.Where(f => f.StudentUid == studentUid && f.Name.EndsWith("_Bang_tinh_Chi_phi.xlsx", StringComparison.OrdinalIgnoreCase)).ToList();
+                    foreach (var oldFile in oldXlsxFiles)
                     {
-                        _logger.LogInformation("Thesis files for student {StudentUid} already exist on Drive. Skipping.", studentUid);
-                        continue;
+                        _logger.LogInformation("Deleting obsolete XLSX file '{FileName}' for student {StudentUid} on Google Drive", oldFile.Name, studentUid);
+                        await _drive.DeleteFileAsync(oldFile.Id, AcademicCategory.Thesis);
                     }
 
                     string[] thesisFiles = new[] { 
                         $"{studentUid}_Khoa_luan_Tot_nghiep.docx", 
                         $"{studentUid}_Slide_ThuyetTrinh.pdf", 
-                        $"{studentUid}_Bang_tinh_Chi_phi.xlsx" 
+                        $"{studentUid}_README.docx" 
                     };
 
                     foreach (var fileName in thesisFiles)
                     {
                         try
                         {
+                            // Avoid uploading existing file (except README which we want to update)
+                            var fileExists = thesisFilesList.Any(f => f.StudentUid == studentUid && f.Name == fileName);
+                            bool forceThisFile = fileName.Contains("README", StringComparison.OrdinalIgnoreCase);
+                            if (fileExists && !force && !forceThisFile)
+                            {
+                                continue;
+                            }
+
                             byte[] content;
                             if (fileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
                             {
-                                content = BuildSamplePdf(major.DisplayName, title, "N/A", studentUid, title, fileName);
-                            }
-                            else if (fileName.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase))
-                            {
-                                content = BuildSampleXlsx(major.DisplayName, title, "N/A", studentUid, title, fileName);
+                                content = BuildSamplePdf(major.DisplayName, "Khóa luận tốt nghiệp", "THESIS202", studentUid, title, fileName);
                             }
                             else
                             {
-                                content = BuildSampleDocx(major.DisplayName, title, "N/A", studentUid, title, fileName);
+                                content = BuildSampleDocx(major.DisplayName, "Khóa luận tốt nghiệp", "THESIS202", studentUid, title, fileName);
                             }
 
                             var result = await _drive.UploadAcademicPdfAsync(
@@ -466,16 +484,72 @@ public class DriveSampleDataSeeder : IDriveSampleDataSeeder
         var cleanedProject = RemoveDiacritics(project);
         var cleanedFileName = RemoveDiacritics(fileName);
 
-        var body = $"""
-            BAO CAO DO AN MON HOC - eThesis
-            Hoc phan: {cleanedSubject} ({code})
-            MSSV: {uid}
-            Ten de tai: {cleanedProject}
-            Chuyen nganh: {cleanedMajor}
-            Tai lieu: {cleanedFileName}
+        string body;
+        if (fileName.Contains("README", StringComparison.OrdinalIgnoreCase))
+        {
+            body = $"""
+                THONG TIN TAI LIEU THAM KHAO (README) - UEF eThesis
+                =================================================
+                Ma so sinh vien: {uid}
+                Ten de tai: {cleanedProject}
+                Chuyen nganh: {cleanedMajor}
+                Phan loai: {cleanedSubject}
+                
+                1. GIOI THIEU DE TAI
+                   Tai lieu nay thuoc he thong thu vien so khoa luan va chuyen de tot nghiep.
+                   De tai tap trung nghien cuu ve: {cleanedProject}.
+                
+                2. NOI DUNG NGHIEU CUU
+                   - Tim hieu ly thuyet lien quan va cac nghien cuu truoc day.
+                   - Nghien cuu giai phap ung dung thuc tien.
+                   - Nhan xet, danh gia ket qua va dinh huong phat trien.
+                
+                3. HUONG DAN SU DUNG & THAM KHAO
+                   - Day la tai lieu luu tru de doc va tham khao hoc thuat.
+                   - Nghiem cam sao chep duoi moi hinh thuc khi chua duoc su dong y cua tac gia va nha truong.
+                """;
+        }
+        else if (fileName.Contains("Chuyen_de", StringComparison.OrdinalIgnoreCase))
+        {
+            body = $"""
+                BAO CAO CHUYEN DE TOT NGHIEP - UEF eThesis
+                =========================================
+                Chuyen nganh: {cleanedMajor}
+                MSSV: {uid}
+                Ten de tai: {cleanedProject}
+                
+                Tom tat:
+                Chuyen de tot nghiep trinh bay cac ket qua nghien cuu thuc nghiem,
+                phan tich thiet ke va danh gia chi tiet he thong ve {cleanedProject}.
+                """;
+        }
+        else if (fileName.Contains("Khoa_luan", StringComparison.OrdinalIgnoreCase))
+        {
+            body = $"""
+                KHOA LUAN TOT NGHIEP - UEF eThesis
+                ==================================
+                Chuyen nganh: {cleanedMajor}
+                MSSV: {uid}
+                Ten de tai: {cleanedProject}
+                
+                Tom tat:
+                Khoa luan tot nghiep tap trung nghien cuu sau ve ly thuyet va
+                trien khai ung dung thuc tien he thong {cleanedProject}.
+                """;
+        }
+        else
+        {
+            body = $"""
+                BAO CAO DO AN MON HOC - eThesis
+                Hoc phan: {cleanedSubject} ({code})
+                MSSV: {uid}
+                Ten de tai: {cleanedProject}
+                Chuyen nganh: {cleanedMajor}
+                Tai lieu: {cleanedFileName}
 
-            Tom tat: Do an nghien cuu va phat trien ung dung {cleanedProject}.
-            """;
+                Tom tat: Do an nghien cuu va phat trien ung dung {cleanedProject}.
+                """;
+        }
 
         return MinimalDocxBuilder.Create(body);
     }
@@ -487,16 +561,29 @@ public class DriveSampleDataSeeder : IDriveSampleDataSeeder
         var cleanedProject = RemoveDiacritics(project);
         var cleanedFileName = RemoveDiacritics(fileName);
 
+        string categoryLabel = "DO AN MON HOC";
+        string docLabel = "Do an";
+        if (subject.Contains("Chuyên đề", StringComparison.OrdinalIgnoreCase))
+        {
+            categoryLabel = "CHUYEN DE TOT NGHIEP";
+            docLabel = "Chuyen de";
+        }
+        else if (subject.Contains("Khóa luận", StringComparison.OrdinalIgnoreCase))
+        {
+            categoryLabel = "KHOA LUAN TOT NGHIEP";
+            docLabel = "Khoa luan";
+        }
+
         var page1 = $"""
             eThesis Fallback PDF Report - Page 1 (Cover Page)
             ------------------------------------------------
             File name: {cleanedFileName}
             Student UID: {uid}
-            Subject: {cleanedSubject} ({code})
+            Type: {categoryLabel}
             Major: {cleanedMajor}
             Project: {cleanedProject}
 
-            Tom tat: Do an nghien cuu va phat trien ung dung {cleanedProject}.
+            Tom tat: {docLabel} nghien cuu va phat trien ung dung {cleanedProject}.
             """;
 
         var page2 = $"""
@@ -521,11 +608,11 @@ public class DriveSampleDataSeeder : IDriveSampleDataSeeder
             Student: {uid}
 
             3. Proposed Methodology
-            We design an integrated microservices system using secure cloud technologies.
+            We design an integrated system using secure cloud technologies.
             The experimental results demonstrate a significant improvement in efficiency.
 
             4. Conclusion
-            This graduation thesis / report successfully achieves its primary objectives.
+            This {docLabel.ToLower()} successfully achieves its primary objectives.
             Future work will focus on integrating advanced machine learning techniques.
             """;
 

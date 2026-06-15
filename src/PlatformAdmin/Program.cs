@@ -390,12 +390,106 @@ _ = Task.Run(async () =>
     try
     {
         using var scope = app.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        
+        // Auto-seed/update default user accounts if missing
+        bool dbChanged = false;
+        
+        var adminUser = await db.Users.FirstOrDefaultAsync(u => u.Email == "admin@ethesis.edu.vn");
+        if (adminUser == null)
+        {
+            adminUser = new User
+            {
+                FullName = "Admin User",
+                Email = "admin@ethesis.edu.vn",
+                PasswordHash = global::BCrypt.Net.BCrypt.HashPassword("123"),
+                Role = "Admin",
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow
+            };
+            db.Users.Add(adminUser);
+            dbChanged = true;
+            Console.WriteLine("🔑 Seeded 'admin@ethesis.edu.vn' user in database.");
+        }
+
+        var advisorUser = await db.Users.FirstOrDefaultAsync(u => u.Email == "advisor@ethesis.edu.vn");
+        if (advisorUser == null)
+        {
+            advisorUser = new User
+            {
+                FullName = "Dr. Nguyen Van A",
+                Email = "advisor@ethesis.edu.vn",
+                PasswordHash = global::BCrypt.Net.BCrypt.HashPassword("123"),
+                Role = "Advisor",
+                Department = "Công nghệ thông tin",
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow
+            };
+            db.Users.Add(advisorUser);
+            dbChanged = true;
+            Console.WriteLine("🔑 Seeded 'advisor@ethesis.edu.vn' user in database.");
+        }
+
+        var studentUser = await db.Users.FirstOrDefaultAsync(u => u.Email == "student@ethesis.edu.vn");
+        if (studentUser == null)
+        {
+            studentUser = new User
+            {
+                FullName = "Tran Thi B",
+                Email = "student@ethesis.edu.vn",
+                PasswordHash = global::BCrypt.Net.BCrypt.HashPassword("123"),
+                Role = "Student",
+                StudentId = "SV001",
+                Department = "Công nghệ thông tin",
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow
+            };
+            db.Users.Add(studentUser);
+            dbChanged = true;
+            Console.WriteLine("🔑 Seeded 'student@ethesis.edu.vn' user in database.");
+        }
+
+        if (dbChanged)
+        {
+            await db.SaveChangesAsync();
+        }
+
+        // Auto-update all seeded ethesis users' passwords to "123" if they are not already
+        var ethesisUsers = await db.Users
+            .Where(u => u.Email != null && u.Email.EndsWith("@ethesis.edu.vn"))
+            .ToListAsync();
+            
+        bool changed = false;
+        foreach (var user in ethesisUsers)
+        {
+            try
+            {
+                if (!global::BCrypt.Net.BCrypt.Verify("123", user.PasswordHash))
+                {
+                    user.PasswordHash = global::BCrypt.Net.BCrypt.HashPassword("123");
+                    changed = true;
+                }
+            }
+            catch
+            {
+                user.PasswordHash = global::BCrypt.Net.BCrypt.HashPassword("123");
+                changed = true;
+            }
+        }
+        
+        if (changed)
+        {
+            await db.SaveChangesAsync();
+        }
+
         var seeder = scope.ServiceProvider.GetRequiredService<IDriveSampleDataSeeder>();
         var syncJob = scope.ServiceProvider.GetRequiredService<DriveSyncJob>();
         var result = await seeder.GenerateSampleDataAsync(force: false);
         Console.WriteLine($"📁 Drive auto-seed: {result.Message} (uploaded={result.Uploaded}, failed={result.Failed})");
         await syncJob.SyncAllAsync();
         Console.WriteLine("✅ Drive initial sync completed.");
+        
+
     }
     catch (Exception ex)
     {

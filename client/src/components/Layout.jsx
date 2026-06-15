@@ -374,7 +374,7 @@ const Layout = () => {
   return (
     <div className="flex flex-col min-h-screen bg-background font-sans text-on-background relative pb-16 md:pb-0">
       {/* TopAppBar - Not Sticky/Fixed (does not scroll with page) */}
-      <header className="sticky top-0 flex justify-between items-center h-[72px] px-4 md:px-10 w-full bg-primary shadow-[0_4px_20px_rgba(140,0,14,0.15)] border-b border-white/10 relative z-50">
+      <header className="sticky top-0 flex justify-between items-center h-[72px] px-4 md:px-10 w-full bg-primary shadow-[0_4px_20px_rgba(140,0,14,0.15)] border-b border-white/10 relative z-50 md:z-[110]">
         <div className="flex items-center gap-3 md:gap-6">
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -551,7 +551,7 @@ const Layout = () => {
 
         {/* SideNavBar - Slide out on mobile, Collapsible on desktop */}
         <aside
-          className={`fixed md:relative top-[72px] md:top-0 bottom-16 md:bottom-0 left-0 z-45 md:z-auto shrink-0 flex flex-col bg-surface-container-lowest border-r border-outline-variant shadow-2xl md:shadow-sm transition-transform md:transition-all duration-300 ease-in-out ${
+          className={`fixed md:relative top-[72px] md:top-0 bottom-16 md:bottom-0 left-0 z-45 md:z-[105] shrink-0 flex flex-col bg-surface-container-lowest border-r border-outline-variant shadow-2xl md:shadow-sm transition-transform md:transition-all duration-300 ease-in-out ${
             isSidebarOpen 
               ? 'translate-x-0 w-[280px]' 
               : '-translate-x-full md:translate-x-0 md:w-0'

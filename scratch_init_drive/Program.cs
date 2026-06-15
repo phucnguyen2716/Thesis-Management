@@ -71,7 +71,8 @@ class Program
                     new { Name = "Phát triển ứng dụng Full-Stack", Code = "SWE1209E" },
                     new { Name = "Công cụ phát triển ứng dụng", Code = "SWE1210E" },
                     new { Name = "Đồ án kỹ thuật phần mềm", Code = "SWE1422" }
-                }}
+                }},
+                new { DisplayName = "Công nghệ phần mềm", Key = "software-engineering", Subjects = Array.Empty<dynamic>() }
             };
 
             int projectUidCounter = 2024300;
@@ -192,6 +193,18 @@ class Program
                     "Xây dựng API Gateway và quản lý phân quyền trong Microservices",
                     "Phát triển ứng dụng di động Android native bằng Kotlin",
                     "Xây dựng hệ thống quản lý học tập trực tuyến LMS với C#"
+                },
+                ["software-engineering"] = new[] {
+                    "Nghiên cứu kiến trúc Microservices và ứng dụng thực tế",
+                    "Đánh giá và tối ưu hiệu năng ứng dụng web bằng Lighthouse",
+                    "Xây dựng quy trình CI/CD tự động hóa kiểm thử phần mềm",
+                    "Phân tích thiết kế hệ thống quản lý học tập trực tuyến LMS",
+                    "Nghiên cứu giải pháp thiết kế Design System cho dự án web lớn",
+                    "Ứng dụng quy trình Scrum trong phát triển phần mềm Agile",
+                    "Xây dựng công cụ phân tích tĩnh mã nguồn kiểm tra chuẩn coding",
+                    "Nghiên cứu giải pháp bảo mật API Gateway cho Microservices",
+                    "Phát triển ứng dụng di động đa nền tảng sử dụng React Native",
+                    "Tối ưu hóa cơ sở dữ liệu quy mô lớn cho ứng dụng thương mại điện tử"
                 }
             };
 
@@ -256,6 +269,18 @@ class Program
                     "Tối ưu hóa truy vấn cơ sở dữ liệu phi quan hệ cho ứng dụng mạng xã hội",
                     "Thiết kế framework phát triển ứng dụng di động tùy biến cao",
                     "Xây dựng hệ thống quản lý và xử lý hàng đợi tin nhắn chịu tải cao"
+                },
+                ["software-engineering"] = new[] {
+                    "Khóa luận tốt nghiệp chuyên sâu về Công nghệ phần mềm",
+                    "Nghiên cứu triển khai quy trình DevSecOps cho doanh nghiệp",
+                    "Xây dựng hệ thống quản lý chất lượng phần mềm tự động hóa",
+                    "Thiết kế kiến trúc hệ thống lưu trữ phân tán chịu lỗi cao",
+                    "Phát triển giải pháp Single Sign-On bảo mật đa nền tảng",
+                    "Tối ưu hóa trải nghiệm người dùng UX/UI bằng phương pháp A/B testing",
+                    "Phát triển ứng dụng Web Real-time chịu tải cao sử dụng Node.js",
+                    "Nghiên cứu ứng dụng Kubernetes quản lý container trong doanh nghiệp",
+                    "Xây dựng hệ thống giám sát hiệu năng phần mềm APM thời gian thực",
+                    "Tối ưu hóa và tái cấu trúc mã nguồn hệ thống ERP di sản"
                 }
             };
 
@@ -292,11 +317,31 @@ class Program
                     byte[] pdfBytes = BuildSamplePdf(major.DisplayName, "Chuyên đề tốt nghiệp", "TOPIC101", studentUid, title, pdfFileName);
                     File.WriteAllBytes(Path.Combine(targetDir, pdfFileName), pdfBytes);
 
-                    // File 3: Spreadsheet
-                    string xlsxFileName = $"{studentUid}_Bang_tinh_Chi_phi.xlsx";
-                    string xlsxContent = $"eThesis - Bang tinh cho chuyen de {title} (MSSV: {studentUid})";
-                    byte[] xlsxBytes = MinimalXlsxBuilder.Create("BangTinh", RemoveDiacritics(xlsxContent));
-                    File.WriteAllBytes(Path.Combine(targetDir, xlsxFileName), xlsxBytes);
+                    // File 3: README Document
+                    string readmeFileName = $"{studentUid}_README.docx";
+                    string readmeContent = $"""
+                        THONG TIN TAI LIEU THAM KHAO (README) - UEF eThesis
+                        =================================================
+                        Ma so sinh vien: {studentUid}
+                        Ten de tai: {RemoveDiacritics(title)}
+                        Chuyen nganh: {RemoveDiacritics(major.DisplayName)}
+                        Phan loai: Chuyen de tot nghiep
+                        
+                        1. GIOI THIEU DE TAI
+                           Tai lieu nay thuoc he thong thu vien so khoa luan va chuyen de tot nghiep.
+                           De tai tap trung nghien cuu ve: {RemoveDiacritics(title)}.
+                        
+                        2. NOI DUNG NGHIEU CUU
+                           - Tim hieu ly thuyet lien quan va cac nghien cuu truoc day.
+                           - Nghien cuu giai phap ung dung thuc tien.
+                           - Nhan xet, danh gia ket qua va dinh huong phat trien.
+                        
+                        3. HUONG DAN SU DUNG & THAM KHAO
+                           - Day la tai lieu luu tru de doc va tham khao hoc thuat.
+                           - Nghiem cam sao chep duoi moi hinh thuc khi chua duoc su dong y cua tac gia va nha truong.
+                        """;
+                    byte[] readmeBytes = MinimalDocxBuilder.Create(readmeContent);
+                    File.WriteAllBytes(Path.Combine(targetDir, readmeFileName), readmeBytes);
 
                     totalFiles += 3;
                 }
@@ -335,11 +380,31 @@ class Program
                     byte[] pdfBytes = BuildSamplePdf(major.DisplayName, "Khóa luận tốt nghiệp", "THESIS202", studentUid, title, pdfFileName);
                     File.WriteAllBytes(Path.Combine(targetDir, pdfFileName), pdfBytes);
 
-                    // File 3: Spreadsheet
-                    string xlsxFileName = $"{studentUid}_Bang_tinh_Chi_phi.xlsx";
-                    string xlsxContent = $"eThesis - Bang tinh cho khoa luan {title} (MSSV: {studentUid})";
-                    byte[] xlsxBytes = MinimalXlsxBuilder.Create("BangTinh", RemoveDiacritics(xlsxContent));
-                    File.WriteAllBytes(Path.Combine(targetDir, xlsxFileName), xlsxBytes);
+                    // File 3: README Document
+                    string readmeFileName = $"{studentUid}_README.docx";
+                    string readmeContent = $"""
+                        THONG TIN TAI LIEU THAM KHAO (README) - UEF eThesis
+                        =================================================
+                        Ma so sinh vien: {studentUid}
+                        Ten de tai: {RemoveDiacritics(title)}
+                        Chuyen nganh: {RemoveDiacritics(major.DisplayName)}
+                        Phan loai: Khoa luan tot nghiep
+                        
+                        1. GIOI THIEU DE TAI
+                           Tai lieu nay thuoc he thong thu vien so khoa luan va chuyen de tot nghiep.
+                           De tai tap trung nghien cuu ve: {RemoveDiacritics(title)}.
+                        
+                        2. NOI DUNG NGHIEU CUU
+                           - Tim hieu ly thuyet lien quan va cac nghien cuu truoc day.
+                           - Nghien cuu giai phap ung dung thuc tien.
+                           - Nhan xet, danh gia ket qua va dinh huong phat trien.
+                        
+                        3. HUONG DAN SU DUNG & THAM KHAO
+                           - Day la tai lieu luu tru de doc va tham khao hoc thuat.
+                           - Nghiem cam sao chep duoi moi hinh thuc khi chua duoc su dong y cua tac gia va nha truong.
+                        """;
+                    byte[] readmeBytes = MinimalDocxBuilder.Create(readmeContent);
+                    File.WriteAllBytes(Path.Combine(targetDir, readmeFileName), readmeBytes);
 
                     totalFiles += 3;
                 }

@@ -62,9 +62,9 @@ public class AppDbContext : DbContext
 
         // Seed roles
         modelBuilder.Entity<User>().HasData(
-            new User { Id = 1, FullName = "Admin User", Email = "admin@ethesis.edu.vn", PasswordHash = BCrypt("admin123"), Role = "Admin", IsActive = true, CreatedAt = DateTime.UtcNow },
-            new User { Id = 2, FullName = "Dr. Nguyen Van A", Email = "advisor@ethesis.edu.vn", PasswordHash = BCrypt("advisor123"), Role = "Advisor", Department = "Computer Science", IsActive = true, CreatedAt = DateTime.UtcNow },
-            new User { Id = 3, FullName = "Tran Thi B", Email = "student@ethesis.edu.vn", PasswordHash = BCrypt("student123"), Role = "Student", StudentId = "SV001", Department = "Computer Science", IsActive = true, CreatedAt = DateTime.UtcNow }
+            new User { Id = 1, FullName = "Admin User", Email = "admin@ethesis.edu.vn", PasswordHash = BCrypt("123"), Role = "Admin", IsActive = true, CreatedAt = DateTime.UtcNow },
+            new User { Id = 2, FullName = "Dr. Nguyen Van A", Email = "advisor@ethesis.edu.vn", PasswordHash = BCrypt("123"), Role = "Advisor", Department = "Computer Science", IsActive = true, CreatedAt = DateTime.UtcNow },
+            new User { Id = 3, FullName = "Tran Thi B", Email = "student@ethesis.edu.vn", PasswordHash = BCrypt("123"), Role = "Student", StudentId = "SV001", Department = "Computer Science", IsActive = true, CreatedAt = DateTime.UtcNow }
         );
 
 

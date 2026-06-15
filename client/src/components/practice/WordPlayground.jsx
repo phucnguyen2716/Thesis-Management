@@ -329,6 +329,10 @@ const WordPlayground = () => {
 
   const handleFilterChapterChange = (tag) => {
     setSelectedChapterFilter(tag);
+    const matched = (templates && templates.find(t => t.chapterTag === tag)) || DEFAULT_TEMPLATES.find(t => t.chapterTag === tag);
+    if (matched) {
+      setActiveTemplateId(matched.id);
+    }
   };
 
   const persist = useCallback(() => {
@@ -549,17 +553,58 @@ const WordPlayground = () => {
     return '1.1';
   };
 
+  const getEvaluationTemplate = (html, text) => {
+    // 1. Nếu selectedChapterFilter không phải là 'Tất cả', lấy template tương ứng
+    if (selectedChapterFilter && selectedChapterFilter !== 'Tất cả') {
+      const found = (templates && templates.find(t => t.chapterTag === selectedChapterFilter))
+        || DEFAULT_TEMPLATES.find(t => t.chapterTag === selectedChapterFilter);
+      if (found) return found;
+    }
+
+    // 2. Nếu selectedChapterFilter là 'Tất cả', ta thử tự động nhận diện chương dựa trên nội dung viết trong editor
+    const lowerText = text.toLowerCase();
+    const hasIntro = lowerText.includes('mở đầu') || lowerText.includes('mo dau');
+    const hasCh1 = lowerText.includes('chương 1') || lowerText.includes('chuong 1');
+    const hasCh2 = lowerText.includes('chương 2') || lowerText.includes('chuong 2');
+    const hasCh3 = lowerText.includes('chương 3') || lowerText.includes('chuong 3');
+    const hasConclusion = lowerText.includes('kết luận') || lowerText.includes('ket luan');
+
+    const detected = [];
+    if (hasIntro) detected.push('intro');
+    if (hasCh1) detected.push('chapter1');
+    if (hasCh2) detected.push('chapter2');
+    if (hasCh3) detected.push('chapter3');
+    if (hasConclusion) detected.push('conclusion');
+
+    // Nếu chỉ phát hiện đúng 1 chương trong nội dung, dùng template của chương đó
+    if (detected.length === 1) {
+      const found = (templates && templates.find(t => t.id === detected[0]))
+        || DEFAULT_TEMPLATES.find(t => t.id === detected[0]);
+      if (found) return found;
+    }
+
+    // 3. Ngược lại (hoặc phát hiện nhiều chương, hoặc không phát hiện chương nào), dùng template mặc định active hoặc master_ch
+    const defaultTemplate = (templates && templates.find(t => t.id === activeTemplateId))
+      || DEFAULT_TEMPLATES.find(t => t.id === activeTemplateId)
+      || (templates && templates[0])
+      || DEFAULT_TEMPLATES[0];
+
+    return defaultTemplate;
+  };
+
   // Logic AI chấm điểm giả lập cực kỳ chi tiết
   const runAiGrading = () => {
     const html = editorRef.current?.innerHTML || '';
     const text = editorRef.current?.innerText || '';
     
-    // Lấy template tương ứng với selectedChapterFilter (đảm bảo chấm đúng chương đang chọn)
-    const template = (templates && templates.find(t => t.chapterTag === selectedChapterFilter))
-      || (templates && templates.find(t => t.id === activeTemplateId)) 
-      || DEFAULT_TEMPLATES.find(t => t.chapterTag === selectedChapterFilter)
-      || DEFAULT_TEMPLATES.find(t => t.id === activeTemplateId)
-      || DEFAULT_TEMPLATES[0];
+    // Tự động nhận diện template cần chấm dựa trên nội dung thực tế trong editor
+    const template = getEvaluationTemplate(html, text);
+
+    // Đồng bộ ngược lại giao diện tab để khớp với chương vừa nhận diện được
+    if (template.chapterTag !== selectedChapterFilter) {
+      setSelectedChapterFilter(template.chapterTag);
+      setActiveTemplateId(template.id);
+    }
 
     const extracted = extractChapterContent(html, text, template.id);
     const wordCount = countWords(extracted.html);
@@ -591,23 +636,19 @@ const WordPlayground = () => {
         setGradingStep(steps[step]);
       } else {
         clearInterval(timer);
-        performEvaluation();
+        performEvaluation(template);
       }
     }, 450);
   };
 
-  const performEvaluation = async () => {
+  const performEvaluation = async (template) => {
     try {
       const html = editorRef.current?.innerHTML || '';
       const text = editorRef.current?.innerText || '';
 
-      // Lấy template tương ứng với selectedChapterFilter (đảm bảo chấm đúng chương đang chọn)
-      const template = (templates && templates.find(t => t.chapterTag === selectedChapterFilter))
-        || (templates && templates.find(t => t.id === activeTemplateId)) 
-        || (templates && templates[0]) 
-        || DEFAULT_TEMPLATES.find(t => t.chapterTag === selectedChapterFilter)
-        || DEFAULT_TEMPLATES.find(t => t.id === activeTemplateId)
-        || DEFAULT_TEMPLATES[0];
+      if (!template) {
+        template = getEvaluationTemplate(html, text);
+      }
 
       // Phân tách chương để chấm điểm đúng chương đó
       const extracted = extractChapterContent(html, text, template.id);
@@ -988,24 +1029,31 @@ const WordPlayground = () => {
               </div>
             </div>
 
-            {/* Lọc chương luyện tập */}
+            {/* Lọc chương luyện tập dưới dạng tabs/buttons bấm trực tiếp */}
             <div className="flex flex-col border-r border-slate-100 pr-4">
               <span className="text-[9px] text-slate-400 uppercase font-black tracking-widest mb-1.5">Chọn chương luyện tập</span>
-              <div className="flex items-center gap-1.5 h-8">
-                <select
-                  value={selectedChapterFilter}
-                  onChange={e => {
-                    handleFilterChapterChange(e.target.value);
-                  }}
-                  className="h-8 px-2.5 rounded border border-slate-200 text-[10px] font-bold text-slate-700 bg-white focus:outline-none focus:border-teal-800"
-                >
-                  <option value="Tất cả">Tất cả (3 Chương)</option>
-                  <option value="Chương Mở đầu">Chương Mở đầu</option>
-                  <option value="Chương 1">Chương 1: Cơ sở lý thuyết</option>
-                  <option value="Chương 2">Chương 2: Phân tích & Thiết kế</option>
-                  <option value="Chương 3">Chương 3: Thực nghiệm</option>
-                  <option value="Chương Kết luận">Chương Kết luận & Hướng đi</option>
-                </select>
+              <div className="flex items-center gap-1 h-8">
+                {[
+                  { tag: 'Tất cả', label: 'Tất cả' },
+                  { tag: 'Chương Mở đầu', label: 'Mở đầu' },
+                  { tag: 'Chương 1', label: 'Chương 1' },
+                  { tag: 'Chương 2', label: 'Chương 2' },
+                  { tag: 'Chương 3', label: 'Chương 3' },
+                  { tag: 'Chương Kết luận', label: 'Kết luận' }
+                ].map(ch => (
+                  <button
+                    key={ch.tag}
+                    type="button"
+                    onClick={() => handleFilterChapterChange(ch.tag)}
+                    className={`px-3.5 h-8 rounded text-[10px] font-black uppercase tracking-wider transition-all duration-200 ${
+                      selectedChapterFilter === ch.tag
+                        ? 'bg-teal-800 text-white shadow-sm scale-102'
+                        : 'bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-slate-800 border border-slate-200/50'
+                    }`}
+                  >
+                    {ch.label}
+                  </button>
+                ))}
               </div>
             </div>
 
@@ -1247,50 +1295,50 @@ const WordPlayground = () => {
       {/* Detailed Evaluation Modal */}
       {showGradeModal && gradeResult && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-fade-in">
-          <div className="bg-white rounded-[1.5rem] border border-outline-variant shadow-2xl w-full max-w-2xl overflow-hidden max-h-[92vh] flex flex-col animate-in scale-in-95 duration-300">
+          <div className="bg-white rounded-[1.25rem] border border-outline-variant shadow-2xl w-full max-w-xl overflow-hidden max-h-[85vh] sm:max-h-[90vh] flex flex-col animate-in scale-in-95 duration-300">
             {/* Modal Header */}
-            <div className="bg-gradient-to-r from-slate-900 via-[#185abd] to-slate-900 p-4 md:p-5 text-white flex justify-between items-center shadow">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 bg-yellow-400 rounded-xl flex items-center justify-center text-slate-900 shadow">
-                  <span className="material-symbols-outlined text-xl font-bold">auto_awesome</span>
+            <div className="bg-gradient-to-r from-slate-900 via-[#185abd] to-slate-900 p-4 text-white flex justify-between items-center shadow">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 bg-yellow-400 rounded-lg flex items-center justify-center text-slate-900 shadow">
+                  <span className="material-symbols-outlined text-lg font-bold">auto_awesome</span>
                 </div>
                 <div>
-                  <h3 className="font-black text-xs md:text-sm uppercase tracking-[0.2em]">Báo cáo đánh giá AI</h3>
-                  <p className="text-[9px] md:text-[10px] font-bold text-white/70 uppercase mt-0.5">{gradeResult.title}</p>
+                  <h3 className="font-black text-[11px] md:text-xs uppercase tracking-[0.2em]">Báo cáo đánh giá AI</h3>
+                  <p className="text-[9px] font-bold text-white/70 uppercase mt-0.5">{gradeResult.title}</p>
                 </div>
               </div>
               <button 
                 onClick={() => setShowGradeModal(false)}
-                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors focus:outline-none"
+                className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors focus:outline-none"
               >
-                <span className="material-symbols-outlined text-base">close</span>
+                <span className="material-symbols-outlined text-sm">close</span>
               </button>
             </div>
 
             {/* Modal Body */}
-            <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4">
+            <div className="flex-1 overflow-y-auto p-4 md:p-5 space-y-3.5">
               {/* Giảng viên đã chấm đè */}
               {gradeResult.teacherGraded && (
-                <div className="p-5 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-start gap-4 shadow-sm">
-                  <div className="w-12 h-12 rounded-xl bg-emerald-500 text-white flex items-center justify-center shadow shrink-0">
-                    <span className="material-symbols-outlined text-2xl">workspace_premium</span>
+                <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 flex items-start gap-3 shadow-sm">
+                  <div className="w-10 h-10 rounded-lg bg-emerald-500 text-white flex items-center justify-center shadow shrink-0">
+                    <span className="material-symbols-outlined text-xl">workspace_premium</span>
                   </div>
-                  <div>
-                    <h4 className="text-sm font-black text-emerald-900 uppercase tracking-wider">Giảng viên đã đánh giá chính thức</h4>
-                    <p className="text-3xl font-black text-emerald-600 mt-1">{gradeResult.teacherGrade} / 10</p>
-                    <p className="text-xs font-semibold text-slate-700 mt-2 leading-relaxed italic bg-white/80 p-3 rounded-lg border border-emerald-100">
+                  <div className="flex-1">
+                    <h4 className="text-[11px] font-black text-emerald-900 uppercase tracking-wider">Giảng viên đã đánh giá chính thức</h4>
+                    <p className="text-2xl font-black text-emerald-600 mt-0.5">{gradeResult.teacherGrade} / 10</p>
+                    <p className="text-[10px] font-semibold text-slate-700 mt-1.5 leading-relaxed italic bg-white/80 p-2.5 rounded-lg border border-emerald-100">
                       &ldquo; {gradeResult.teacherFeedback || 'Chất lượng bài làm tốt, định dạng đều đặn.'} &rdquo;
                     </p>
-                    <div className="grid grid-cols-4 gap-2 mt-3 text-center">
+                    <div className="grid grid-cols-4 gap-1.5 mt-2.5 text-center">
                       {[
                         { label: 'Nội dung', val: gradeResult.teacherRubric?.content },
                         { label: 'Phương pháp', val: gradeResult.teacherRubric?.method },
                         { label: 'Tính mới', val: gradeResult.teacherRubric?.originality },
                         { label: 'Trình bày', val: gradeResult.teacherRubric?.presentation }
                       ].map((item, idx) => (
-                        <div key={idx} className="bg-white p-1.5 rounded-lg border border-emerald-100/50">
-                          <p className="text-[9px] text-slate-400 font-bold uppercase">{item.label}</p>
-                          <p className="text-xs font-black text-emerald-700">{item.val || 8.0}</p>
+                        <div key={idx} className="bg-white p-1 rounded-md border border-emerald-100/50">
+                          <p className="text-[8px] text-slate-400 font-bold uppercase">{item.label}</p>
+                          <p className="text-[10px] font-black text-emerald-700">{item.val || 8.0}</p>
                         </div>
                       ))}
                     </div>
@@ -1299,25 +1347,25 @@ const WordPlayground = () => {
               )}
 
               {/* Bảng điểm AI chính */}
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+              <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5 items-center">
                 {/* Vòng tròn điểm số */}
-                <div className="md:col-span-4 flex flex-col items-center justify-center p-4 bg-slate-50 rounded-2xl border border-slate-100 shadow-inner">
-                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Điểm AI Đề xuất</span>
-                  <div className="relative w-24 h-24 flex items-center justify-center bg-white rounded-full shadow-md border-4 border-[#185abd]/10">
+                <div className="sm:col-span-4 flex flex-col items-center justify-center p-3 bg-slate-50 rounded-xl border border-slate-100 shadow-inner">
+                  <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Điểm AI Đề xuất</span>
+                  <div className="relative w-20 h-20 flex items-center justify-center bg-white rounded-full shadow-md border-4 border-[#185abd]/10">
                     <div className="absolute inset-0 rounded-full border-4 border-yellow-400 border-r-transparent animate-[spin_3s_linear_infinite]" />
                     <div className="text-center">
-                      <span className="text-3xl font-black tracking-tight text-slate-900">{gradeResult.aiScore}</span>
-                      <span className="text-[10px] font-semibold text-slate-400 block mt-0.5">/ 10</span>
+                      <span className="text-2xl font-black tracking-tight text-slate-900">{gradeResult.aiScore}</span>
+                      <span className="text-[8px] font-semibold text-slate-400 block mt-0.5">/ 10</span>
                     </div>
                   </div>
-                  <p className="text-[9px] font-black text-[#185abd] uppercase tracking-wider mt-3 px-2.5 py-0.5 bg-[#185abd]/10 rounded-full">
+                  <p className="text-[8px] font-black text-[#185abd] uppercase tracking-wider mt-2 px-2 py-0.5 bg-[#185abd]/10 rounded-full">
                     {gradeResult.aiScore >= 8.5 ? 'Xuất sắc' : gradeResult.aiScore >= 7.0 ? 'Khá tốt' : 'Cần cải thiện'}
                   </p>
                 </div>
 
                 {/* Chi tiết 4 tiêu chí của AI */}
-                <div className="md:col-span-8 space-y-2.5">
-                  <h4 className="text-[10px] font-black text-slate-700 uppercase tracking-widest">Chi tiết tiêu chí</h4>
+                <div className="sm:col-span-8 space-y-2">
+                  <h4 className="text-[9px] font-black text-slate-700 uppercase tracking-widest">Chi tiết tiêu chí</h4>
                   {[
                     { label: 'Cấu trúc & Đề mục (Method)', val: gradeResult.aiRubric.method, icon: 'schema', color: 'bg-blue-500' },
                     { label: 'Nội dung & Độ dài (Content)', val: gradeResult.aiRubric.content, icon: 'article', color: 'bg-emerald-500' },
@@ -1325,14 +1373,14 @@ const WordPlayground = () => {
                     { label: 'Văn phong chuyên môn (Originality)', val: gradeResult.aiRubric.originality, icon: 'lightbulb', color: 'bg-amber-500' }
                   ].map((rub, idx) => (
                     <div key={idx} className="space-y-0.5">
-                      <div className="flex justify-between items-center text-[11px]">
+                      <div className="flex justify-between items-center text-[10px]">
                         <span className="font-bold text-slate-700 flex items-center gap-1">
-                          <span className={`material-symbols-outlined text-xs text-white p-0.5 rounded ${rub.color}`}>{rub.icon}</span>
+                          <span className={`material-symbols-outlined text-[10px] text-white p-0.5 rounded ${rub.color}`}>{rub.icon}</span>
                           {rub.label}
                         </span>
                         <span className="font-black text-[#185abd]">{rub.val} / 10</span>
                       </div>
-                      <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                      <div className="w-full h-1 bg-slate-100 rounded-full overflow-hidden">
                         <div className={`h-full ${rub.color} rounded-full`} style={{ width: `${rub.val * 10}%` }} />
                       </div>
                     </div>
@@ -1341,16 +1389,16 @@ const WordPlayground = () => {
               </div>
 
               {/* Đề xuất chi tiết từ AI */}
-              <div className="space-y-2">
-                <h4 className="text-[10px] font-black text-slate-700 uppercase tracking-widest flex items-center gap-1">
+              <div className="space-y-1.5">
+                <h4 className="text-[9px] font-black text-slate-700 uppercase tracking-widest flex items-center gap-1">
                   <span className="material-symbols-outlined text-amber-500 text-xs">tips_and_updates</span>
                   Đề xuất chỉnh sửa của Gemini AI
                 </h4>
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   {gradeResult.aiFeedback.map((f, i) => (
                     <div 
                       key={i} 
-                      className={`p-3 rounded-xl border text-[11px] flex items-start gap-2.5 transition-all ${
+                      className={`p-2.5 rounded-xl border text-[10px] flex items-start gap-2.5 transition-all ${
                         f.type === 'success' 
                           ? 'bg-emerald-50/50 border-emerald-100 text-slate-700' 
                           : f.type === 'warning' 
@@ -1358,14 +1406,14 @@ const WordPlayground = () => {
                             : 'bg-blue-50/50 border-blue-100 text-slate-700'
                       }`}
                     >
-                      <span className={`material-symbols-outlined text-sm shrink-0 mt-0.5 ${
+                      <span className={`material-symbols-outlined text-xs shrink-0 mt-0.5 ${
                         f.type === 'success' ? 'text-emerald-600' : f.type === 'warning' ? 'text-red-500' : 'text-blue-500'
                       }`}>
                         {f.type === 'success' ? 'check_circle' : f.type === 'warning' ? 'warning' : 'info'}
                       </span>
                       <div>
-                        <p className="font-bold text-slate-900 text-[11px] mb-0.5">{f.title}</p>
-                        <p className="leading-relaxed font-semibold">{f.text}</p>
+                        <p className="font-bold text-slate-950 text-[10px] mb-0.5">{f.title}</p>
+                        <p className="leading-relaxed font-semibold text-slate-600">{f.text}</p>
                       </div>
                     </div>
                   ))}
@@ -1374,14 +1422,14 @@ const WordPlayground = () => {
             </div>
 
             {/* Modal Footer */}
-            <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-4 shrink-0">
-              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+            <div className="p-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-4 shrink-0">
+              <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">
                 Đã ghi nhận bài nộp thử vào hệ thống.
               </span>
               <button
                 type="button"
                 onClick={() => setShowGradeModal(false)}
-                className="px-5 py-2 bg-slate-950 hover:bg-slate-900 text-white rounded-lg text-xs font-black uppercase tracking-widest transition-colors shadow"
+                className="px-4.5 py-1.5 bg-slate-950 hover:bg-slate-900 text-white rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors shadow"
               >
                 Đồng ý & Đóng
               </button>

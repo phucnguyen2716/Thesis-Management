@@ -190,7 +190,7 @@ const FavoritesPage = () => {
 
   const fetchTheses = useCallback(async () => {
     try {
-      const { data } = await thesisService.getAll({ page: 1, pageSize: 100 });
+      const { data } = await thesisService.getAll({ page: 1, pageSize: 1000 });
       if (data && data.items && data.items.length > 0) {
         const mapped = data.items.map(t => ({
           id: t.id,

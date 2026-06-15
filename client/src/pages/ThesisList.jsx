@@ -52,7 +52,8 @@ const ThesisList = () => {
     try {
       const { data } = await thesisService.getAll({ 
         search, 
-        status: statusFilter || undefined 
+        status: statusFilter || undefined,
+        pageSize: 1000
       });
       setTheses(data.items);
     } catch (err) {

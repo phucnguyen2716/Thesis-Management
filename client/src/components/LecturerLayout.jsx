@@ -63,7 +63,7 @@ const LecturerLayout = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-[#f4f7fb] font-sans text-[#111c2d] relative pb-16 md:pb-0">
-      <header className="flex justify-between items-center h-16 md:h-[72px] px-4 md:px-8 w-full bg-teal-900 shadow-md border-b border-teal-950/20 sticky top-0 z-50">
+      <header className="flex justify-between items-center h-16 md:h-[72px] px-4 md:px-8 w-full bg-teal-900 shadow-md border-b border-teal-950/20 sticky top-0 z-50 md:z-[110]">
         <div className="flex items-center gap-3 md:gap-5">
           <button
             type="button"
@@ -142,7 +142,7 @@ const LecturerLayout = () => {
         )}
 
         <aside
-          className={`fixed md:relative top-16 md:top-0 bottom-16 md:bottom-auto left-0 z-45 md:z-auto flex flex-col bg-white shadow-xl md:shadow-sm transition-[width,transform] duration-300 ease-in-out overflow-hidden ${
+          className={`fixed md:relative top-16 md:top-0 bottom-16 md:bottom-auto left-0 z-45 md:z-[105] flex flex-col bg-white shadow-xl md:shadow-sm transition-[width,transform] duration-300 ease-in-out overflow-hidden ${
             isSidebarOpen
               ? 'translate-x-0 w-[260px] md:min-w-[260px] border-r border-slate-200'
               : '-translate-x-full w-0 min-w-0 md:translate-x-0 md:w-0 md:min-w-0 border-r-0'

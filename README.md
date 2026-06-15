@@ -1,4 +1,4 @@
-# 🎓 eThesis — Nền tảng Quản lý Khóa luận Tốt nghiệp & Đề tài Nghiên cứu Khoa học
+# 🎓 eThesis — Thư viện số Học thuật & Tra cứu Đề tài Nghiên cứu Khoa học
 
 > **Đồ án tốt nghiệp đại học** · Ngành Công nghệ Thông tin · Trường Đại học Kinh tế - Tài chính TP.HCM (UEF)
 
@@ -71,7 +71,7 @@ Topic/
 ├── Trí tuệ nhân tạo/
 │   ├── SV2026301_Bao_cao_Chuyen_de.docx
 │   ├── SV2026301_Slide_ThuyetTrinh.pdf
-│   └── SV2026301_Bang_tinh_Chi_phi.xlsx
+│   └── SV2026301_README.docx
 ├── Mạng máy tính/
 │   └── ...
 └── ...
@@ -83,7 +83,7 @@ Thesis/
 ├── Trí tuệ nhân tạo/
 │   ├── SV2026401_Khoa_luan_Tot_nghiep.docx
 │   ├── SV2026401_Slide_ThuyetTrinh.pdf
-│   └── SV2026401_Bang_tinh_Chi_phi.xlsx
+│   └── SV2026401_README.docx
 ├── Mạng máy tính/
 │   └── ...
 └── ...
@@ -607,14 +607,14 @@ Lưu trữ thông tin các file tài liệu đính kèm của đề tài khóa l
 
 | Tên cột | Kiểu dữ liệu | Ràng buộc | Mô tả |
 | :--- | :--- | :--- | :--- |
-| **Id** | `int` | PK, Identity | Mã định danh bản nộp |
-| **ThesisId** | `int` | FK -> `Theses.Id` (Not Null) | Bản nộp thuộc về đề tài nào |
+| **Id** | `int` | PK, Identity | Mã định danh tệp tài liệu số hóa |
+| **ThesisId** | `int` | FK -> `Theses.Id` (Not Null) | Tệp tài liệu thuộc về đề tài nào |
 | **FilePath** | `string` | Not Null | Đường dẫn file trên ổ đĩa máy chủ |
 | **FileName** | `string` | Not Null | Tên file vật lý ban đầu (Ví dụ: `Bao_cao_tiendo_V2.pdf`) |
 | **FileSize** | `long` | Not Null | Dung lượng file (tính theo byte) |
-| **Version** | `int` | Not Null, Default: `1` | Số thứ tự phiên bản nộp (tăng tự động) |
+| **Version** | `int` | Not Null, Default: `1` | Số thứ tự phiên bản tài liệu (tăng tự động) |
 | **Notes** | `string?` | Nullable | Ghi chú mô tả đính kèm tài liệu |
-| **SubmittedAt** | `DateTime` | Not Null, Default: `UtcNow` | Thời gian tải lên hệ thống |
+| **SubmittedAt** | `DateTime` | Not Null, Default: `UtcNow` | Thời gian số hóa/tải lên hệ thống |
 
 ##### 4. Bảng `ThesisReviews` (Đánh giá & Chấm điểm từ Giảng viên / Hội đồng)
 Lưu trữ thông tin điểm số, nhận xét và quyết định phê duyệt của giảng viên phản biện hoặc hội đồng.
@@ -737,9 +737,9 @@ Hệ thống đi kèm cơ chế tự động gieo dữ liệu mẫu (Database Se
 
 | Vai trò (Role) | Email đăng nhập | Mật khẩu (Password) | Tính năng trải nghiệm nổi bật |
 | :--- | :--- | :--- | :--- |
-| **Quản trị viên (Admin)** | `admin@ethesis.edu.vn` | `admin123` | Phân quyền tài khoản, xem Audit Logs đăng nhập, cấu hình thuật toán so khớp, kiểm duyệt xuất bản thư viện. |
-| **Giảng viên (Advisor)** | `advisor@ethesis.edu.vn` | `advisor123` | Xem phân tích so khớp tài liệu, đề xuất tài liệu tham khảo, quản lý bài luyện tập. |
-| **Sinh viên (Student)** | `student@ethesis.edu.vn` | `student123` | Tra cứu tài liệu khóa luận, kiểm tra hướng dẫn viết tài liệu, chơi game cờ vua. |
+| **Quản trị viên (Admin)** | `admin@ethesis.edu.vn` <br>*(Đăng nhập Google: Tự động nhận vai trò Admin)* | `123` | Phân quyền tài khoản, xem Audit Logs đăng nhập, cấu hình thuật toán so khớp, kiểm duyệt xuất bản thư viện. |
+| **Giảng viên (Advisor)** | `advisor@ethesis.edu.vn` | `123` | Xem phân tích so khớp tài liệu, đề xuất tài liệu tham khảo, quản lý bài luyện tập. |
+| **Sinh viên (Student)** | `student@ethesis.edu.vn` | `123` | Tra cứu tài liệu khóa luận, kiểm tra hướng dẫn viết tài liệu, chơi game cờ vua. |
 
 ---
 

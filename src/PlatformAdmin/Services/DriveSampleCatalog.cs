@@ -65,6 +65,7 @@ public static class DriveSampleCatalog
             new SubjectDef("Phát triển ứng dụng web nâng cao", "SWE1218E"),
             new SubjectDef("Đồ án chuyên ngành phát triển ứng dụng", "SWE1420"),
         }, 3),
+        new("Công nghệ phần mềm", "software-engineering", new SubjectDef[] {}),
     };
 
     private static readonly Dictionary<string, string[]> GroupSuffixes = new()
@@ -138,6 +139,18 @@ public static class DriveSampleCatalog
             "Xây dựng API Gateway và quản lý phân quyền trong Microservices",
             "Phát triển ứng dụng di động Android native bằng Kotlin",
             "Xây dựng hệ thống quản lý học tập trực tuyến LMS với C#"
+        },
+        ["software-engineering"] = new[] {
+            "Nghiên cứu kiến trúc Microservices và ứng dụng thực tế",
+            "Đánh giá và tối ưu hiệu năng ứng dụng web bằng Lighthouse",
+            "Xây dựng quy trình CI/CD tự động hóa kiểm thử phần mềm",
+            "Phân tích thiết kế hệ thống quản lý học tập trực tuyến LMS",
+            "Nghiên cứu giải pháp thiết kế Design System cho dự án web lớn",
+            "Ứng dụng quy trình Scrum trong phát triển phần mềm Agile",
+            "Xây dựng công cụ phân tích tĩnh mã nguồn kiểm tra chuẩn coding",
+            "Nghiên cứu giải pháp bảo mật API Gateway cho Microservices",
+            "Phát triển ứng dụng di động đa nền tảng sử dụng React Native",
+            "Tối ưu hóa cơ sở dữ liệu quy mô lớn cho ứng dụng thương mại điện tử"
         }
     };
 
@@ -202,6 +215,18 @@ public static class DriveSampleCatalog
             "Tối ưu hóa truy vấn cơ sở dữ liệu phi quan hệ cho ứng dụng mạng xã hội",
             "Thiết kế framework phát triển ứng dụng di động tùy biến cao",
             "Xây dựng hệ thống quản lý và xử lý hàng đợi tin nhắn chịu tải cao"
+        },
+        ["software-engineering"] = new[] {
+            "Khóa luận tốt nghiệp chuyên sâu về Công nghệ phần mềm",
+            "Nghiên cứu triển khai quy trình DevSecOps cho doanh nghiệp",
+            "Xây dựng hệ thống quản lý chất lượng phần mềm tự động hóa",
+            "Thiết kế kiến trúc hệ thống lưu trữ phân tán chịu lỗi cao",
+            "Phát triển giải pháp Single Sign-On bảo mật đa nền tảng",
+            "Tối ưu hóa trải nghiệm người dùng UX/UI bằng phương pháp A/B testing",
+            "Phát triển ứng dụng Web Real-time chịu tải cao sử dụng Node.js",
+            "Nghiên cứu ứng dụng Kubernetes quản lý container trong doanh nghiệp",
+            "Xây dựng hệ thống giám sát hiệu năng phần mềm APM thời gian thực",
+            "Tối ưu hóa và tái cấu trúc mã nguồn hệ thống ERP di sản"
         }
     };
 

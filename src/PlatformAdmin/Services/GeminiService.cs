@@ -119,103 +119,7 @@ namespace PlatformAdmin.Services
 
             if (_useMock)
             {
-                bool isEnglish = IsEnglishPrompt(originalPrompt);
-                var lower = originalPrompt.ToLowerInvariant();
-
-                if (isEnglish)
-                {
-                    if (lower.Contains("hello") || lower.Contains("hi"))
-                    {
-                        return "Hello! I am the UEF Academic AI Assistant. I can assist you with researching thesis topics, completing coursework, processing graduation theses, optimizing images, or checking for plagiarism. How can I help you today?";
-                    }
-                    if (lower.Contains("post") || lower.Contains("create") || lower.Contains("share"))
-                    {
-                        return "Excellent! Your post creation request has been received and processed successfully. The record has been safely stored in the Postgres schema `social.posts` and automatically indexed for search in Elasticsearch!";
-                    }
-                    if (lower.Contains("notify") || lower.Contains("email") || lower.Contains("send") || lower.Contains("mail"))
-                    {
-                        return "Completed successfully! The notification dispatch request has been approved and sent. The audit activity log has been recorded in the Postgres schema `notification.notifications`!";
-                    }
-                    if (executionResult.Contains("Search completed"))
-                    {
-                        if (executionResult.Contains("Found"))
-                        {
-                            var listPart = executionResult.Substring(executionResult.IndexOf("matching theses:") + "matching theses:".Length);
-                            var formattedList = string.Join("\n", listPart.Split(new[] { "; " }, StringSplitOptions.RemoveEmptyEntries)
-                                .Select(item =>
-                                {
-                                    var trimmed = item.Trim();
-                                    try
-                                    {
-                                        var idStr = trimmed.Substring(3, trimmed.IndexOf(":") - 3).Trim();
-                                        var titleAndStudent = trimmed.Substring(trimmed.IndexOf(":") + 1).Trim();
-                                        var title = titleAndStudent.Substring(1, titleAndStudent.IndexOf("'", 1) - 1);
-                                        var student = titleAndStudent.Substring(titleAndStudent.IndexOf("by student") + 10).Trim();
-
-                                        return $"[THESIS_CARD:id={idStr}|title={title}|student={student}]";
-                                    }
-                                    catch
-                                    {
-                                        return $"• {trimmed}";
-                                    }
-                                }));
-
-                            return $"I found matching theses for your request! Here are the search results:\n\n{formattedList}\n\nYou can click on a link to view its details or read it in the 3D Flipbook reader!";
-                        }
-                        else
-                        {
-                            return $"I searched for theses but couldn't find any match for your request. Please try again with other keywords!";
-                        }
-                    }
-                    return $"I have received your request: \"{originalPrompt}\". The Sandwich Guardrail secure redirection pipeline has processed it successfully. Logic execution result: {executionResult}";
-                }
-                else
-                {
-                    if (lower.Contains("hello") || lower.Contains("hi") || lower.Contains("chào") || lower.Contains("chao"))
-                    {
-                        return "Xin chào! Tôi là trợ lý AI học thuật UEF. Tôi có thể hỗ trợ bạn tìm kiếm đề tài, làm chuyên đề, khóa luận, tối ưu hóa hình ảnh hoặc kiểm tra đạo văn. Bạn cần tôi giúp gì hôm nay?";
-                    }
-                    if (lower.Contains("post") || lower.Contains("create") || lower.Contains("đăng bài") || lower.Contains("chia sẻ"))
-                    {
-                        return "Tuyệt vời! Yêu cầu tạo bài đăng của bạn đã được tiếp nhận và xử lý thành công. Bản ghi đã được lưu trữ an toàn trong Postgres schema `social.posts` và tự động lập chỉ mục tìm kiếm trên Elasticsearch!";
-                    }
-                    if (lower.Contains("notify") || lower.Contains("email") || lower.Contains("thông báo") || lower.Contains("gửi thư"))
-                    {
-                        return "Đã hoàn thành! Yêu cầu gửi thông báo đã được phê duyệt và gửi đi thành công. Nhật ký hoạt động kiểm toán đã được ghi nhận trong Postgres schema `notification.notifications`!";
-                    }
-                    if (executionResult.Contains("Search completed"))
-                    {
-                        if (executionResult.Contains("Found"))
-                        {
-                            var listPart = executionResult.Substring(executionResult.IndexOf("matching theses:") + "matching theses:".Length);
-                            var formattedList = string.Join("\n", listPart.Split(new[] { "; " }, StringSplitOptions.RemoveEmptyEntries)
-                                .Select(item =>
-                                {
-                                    var trimmed = item.Trim();
-                                    try
-                                    {
-                                        var idStr = trimmed.Substring(3, trimmed.IndexOf(":") - 3).Trim();
-                                        var titleAndStudent = trimmed.Substring(trimmed.IndexOf(":") + 1).Trim();
-                                        var title = titleAndStudent.Substring(1, titleAndStudent.IndexOf("'", 1) - 1);
-                                        var student = titleAndStudent.Substring(titleAndStudent.IndexOf("by student") + 10).Trim();
-
-                                        return $"[THESIS_CARD:id={idStr}|title={title}|student={student}]";
-                                    }
-                                    catch
-                                    {
-                                        return $"• {trimmed}";
-                                    }
-                                }));
-
-                            return $"Tôi đã tìm thấy đề tài phù hợp với yêu cầu của bạn! Dưới đây là kết quả:\n\n{formattedList}\n\nBạn có thể nhấp vào liên kết tương ứng để xem chi tiết hoặc đọc sách 3D Flipbook nhé!";
-                        }
-                        else
-                        {
-                            return $"Tôi đã thực hiện tìm kiếm đề tài nhưng rất tiếc chưa tìm thấy kết quả nào khớp với yêu cầu của bạn. Bạn hãy thử tìm với từ khóa khác nhé!";
-                        }
-                    }
-                    return $"Tôi đã tiếp nhận yêu cầu của bạn: \"{originalPrompt}\". Luồng điều hướng Sandwich Guardrail bảo mật đã xử lý thành công. Kết quả logic: {executionResult}";
-                }
+                return FormatExecutionResult(originalPrompt, executionResult);
             }
 
             try
@@ -241,12 +145,187 @@ namespace PlatformAdmin.Services
                     .GetProperty("content")
                     .GetProperty("parts")[0]
                     .GetProperty("text")
-                    .GetString() ?? "[Fallback] Command executed successfully, but failed to format response text.";
+                    .GetString() ?? FormatExecutionResult(originalPrompt, executionResult);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to call Gemini API in formatting. Falling back to standard format.");
-                return $"[Fallback] Operation executed successfully. Output payload: {executionResult}";
+                return FormatExecutionResult(originalPrompt, executionResult);
+            }
+        }
+
+        private string FormatExecutionResult(string originalPrompt, string executionResult)
+        {
+            bool isEnglish = IsEnglishPrompt(originalPrompt);
+            var lower = originalPrompt.ToLowerInvariant();
+
+            if (isEnglish)
+            {
+                // Greeting
+                if (lower.Contains("hello") || lower.Contains("hi") || lower.Contains("hey"))
+                {
+                    return "Hello! I am your eThesis Academic Assistant. I'm here to help you navigate our Digital Library. How can I assist you today, my friend?";
+                }
+                
+                // About Website
+                if (lower.Contains("what is this") || lower.Contains("what website") || lower.Contains("about") || lower.Contains("website gì") || lower.Contains("trang web gì"))
+                {
+                    return "Welcome to **eThesis**! This is an academic Digital Library platform. Here, you can search for outstanding graduation theses and specialization reports, read them using our beautiful 3D Flipbook viewer, practice writing academic chapters in a standard A4 editor, and even play fun intellectual games in the Arena to relax!";
+                }
+
+                // Features
+                if (lower.Contains("feature") || lower.Contains("capability") || lower.Contains("what can you do") || lower.Contains("chức năng") || lower.Contains("tính năng"))
+                {
+                    return "Here is what we can do in **eThesis**:\n\n" +
+                           "1. 🔍 **Smart Search & Reference:** Search our library using full-text BM25 rankings and read documents via a 3D Flipbook reader.\n" +
+                           "2. ✍️ **Academic A4 Editor:** Practice drafting your research chapters with real-time word limits and AI formatting checks.\n" +
+                           "3. 📖 **Citation & Guidelines:** Easily reference templates based on standard APA and IEEE guidelines.\n" +
+                           "4. 🎮 **Mini-Game Arena:** Unwind with Chess vs AI, Word Connect, Solitaire, or Tetris Blitz!\n\n" +
+                           "How can I help you explore these features?";
+                }
+
+                // Credentials/Login
+                if (lower.Contains("login") || lower.Contains("credential") || lower.Contains("password") || lower.Contains("account") || lower.Contains("tài khoản") || lower.Contains("đăng nhập"))
+                {
+                    return "Sure! You can test our Digital Library using these seeded accounts (password is `123` for all):\n\n" +
+                           "- **Admin:** `admin@ethesis.edu.vn` (or simply log in via Google to auto-grant Admin status)\n" +
+                           "- **Advisor:** `advisor@ethesis.edu.vn`\n" +
+                           "- **Student:** `student@ethesis.edu.vn`";
+                }
+
+                // Thank you
+                if (lower.Contains("thank") || lower.Contains("thanks") || lower.Contains("tks") || lower.Contains("cảm ơn"))
+                {
+                    return "You're very welcome! I'm always glad to help. Let me know if you need anything else!";
+                }
+
+                // Search Results
+                if (executionResult.Contains("Search completed"))
+                {
+                    if (executionResult.Contains("Found"))
+                    {
+                        try
+                        {
+                            var listPart = executionResult.Substring(executionResult.IndexOf("matching theses:") + "matching theses:".Length);
+                            var formattedList = string.Join("\n", listPart.Split(new[] { "; " }, StringSplitOptions.RemoveEmptyEntries)
+                                .Select(item =>
+                                {
+                                    var trimmed = item.Trim();
+                                    try
+                                    {
+                                        var idStr = trimmed.Substring(3, trimmed.IndexOf(":") - 3).Trim();
+                                        var titleAndStudent = trimmed.Substring(trimmed.IndexOf(":") + 1).Trim();
+                                        var title = titleAndStudent.Substring(1, titleAndStudent.IndexOf("'", 1) - 1);
+                                        var student = titleAndStudent.Substring(titleAndStudent.IndexOf("by student") + 10).Trim();
+                                        student = student.TrimEnd('.', ';', ' ');
+
+                                        return $"[THESIS_CARD:id={idStr}|title={title}|student={student}]";
+                                    }
+                                    catch
+                                    {
+                                        return $"• {trimmed.TrimEnd('.', ';', ' ')}";
+                                    }
+                                }));
+
+                            return $"I found matching theses for your request! Here are the search results:\n\n{formattedList}\n\nYou can click on a card to view its details or read it in the 3D Flipbook reader!";
+                        }
+                        catch
+                        {
+                            return $"I found some theses matching your query: {executionResult}";
+                        }
+                    }
+                    else
+                    {
+                        return "I searched for theses but couldn't find any match for your request. Please try again with other keywords!";
+                    }
+                }
+
+                // Default Fallback
+                return $"I hear you! As your eThesis academic assistant, I am happy to chat and guide you. Although I'm running in standby mode right now, you can still ask me to search for documents (e.g., \"find AI thesis\"), check formatting guidelines, or explain our mini-games. What part of our Digital Library shall we explore together?";
+            }
+            else
+            {
+                // Greeting
+                if (lower.Contains("chào") || lower.Contains("chao") || lower.Contains("hello") || lower.Contains("hi") || lower.Contains("hey"))
+                {
+                    return "Xin chào bạn! Tôi là trợ lý ảo eThesis. Tôi có thể hỗ trợ bạn tìm kiếm tài liệu, cẩm nang viết khóa luận và giải đáp thắc mắc. Hôm nay tôi có thể giúp gì cho bạn?";
+                }
+
+                // About Website
+                if (lower.Contains("đây là") || lower.Contains("trang web gì") || lower.Contains("web gì") || lower.Contains("website gì") || lower.Contains("day la") || lower.Contains("trang gi") || lower.Contains("đây là trang"))
+                {
+                    return "Chào mừng bạn đến với **eThesis**! Đây là **Thư viện số Học thuật & Tra cứu Đề tài Thông minh** dành riêng cho sinh viên UEF. Tại đây, bạn có thể tra cứu và tham khảo kho khóa luận/chuyên đề xuất sắc của các khóa trước, đọc sách định dạng 3D Flipbook sinh động, luyện tập soạn thảo bài viết chuẩn A4 và giải trí với các trò chơi trí tuệ!";
+                }
+
+                // Features
+                if (lower.Contains("chức năng") || lower.Contains("tính năng") || lower.Contains("làm được gì") || lower.Contains("lam duoc gi") || lower.Contains("chuc nang") || lower.Contains("tinh nang") || lower.Contains("có gì"))
+                {
+                    return "Đến với **eThesis**, bạn có thể trải nghiệm các tính năng nổi bật sau:\n\n" +
+                           "1. 🔍 **Tra cứu Thư viện số:** Tìm kiếm toàn văn khóa luận tốt nghiệp và chuyên đề xuất sắc, đọc trực tuyến với trình đọc sách 3D Flipbook.\n" +
+                           "2. ✍️ **Luyện tập Soạn thảo:** Tập viết các chương nghiên cứu trên khung soạn thảo giả lập trang A4 chuẩn học thuật, có AI chấm điểm trực tiếp.\n" +
+                           "3. 📖 **Cẩm nang Trích dẫn:** Xem hướng dẫn trình bày văn bản khoa học theo chuẩn APA/IEEE.\n" +
+                           "4. 🎮 **Mini-Game Arena:** Giải trí giảm áp lực học tập với Cờ vua vs AI, Nối chữ học thuật, Solitaire và Tetris.\n\n" +
+                           "Bạn cần tôi hướng dẫn chi tiết về tính năng nào?";
+                }
+
+                // Credentials/Login
+                if (lower.Contains("đăng nhập") || lower.Contains("dang nhap") || lower.Contains("tài khoản") || lower.Contains("tai khoan") || lower.Contains("mật khẩu") || lower.Contains("mat khau") || lower.Contains("mk") || lower.Contains("password") || lower.Contains("acc"))
+                {
+                    return "Bạn có thể thử nghiệm hệ thống eThesis bằng các tài khoản kiểm thử sau (mật khẩu đều là `123`):\n\n" +
+                           "- **Quản trị viên (Admin):** `admin@ethesis.edu.vn` (Hoặc đăng nhập bằng tài khoản Google để tự động nhận quyền Admin)\n" +
+                           "- **Giảng viên (Advisor):** `advisor@ethesis.edu.vn`\n" +
+                           "- **Sinh viên (Student):** `student@ethesis.edu.vn`";
+                }
+
+                // Thank you
+                if (lower.Contains("cảm ơn") || lower.Contains("cam on") || lower.Contains("thank") || lower.Contains("tks"))
+                {
+                    return "Không có gì đâu nè! Rất vui được hỗ trợ bạn. Chúc bạn có một ngày học tập thật hiệu quả nhé!";
+                }
+
+                // Search Results
+                if (executionResult.Contains("Search completed"))
+                {
+                    if (executionResult.Contains("Found"))
+                    {
+                        try
+                        {
+                            var listPart = executionResult.Substring(executionResult.IndexOf("matching theses:") + "matching theses:".Length);
+                            var formattedList = string.Join("\n", listPart.Split(new[] { "; " }, StringSplitOptions.RemoveEmptyEntries)
+                                .Select(item =>
+                                {
+                                    var trimmed = item.Trim();
+                                    try
+                                    {
+                                        var idStr = trimmed.Substring(3, trimmed.IndexOf(":") - 3).Trim();
+                                        var titleAndStudent = trimmed.Substring(trimmed.IndexOf(":") + 1).Trim();
+                                        var title = titleAndStudent.Substring(1, titleAndStudent.IndexOf("'", 1) - 1);
+                                        var student = titleAndStudent.Substring(titleAndStudent.IndexOf("by student") + 10).Trim();
+                                        student = student.TrimEnd('.', ';', ' ');
+
+                                        return $"[THESIS_CARD:id={idStr}|title={title}|student={student}]";
+                                    }
+                                    catch
+                                    {
+                                        return $"• {trimmed.TrimEnd('.', ';', ' ')}";
+                                    }
+                                }));
+
+                            return $"Tôi đã tìm thấy đề tài phù hợp với yêu cầu của bạn! Dưới đây là kết quả:\n\n{formattedList}\n\nBạn có thể nhấp vào liên kết tương ứng để xem chi tiết hoặc đọc sách 3D Flipbook nhé!";
+                        }
+                        catch
+                        {
+                            return $"Tôi đã tìm thấy một số đề tài phù hợp: {executionResult}";
+                        }
+                    }
+                    else
+                    {
+                        return "Tôi đã thực hiện tìm kiếm đề tài nhưng rất tiếc chưa tìm thấy kết quả nào khớp với yêu cầu của bạn. Bạn hãy thử tìm với từ khóa khác nhé!";
+                    }
+                }
+
+                // Default Fallback
+                return $"Tôi đã ghi nhận câu hỏi của bạn: \"{originalPrompt}\". Hiện tại tôi đang chạy ở chế độ chuẩn bị, nhưng bạn vẫn có thể yêu cầu tôi tìm kiếm tài liệu (ví dụ: 'tìm khóa luận công nghệ phần mềm'), hỏi đáp về tài khoản đăng nhập hoặc các cẩm nang trình bày bài viết nhé! Bạn muốn chúng ta cùng khám phá phần nào của Thư viện số?";
             }
         }
 
