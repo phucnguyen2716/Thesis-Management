@@ -244,25 +244,25 @@ using (var scope = app.Services.CreateScope())
                 Console.WriteLine($"Corrected category encoding for {corruptedPosts.Count} posts.");
             }
 
-            // Update posts 1, 2, 3 with real image URLs if they still have the googleusercontent ones or empty
+            // Update posts 1, 2, 3 with professional googleusercontent image URLs (which will trigger Cloudinary upload)
             var post1 = context.SocialPosts.Find(1);
-            if (post1 != null && (post1.Image.Contains("googleusercontent.com") || post1.Image.Contains("photo-1523050854058-8df90110c9f1") || string.IsNullOrEmpty(post1.Image)))
+            if (post1 != null && !post1.Image.Contains("aida-public/AB6AXuDVaKckFBO6OahgQhL5POM9H"))
             {
-                post1.Image = "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4";
+                post1.Image = "https://lh3.googleusercontent.com/aida-public/AB6AXuDVaKckFBO6OahgQhL5POM9HkyyecIPbbQpO1dWLvQHUSBcj49wyeR69ByLr8G1HshrXjAzidE5A-wOT6RA7V7eLvC33ch_y8-bNDvNRg1HwmmnaJTAcz8NBYG9tH7A-4q9Aydwy8_z9zEL6dgejrSFafcXOHrBluNSxzC-1l68EVFbA93qGEExIzjN4r7IEyBbD-vnEDCAtJDWdRszsVJdArxh12IA2eUzDBOvizUG5zZuFjD1jL69T8qDOK5VDX_pqXpNUf76mRsk";
                 post1.CloudinaryStatus = "None";
             }
 
             var post2 = context.SocialPosts.Find(2);
-            if (post2 != null && (post2.Image.Contains("googleusercontent.com") || string.IsNullOrEmpty(post2.Image)))
+            if (post2 != null && !post2.Image.Contains("aida-public/AB6AXuC9CBcdVbi_lVPZdj1fMXkDrm"))
             {
-                post2.Image = "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?q=80&w=800&auto=format&fit=crop";
+                post2.Image = "https://lh3.googleusercontent.com/aida-public/AB6AXuC9CBcdVbi_lVPZdj1fMXkDrm6UXNpgAQzAbT5BzIzcVc1wXGTHcmwvFTTaIEgcFm1wFyYIkxuYp8LKwSkizyelJ4bjIqymKLSgFfukFSODI8QlHCdYgYlzoIpXWPGJ6pwNFnkIc54kH5CFyy19WYTo0HdQ9cSVQ1CNsuV41pZn1z5hhO7krZslwN6YtBpL_fRpzCvXn5HpiOcH4ntw_v0VI8GftCgk9T6IiQz7ikPDYxY5Gr4t4CGGG3_-YsRIM4rMsyCMlTMvyufS";
                 post2.CloudinaryStatus = "None";
             }
 
             var post3 = context.SocialPosts.Find(3);
-            if (post3 != null && (post3.Image.Contains("googleusercontent.com") || string.IsNullOrEmpty(post3.Image)))
+            if (post3 != null && !post3.Image.Contains("aida-public/AB6AXuANxGO4D6ojuZlYk7MEhtq_38"))
             {
-                post3.Image = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=800&auto=format&fit=crop";
+                post3.Image = "https://lh3.googleusercontent.com/aida-public/AB6AXuANxGO4D6ojuZlYk7MEhtq_38tsfUs324mV9MOXepahz-7q_MfJXjqjvHbgLt27PAjQquIgxNbU4l8TFLxxTqokf9fiaJRq8mxeZIqQU-_fhU1ho_Omjv4xl_49kl_cJIIr3tyg5-3Lu3GYiLPM2N3psKIdMJtF-p6DcwYjflkXf24kayQ57904JAS0eyc8PMffw-nv4NNzDqKse0KbLJ4YWmW0Hqys7UoOYciK4A2BTM_k2g3B1Slq6NwqcMgwtqtuEWUyLaQ7lH_W";
                 post3.CloudinaryStatus = "None";
             }
 

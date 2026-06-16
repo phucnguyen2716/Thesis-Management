@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getSocialPosts } from '../utils/adminContentStore';
+import { socialService } from '../services/api';
 import useLanguage from '../hooks/useLanguage';
 
 const Dashboard = () => {
@@ -62,20 +62,26 @@ const Dashboard = () => {
   }[lang];
 
   useEffect(() => {
-    const load = () =>
-      setNewsItems(
-        getSocialPosts()
-          .slice(0, 3)
-          .map(p => ({
-            id: p.id,
-            title: p.title,
-            date: p.date,
-            badge: p.category,
-            badgeClass: p.badgeClass || 'bg-primary text-on-primary',
-            image: p.image,
-            desc: p.desc,
-          }))
-      );
+    const load = async () => {
+      try {
+        const { data } = await socialService.getAll(true);
+        setNewsItems(
+          data
+            .slice(0, 3)
+            .map(p => ({
+              id: p.id,
+              title: p.title,
+              date: p.date || (p.createdAt ? new Date(p.createdAt).toLocaleDateString('vi-VN') : ''),
+              badge: p.category,
+              badgeClass: p.badgeClass || 'bg-primary text-on-primary',
+              image: p.image,
+              desc: p.desc,
+            }))
+        );
+      } catch (err) {
+        console.error("Failed to load dashboard news", err);
+      }
+    };
     load();
     window.addEventListener('admin-content-updated', load);
     return () => window.removeEventListener('admin-content-updated', load);
