@@ -41,26 +41,26 @@ const emptyEvent = () => ({
 const SEED_EVENTS = [
   {
     id: 'evt-1',
-    title: 'Hội thảo Trí tuệ Nhân tạo trong Giáo dục 2025',
-    description: 'Hội thảo quốc tế về ứng dụng AI trong đổi mới phương pháp giảng dạy đại học, với sự tham gia của các chuyên gia hàng đầu.',
+    title: 'Hội thảo: Hướng dẫn viết bài báo khoa học và Công bố quốc tế 2025',
+    description: 'Hội thảo chuyên đề giúp sinh viên nắm vững phương pháp viết bài báo khoa học, cách lập luận và trình bày kết quả nghiên cứu chuẩn Scopus/ISI.',
     eventType: 'Hội thảo',
     location: 'Hội trường A, Cơ sở 1 - UEF',
     startDate: '2025-07-15',
-    endDate: '2025-07-16',
+    endDate: '2025-07-15',
     organizer: 'Khoa Công nghệ thông tin',
     contactPhone: '0901234567',
     contactEmail: 'cntt@uef.edu.vn',
-    maxParticipants: '200',
-    imageUrl: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800&q=80',
-    link: 'https://uef.edu.vn/events/ai-education-2025',
+    maxParticipants: '250',
+    imageUrl: 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=800&q=80',
+    link: 'https://uef.edu.vn/scientific-writing-2025',
     status: 'upcoming',
     published: true,
     createdAt: Date.now() - 86400000 * 5,
   },
   {
     id: 'evt-2',
-    title: 'Workshop: Kỹ năng viết luận văn khoa học',
-    description: 'Hướng dẫn sinh viên phương pháp nghiên cứu, trích dẫn và trình bày luận văn theo chuẩn quốc tế APA/IEEE.',
+    title: 'Workshop: Kỹ năng nghiên cứu khoa học và Khai thác cơ sở dữ liệu',
+    description: 'Workshop thực hành giúp sinh viên làm quen với các công cụ tìm kiếm bài báo khoa học, quản lý trích dẫn tài liệu tham khảo (Mendeley/Zotero).',
     eventType: 'Workshop',
     location: 'Phòng Lab 301, Tòa nhà B',
     startDate: '2025-06-20',
@@ -68,8 +68,8 @@ const SEED_EVENTS = [
     organizer: 'PGS.TS. Nguyễn Văn An',
     contactPhone: '0901234567',
     contactEmail: 'nguyen.van.an@uef.edu.vn',
-    maxParticipants: '50',
-    imageUrl: 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=800&q=80',
+    maxParticipants: '60',
+    imageUrl: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=800&q=80',
     link: '',
     status: 'ongoing',
     published: true,
@@ -77,26 +77,8 @@ const SEED_EVENTS = [
   },
   {
     id: 'evt-3',
-    title: 'Cuộc thi Lập trình UEF Hackathon 2025',
-    description: 'Cuộc thi lập trình 48h dành cho sinh viên toàn trường, với chủ đề "Giải pháp công nghệ cho cộng đồng".',
-    eventType: 'Cuộc thi',
-    location: 'Sảnh lớn, Cơ sở 2 - UEF',
-    startDate: '2025-08-10',
-    endDate: '2025-08-12',
-    organizer: 'CLB IT & Khoa CNTT',
-    contactPhone: '0923456789',
-    contactEmail: 'hackathon@uef.edu.vn',
-    maxParticipants: '120',
-    imageUrl: 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800&q=80',
-    link: 'https://uef.edu.vn/hackathon2025',
-    status: 'upcoming',
-    published: true,
-    createdAt: Date.now() - 86400000 * 1,
-  },
-  {
-    id: 'evt-4',
-    title: 'Seminar: Blockchain và Tương lai Tài chính số',
-    description: 'Chuyên đề về công nghệ Blockchain, DeFi và ứng dụng trong ngành tài chính - ngân hàng.',
+    title: 'Seminar: Quy chuẩn viết báo cáo Nghiên cứu khoa học sinh viên cấp Trường',
+    description: 'Seminar chuyên đề chia sẻ quy chuẩn trình bày khóa luận, báo cáo khoa học cấp trường, định dạng theo chuẩn IEEE/APA và quy trình phản biện.',
     eventType: 'Seminar',
     location: 'Online - Microsoft Teams',
     startDate: '2025-05-25',
@@ -105,29 +87,11 @@ const SEED_EVENTS = [
     contactPhone: '0912345678',
     contactEmail: 'tran.bich.ngoc@uef.edu.vn',
     maxParticipants: '300',
-    imageUrl: 'https://images.unsplash.com/photo-1639322537228-f710d846310a?w=800&q=80',
-    link: 'https://teams.microsoft.com/seminar-blockchain',
+    imageUrl: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80',
+    link: 'https://teams.microsoft.com/seminar-research-standard',
     status: 'completed',
     published: true,
     createdAt: Date.now() - 86400000 * 20,
-  },
-  {
-    id: 'evt-5',
-    title: 'Ngày hội Tuyển dụng UEF Job Fair 2025',
-    description: 'Kết nối sinh viên với hơn 50 doanh nghiệp hàng đầu trong lĩnh vực CNTT, Kinh tế và Luật.',
-    eventType: 'Tuyển dụng',
-    location: 'Sân trường, Cơ sở 1 - UEF',
-    startDate: '2025-09-05',
-    endDate: '2025-09-05',
-    organizer: 'Phòng Quan hệ Doanh nghiệp',
-    contactPhone: '0956789012',
-    contactEmail: 'career@uef.edu.vn',
-    maxParticipants: '500',
-    imageUrl: 'https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=800&q=80',
-    link: 'https://uef.edu.vn/jobfair2025',
-    status: 'upcoming',
-    published: true,
-    createdAt: Date.now() - 86400000 * 2,
   },
 ];
 
@@ -176,6 +140,19 @@ const AdminEventsPage = () => {
             status: extra.status || 'upcoming',
           };
         });
+
+      // Force re-seed if we find old non-academic events (like Hackathon or Tuyển dụng)
+      const hasOldEvents = list.some(e => e.title.includes("Hackathon") || e.title.includes("Tuyển dụng") || e.title.includes("Job Fair"));
+      if (hasOldEvents) {
+        for (const ev of list) {
+          try {
+            await socialService.delete(ev.id);
+          } catch (e) {
+            console.error("Failed to delete old event", ev.id, e);
+          }
+        }
+        list = [];
+      }
 
       // Nếu chưa có sự kiện nào trong DB, tự động seed lên DB
       if (list.length === 0) {
