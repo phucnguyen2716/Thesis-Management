@@ -108,7 +108,7 @@ const AdminUsersPage = ({ fixedRole }) => {
         <div>
           <h1 className="text-2xl font-black text-white">{pageTitle}</h1>
           <p className="text-slate-400 text-sm">
-            CRUD · {filtered.length}/{users.filter(u => u.role === tab).length} hiển thị
+            Quản lý · {filtered.length}/{users.filter(u => u.role === tab).length} hiển thị
           </p>
         </div>
         <button

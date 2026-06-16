@@ -39,6 +39,7 @@ import AdminUsersPage from './pages/admin/AdminUsersPage';
 import AdminLoginAuditPage from './pages/admin/AdminLoginAuditPage';
 import AdminSocialPage from './pages/admin/AdminSocialPage';
 import AdminThesesPage from './pages/admin/AdminThesesPage';
+import AdminEventsPage from './pages/admin/AdminEventsPage';
 
 
 function App() {
@@ -68,6 +69,7 @@ function App() {
           <Route path="audit" element={<AdminLoginAuditPage />} />
           <Route path="social" element={<AdminSocialPage />} />
           <Route path="theses/:category" element={<AdminThesesPage />} />
+          <Route path="events" element={<AdminEventsPage />} />
 
         </Route>
 
