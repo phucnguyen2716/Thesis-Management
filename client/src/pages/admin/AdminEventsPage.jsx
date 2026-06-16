@@ -28,10 +28,10 @@ const EVENT_TYPES = [
 ];
 
 const STATUS_MAP = {
-  upcoming:  { label: 'Sắp diễn ra', cls: 'bg-blue-100 text-blue-800 border-blue-200' },
-  ongoing:   { label: 'Đang diễn ra', cls: 'bg-emerald-100 text-emerald-800 border-emerald-200' },
-  completed: { label: 'Đã kết thúc', cls: 'bg-slate-100 text-slate-600 border-slate-200' },
-  cancelled: { label: 'Đã hủy',      cls: 'bg-red-100 text-red-800 border-red-200' },
+  upcoming:  { label: 'Sắp diễn ra', cls: 'bg-blue-500/20 text-blue-400 border-blue-500/30' },
+  ongoing:   { label: 'Đang diễn ra', cls: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' },
+  completed: { label: 'Đã kết thúc', cls: 'bg-slate-800 text-slate-400 border-slate-700' },
+  cancelled: { label: 'Đã hủy',      cls: 'bg-red-500/20 text-red-400 border-red-500/30' },
 };
 
 const emptyEvent = () => ({
@@ -67,7 +67,7 @@ const SEED_EVENTS = [
     contactPhone: '0901234567',
     contactEmail: 'cntt@uef.edu.vn',
     maxParticipants: '200',
-    imageUrl: '',
+    imageUrl: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800&q=80',
     link: 'https://uef.edu.vn/events/ai-education-2025',
     status: 'upcoming',
     published: true,
@@ -85,7 +85,7 @@ const SEED_EVENTS = [
     contactPhone: '0901234567',
     contactEmail: 'nguyen.van.an@uef.edu.vn',
     maxParticipants: '50',
-    imageUrl: '',
+    imageUrl: 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=800&q=80',
     link: '',
     status: 'ongoing',
     published: true,
@@ -103,7 +103,7 @@ const SEED_EVENTS = [
     contactPhone: '0923456789',
     contactEmail: 'hackathon@uef.edu.vn',
     maxParticipants: '120',
-    imageUrl: '',
+    imageUrl: 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800&q=80',
     link: 'https://uef.edu.vn/hackathon2025',
     status: 'upcoming',
     published: true,
@@ -121,7 +121,7 @@ const SEED_EVENTS = [
     contactPhone: '0912345678',
     contactEmail: 'tran.bich.ngoc@uef.edu.vn',
     maxParticipants: '300',
-    imageUrl: '',
+    imageUrl: 'https://images.unsplash.com/photo-1639322537228-f710d846310a?w=800&q=80',
     link: 'https://teams.microsoft.com/seminar-blockchain',
     status: 'completed',
     published: true,
@@ -139,7 +139,7 @@ const SEED_EVENTS = [
     contactPhone: '0956789012',
     contactEmail: 'career@uef.edu.vn',
     maxParticipants: '500',
-    imageUrl: '',
+    imageUrl: 'https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=800&q=80',
     link: 'https://uef.edu.vn/jobfair2025',
     status: 'upcoming',
     published: true,
@@ -162,7 +162,10 @@ const AdminEventsPage = () => {
 
   const load = useCallback(() => {
     let list = loadEvents();
-    if (list.length === 0) {
+    // Re-seed nếu chưa có data hoặc seed cũ không có hình
+    const needReseed = list.length === 0 ||
+      (list.some(e => e.id?.startsWith('evt-')) && list.every(e => !e.imageUrl));
+    if (needReseed) {
       saveEvents(SEED_EVENTS);
       list = SEED_EVENTS;
     }
@@ -346,14 +349,23 @@ const AdminEventsPage = () => {
             {filtered.map(ev => (
               <tr key={ev.id} className="hover:bg-slate-900/50 transition-colors">
                 <td className="p-3">
-                  <button
-                    type="button"
-                    onClick={() => setViewEvent(ev)}
-                    className="text-left hover:text-amber-400 transition-colors"
-                  >
-                    <p className="font-bold text-white leading-tight">{ev.title}</p>
-                    <p className="text-[11px] text-slate-500 mt-0.5">{ev.organizer || '—'}</p>
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-slate-800 overflow-hidden flex-shrink-0 border border-slate-700 flex items-center justify-center">
+                      {ev.imageUrl ? (
+                        <img src={ev.imageUrl} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="material-symbols-outlined text-slate-600 text-sm">image</span>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setViewEvent(ev)}
+                      className="text-left hover:text-amber-400 transition-colors"
+                    >
+                      <p className="font-bold text-white leading-tight">{ev.title}</p>
+                      <p className="text-[11px] text-slate-500 mt-0.5">{ev.organizer || '—'}</p>
+                    </button>
+                  </div>
                 </td>
                 <td className="p-3 hidden md:table-cell">
                   <span className="text-xs font-semibold text-slate-300 bg-slate-800 px-2 py-1 rounded-md whitespace-nowrap">
@@ -368,7 +380,7 @@ const AdminEventsPage = () => {
                   )}
                 </td>
                 <td className="p-3 text-center">
-                  <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${STATUS_MAP[ev.status]?.cls || 'bg-slate-100 text-slate-600'}`}>
+                  <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border whitespace-nowrap ${STATUS_MAP[ev.status]?.cls || 'bg-slate-100 text-slate-600'}`}>
                     {STATUS_MAP[ev.status]?.label || ev.status}
                   </span>
                 </td>
