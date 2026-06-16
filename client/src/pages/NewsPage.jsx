@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getSocialPosts } from '../utils/adminContentStore';
+import { socialService } from '../services/api';
 
 const NewsPage = () => {
   const navigate = useNavigate();
@@ -10,43 +10,17 @@ const NewsPage = () => {
   const categories = ['All', 'Tin mới', 'Hướng dẫn', 'Tính năng', 'Báo chí', 'Sự kiện'];
 
   useEffect(() => {
-    const load = () => {
-      const posts = getSocialPosts();
-      
-      // Load events from localStorage
-      let eventsList = [];
+    const load = async () => {
       try {
-        const raw = localStorage.getItem('adminEvents');
-        eventsList = raw ? JSON.parse(raw) : [];
-      } catch (e) {
-        console.error(e);
+        const { data } = await socialService.getAll(true);
+        setAllNewsItems(data);
+      } catch (err) {
+        console.error("Failed to load news posts from backend", err);
       }
-      
-      // Map events to match news card format
-      const mappedEvents = eventsList.filter(e => e.published).map(e => ({
-        id: e.id,
-        title: e.title,
-        date: e.startDate ? new Date(e.startDate).toLocaleDateString('vi-VN') : '',
-        category: 'Sự kiện',
-        badgeClass: 'bg-amber-600 text-white',
-        image: e.imageUrl || 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&q=80&w=800',
-        desc: e.description || '',
-        published: e.published,
-        createdAt: e.createdAt || Date.now(),
-      }));
-      
-      // Combine and sort by createdAt descending
-      const combined = [...posts, ...mappedEvents].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-      setAllNewsItems(combined);
     };
-    
     load();
     window.addEventListener('admin-content-updated', load);
-    window.addEventListener('admin-events-updated', load);
-    return () => {
-      window.removeEventListener('admin-content-updated', load);
-      window.removeEventListener('admin-events-updated', load);
-    };
+    return () => window.removeEventListener('admin-content-updated', load);
   }, []);
 
   const filteredNews = filter === 'All' 
@@ -135,7 +109,9 @@ const NewsPage = () => {
                   </div>
                 </div>
                 <div className="px-4">
-                  <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-3 block">{news.date}</span>
+                  <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-3 block">
+                    {news.date || (news.createdAt ? new Date(news.createdAt).toLocaleDateString('vi-VN') : '')}
+                  </span>
                   <h3 className="text-xl font-black text-on-surface mb-3 line-clamp-2 group-hover:text-primary transition-colors leading-snug">
                     {news.title}
                   </h3>
@@ -166,7 +142,9 @@ const NewsPage = () => {
                   <div className="flex-1 flex flex-col justify-center py-6 pr-8">
                     <div className="flex items-center gap-3 mb-4">
                       <span className="w-10 h-[2px] bg-primary"></span>
-                      <span className="text-[10px] font-black text-primary uppercase tracking-widest">{news.date}</span>
+                      <span className="text-[10px] font-black text-primary uppercase tracking-widest">
+                        {news.date || (news.createdAt ? new Date(news.createdAt).toLocaleDateString('vi-VN') : '')}
+                      </span>
                     </div>
                     <h3 className="text-2xl font-black text-on-surface mb-4 group-hover:text-primary transition-colors leading-tight">
                       {news.title}

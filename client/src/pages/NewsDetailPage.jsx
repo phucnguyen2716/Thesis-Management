@@ -1,84 +1,86 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { socialService } from '../services/api';
 
 const NewsDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [post, setPost] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const newsDetail = React.useMemo(() => {
-    // 1. Check if it is an event (evt-...)
-    if (id?.startsWith('evt-')) {
+  useEffect(() => {
+    const load = async () => {
       try {
-        const raw = localStorage.getItem('adminEvents');
-        const list = raw ? JSON.parse(raw) : [];
-        const ev = list.find(e => e.id === id);
-        if (ev) {
-          return {
-            title: ev.title,
-            date: ev.startDate ? new Date(ev.startDate).toLocaleDateString('vi-VN') : '',
-            author: ev.organizer || 'Ban Tổ Chức',
-            category: 'Sự kiện',
-            image: ev.imageUrl || 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&q=80&w=800',
-            content: `
-              <p class="mb-4 font-bold text-lg text-primary">Thời gian diễn ra: ${ev.startDate ? new Date(ev.startDate).toLocaleDateString('vi-VN') : ''} ${ev.endDate && ev.endDate !== ev.startDate ? ` đến ${new Date(ev.endDate).toLocaleDateString('vi-VN')}` : ''}</p>
-              <p class="mb-4 font-bold text-slate-700">Địa điểm: ${ev.location || 'Trực tuyến'}</p>
-              ${ev.maxParticipants ? `<p class="mb-4">Số lượng người tham gia tối đa: <strong>${ev.maxParticipants} người</strong></p>` : ''}
-              <div class="mb-6 leading-relaxed whitespace-pre-line text-on-surface-variant font-medium">${ev.description || 'Không có mô tả chi tiết cho sự kiện này.'}</div>
-              ${(ev.contactPhone || ev.contactEmail) ? `
-                <div class="p-4 bg-surface-container rounded-xl border border-outline-variant mt-6 text-sm">
-                  <h4 class="font-bold text-on-surface mb-2">Thông tin liên hệ:</h4>
-                  ${ev.contactPhone ? `<p>Điện thoại: ${ev.contactPhone}</p>` : ''}
-                  ${ev.contactEmail ? `<p>Email: ${ev.contactEmail}</p>` : ''}
-                </div>
-              ` : ''}
-            `,
-            link: ev.link,
-            isEvent: true,
-          };
-        }
-      } catch (e) {
-        console.error(e);
+        const { data } = await socialService.getAll(false);
+        const found = data.find(p => p.id === id || String(p.id) === String(id));
+        setPost(found);
+      } catch (err) {
+        console.error("Failed to load post detail", err);
+      } finally {
+        setLoading(false);
       }
-    }
-
-    // 2. Otherwise search in news posts
-    try {
-      const raw = localStorage.getItem('adminSocialPosts');
-      const list = raw ? JSON.parse(raw) : [];
-      const post = list.find(p => p.id === id);
-      if (post) {
-        return {
-          title: post.title,
-          date: post.date || new Date(post.createdAt).toLocaleDateString('vi-VN'),
-          author: post.author || 'Phòng Quản lý Khoa học',
-          category: post.category || 'Tin mới',
-          image: post.image || 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&q=80&w=800',
-          content: post.content ? post.content : `<p>${post.desc}</p>`,
-          link: post.sourceLink || post.link,
-          isEvent: false,
-        };
-      }
-    } catch (e) {
-      console.error(e);
-    }
-
-    return null;
+    };
+    load();
   }, [id]);
 
-  if (!newsDetail) {
+  if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-background p-6">
-        <span className="material-symbols-outlined text-6xl text-slate-400 mb-4">error</span>
-        <h2 className="text-2xl font-black text-on-surface mb-2">Không tìm thấy bài viết hoặc sự kiện</h2>
-        <button
-          onClick={() => navigate('/news')}
-          className="mt-4 px-6 py-2 bg-primary text-white rounded-xl font-bold uppercase text-xs tracking-wider"
-        >
-          Quay lại danh sách
+      <div className="flex items-center justify-center min-h-screen bg-background text-on-surface-variant font-medium">
+        <span className="material-symbols-outlined animate-spin text-4xl text-primary">sync</span>
+        <span className="ml-2">Đang tải chi tiết bài viết...</span>
+      </div>
+    );
+  }
+
+  if (!post) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-background text-on-surface-variant p-6">
+        <span className="material-symbols-outlined text-6xl text-red-500 mb-4 font-black">error</span>
+        <h2 className="text-2xl font-black text-on-surface mb-2">Không tìm thấy bài viết</h2>
+        <p className="mb-6 opacity-60">Bài viết hoặc sự kiện này không tồn tại hoặc đã bị xóa.</p>
+        <button onClick={() => navigate('/news')} className="px-6 py-3 bg-primary text-on-primary rounded-xl font-black text-xs uppercase tracking-widest">
+          Quay lại Tin tức
         </button>
       </div>
     );
   }
+
+  let extra = {};
+  if (post.category === 'Sự kiện') {
+    try {
+      extra = JSON.parse(post.content);
+    } catch {
+      // Fallback
+    }
+  }
+
+  const newsDetail = {
+    title: post.title || '',
+    date: post.date || (post.createdAt ? new Date(post.createdAt).toLocaleDateString('vi-VN') : ''),
+    author: extra.organizer || 'Ban Tổ chức',
+    category: post.category || 'Tin tức',
+    image: post.image || 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4',
+    content: post.category === 'Sự kiện' 
+      ? `
+        <div class="space-y-4">
+          <p class="mb-6 font-bold text-lg text-primary flex items-center gap-2">
+            <span class="material-symbols-outlined">event_note</span>
+            Sự kiện: ${extra.eventType || 'Hội thảo'}
+          </p>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-6 rounded-2xl bg-surface-container border border-outline-variant/50">
+            <p><strong>Bắt đầu:</strong> ${extra.startDate ? new Date(extra.startDate).toLocaleDateString('vi-VN') : '—'}</p>
+            <p><strong>Kết thúc:</strong> ${extra.endDate ? new Date(extra.endDate).toLocaleDateString('vi-VN') : '—'}</p>
+            <p><strong>Địa điểm:</strong> ${extra.location || 'Trực tuyến'}</p>
+            <p><strong>Số lượng tối đa:</strong> ${extra.maxParticipants || 'Không giới hạn'} người</p>
+          </div>
+          <p class="mt-6 font-medium text-slate-700 leading-relaxed">${post.desc || ''}</p>
+        </div>
+      `
+      : (post.content || post.desc || ''),
+    link: extra.link || '',
+    isEvent: post.category === 'Sự kiện',
+    extra
+  };
 
   return (
     <div className="flex flex-col bg-background min-h-screen animate-in fade-in duration-500">
@@ -112,6 +114,7 @@ const NewsDetailPage = () => {
       {/* Content Section */}
       <section className="px-8 md:px-16 lg:px-24 py-16 max-w-[1000px] mx-auto w-full">
         <div className="prose prose-lg max-w-none text-on-surface-variant leading-loose font-medium mb-12">
+          {/* Using dangerouslySetInnerHTML to simulate rich content for mock */}
           <div dangerouslySetInnerHTML={{ __html: newsDetail.content }} />
         </div>
 
@@ -123,10 +126,8 @@ const NewsDetailPage = () => {
                    <span className="material-symbols-outlined">link</span>
                 </div>
                 <div>
-                  <h4 className="text-sm font-black text-on-surface">
-                    {newsDetail.isEvent ? 'Liên kết sự kiện' : 'Tham khảo bài viết gốc'}
-                  </h4>
-                  <p className="text-[10px] text-on-surface-variant font-medium">Xem chi tiết tại website liên kết.</p>
+                  <h4 className="text-sm font-black text-on-surface">Tham khảo bài viết gốc</h4>
+                  <p className="text-[10px] text-on-surface-variant font-medium">Xem chi tiết tại website chính thức.</p>
                 </div>
              </div>
              <a href={newsDetail.link} target="_blank" rel="noreferrer" className="px-8 py-3 bg-white text-primary rounded-xl font-black text-[10px] uppercase tracking-widest border border-outline-variant hover:bg-primary hover:text-on-primary transition-all">Truy cập ngay</a>
@@ -134,7 +135,7 @@ const NewsDetailPage = () => {
         )}
 
         {/* Google Form Registration Section */}
-        {newsDetail.isEvent && newsDetail.link && (
+        {newsDetail.isEvent && (
           <div className="mb-16 bg-gradient-to-br from-primary to-primary-container rounded-[3rem] p-12 text-on-primary shadow-2xl relative overflow-hidden group">
              <span className="material-symbols-outlined absolute -right-8 -top-8 text-[12rem] opacity-10 rotate-12 group-hover:scale-110 transition-transform duration-700">assignment</span>
              <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
@@ -145,16 +146,16 @@ const NewsDetailPage = () => {
                   </div>
                   <h3 className="text-3xl font-black mb-4 tracking-tight">Sẵn sàng tham gia?</h3>
                   <p className="text-sm font-medium opacity-80 leading-relaxed max-w-md">
-                     Vui lòng click vào nút bên dưới để mở liên kết đăng ký chính thức của sự kiện.
+                     Vui lòng đăng ký tham gia sự kiện trực tuyến bằng cách nhấn nút bên dưới.
                   </p>
                 </div>
                 <a 
-                  href={newsDetail.link} 
+                  href={newsDetail.link || "#"} 
                   target="_blank" 
                   rel="noreferrer" 
                   className="shrink-0 px-12 py-5 bg-white text-primary rounded-[1.5rem] font-black uppercase tracking-[0.2em] text-xs shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-3"
                 >
-                  Đăng ký ngay
+                  Mở Link Đăng Ký
                   <span className="material-symbols-outlined text-lg">open_in_new</span>
                 </a>
              </div>

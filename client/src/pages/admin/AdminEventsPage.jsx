@@ -1,21 +1,5 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
-
-// ─────────────────────────────────────────────────────────────
-// Storage helpers
-// ─────────────────────────────────────────────────────────────
-const STORAGE_KEY = 'adminEvents';
-
-const loadEvents = () => {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch { return []; }
-};
-
-const saveEvents = (list) => {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
-  window.dispatchEvent(new Event('admin-events-updated'));
-};
+import { socialService } from '../../services/api';
 
 const EVENT_TYPES = [
   'Hội thảo',
@@ -160,22 +144,106 @@ const AdminEventsPage = () => {
   const [editId, setEditId] = useState(null);
   const [viewEvent, setViewEvent] = useState(null);
 
-  const load = useCallback(() => {
-    let list = loadEvents();
-    // Re-seed nếu chưa có data hoặc seed cũ không có hình
-    const needReseed = list.length === 0 ||
-      (list.some(e => e.id?.startsWith('evt-')) && list.every(e => !e.imageUrl));
-    if (needReseed) {
-      saveEvents(SEED_EVENTS);
-      list = SEED_EVENTS;
+  const load = useCallback(async () => {
+    try {
+      const { data } = await socialService.getAll(false);
+      let list = data
+        .filter(p => p.category === 'Sự kiện')
+        .map(p => {
+          let extra = {};
+          try {
+            extra = JSON.parse(p.content);
+          } catch {
+            extra = {};
+          }
+          return {
+            id: p.id,
+            title: p.title,
+            description: p.desc,
+            imageUrl: p.image,
+            published: p.published,
+            createdAt: new Date(p.createdAt).getTime(),
+            cloudinaryStatus: p.cloudinaryStatus,
+            eventType: extra.eventType || 'Hội thảo',
+            location: extra.location || '',
+            startDate: extra.startDate || '',
+            endDate: extra.endDate || '',
+            organizer: extra.organizer || '',
+            contactPhone: extra.contactPhone || '',
+            contactEmail: extra.contactEmail || '',
+            maxParticipants: extra.maxParticipants || '',
+            link: extra.link || '',
+            status: extra.status || 'upcoming',
+          };
+        });
+
+      // Nếu chưa có sự kiện nào trong DB, tự động seed lên DB
+      if (list.length === 0) {
+        for (const seed of SEED_EVENTS) {
+          const payload = {
+            title: seed.title,
+            category: 'Sự kiện',
+            badgeClass: 'bg-amber-500 text-white',
+            image: seed.imageUrl,
+            desc: seed.description,
+            content: JSON.stringify({
+              eventType: seed.eventType,
+              location: seed.location,
+              startDate: seed.startDate,
+              endDate: seed.endDate,
+              organizer: seed.organizer,
+              contactPhone: seed.contactPhone,
+              contactEmail: seed.contactEmail,
+              maxParticipants: seed.maxParticipants,
+              link: seed.link,
+              status: seed.status,
+            }),
+            published: seed.published,
+          };
+          await socialService.create(payload);
+        }
+        const res = await socialService.getAll(false);
+        list = res.data
+          .filter(p => p.category === 'Sự kiện')
+          .map(p => {
+            let extra = {};
+            try { extra = JSON.parse(p.content); } catch { extra = {}; }
+            return {
+              id: p.id,
+              title: p.title,
+              description: p.desc,
+              imageUrl: p.image,
+              published: p.published,
+              createdAt: new Date(p.createdAt).getTime(),
+              cloudinaryStatus: p.cloudinaryStatus,
+              eventType: extra.eventType || 'Hội thảo',
+              location: extra.location || '',
+              startDate: extra.startDate || '',
+              endDate: extra.endDate || '',
+              organizer: extra.organizer || '',
+              contactPhone: extra.contactPhone || '',
+              contactEmail: extra.contactEmail || '',
+              maxParticipants: extra.maxParticipants || '',
+              link: extra.link || '',
+              status: extra.status || 'upcoming',
+            };
+          });
+      }
+
+      setEvents(list.sort((a, b) => b.createdAt - a.createdAt));
+    } catch (err) {
+      console.error("Failed to load events from backend", err);
     }
-    setEvents(list.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)));
   }, []);
 
   useEffect(() => {
     load();
     window.addEventListener('admin-events-updated', load);
-    return () => window.removeEventListener('admin-events-updated', load);
+    window.addEventListener('admin-content-updated', load);
+    return () => {
+      window.removeEventListener('admin-events-updated', load);
+      window.removeEventListener('admin-content-updated', load);
+    };
   }, [load]);
 
   const filtered = useMemo(() => {
@@ -211,38 +279,83 @@ const AdminEventsPage = () => {
     setModal('edit');
   };
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
-    const list = loadEvents();
-    if (modal === 'create') {
-      const newEvent = {
-        ...form,
-        id: `evt-${Date.now()}`,
-        createdAt: Date.now(),
+    try {
+      const payload = {
+        title: form.title,
+        category: 'Sự kiện',
+        badgeClass: 'bg-amber-500 text-white',
+        image: form.imageUrl,
+        desc: form.description,
+        content: JSON.stringify({
+          eventType: form.eventType,
+          location: form.location,
+          startDate: form.startDate,
+          endDate: form.endDate,
+          organizer: form.organizer,
+          contactPhone: form.contactPhone,
+          contactEmail: form.contactEmail,
+          maxParticipants: form.maxParticipants,
+          link: form.link,
+          status: form.status,
+        }),
+        published: form.published,
       };
-      list.unshift(newEvent);
-    } else {
-      const idx = list.findIndex(ev => ev.id === editId);
-      if (idx >= 0) list[idx] = { ...list[idx], ...form };
+
+      if (modal === 'create') {
+        await socialService.create(payload);
+      } else {
+        await socialService.update(editId, payload);
+      }
+      setModal(null);
+      load();
+    } catch (err) {
+      console.error("Failed to save event", err);
+      alert("Đã xảy ra lỗi khi lưu sự kiện.");
     }
-    saveEvents(list);
-    setModal(null);
-    load();
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (!window.confirm('Bạn có chắc muốn xóa sự kiện này?')) return;
-    const list = loadEvents().filter(ev => ev.id !== id);
-    saveEvents(list);
-    load();
+    try {
+      await socialService.delete(id);
+      load();
+    } catch (err) {
+      console.error("Failed to delete event", err);
+      alert("Đã xảy ra lỗi khi xóa sự kiện.");
+    }
   };
 
-  const handleTogglePublish = (id) => {
-    const list = loadEvents().map(ev =>
-      ev.id === id ? { ...ev, published: !ev.published } : ev
-    );
-    saveEvents(list);
-    load();
+  const handleTogglePublish = async (id) => {
+    const ev = events.find(item => item.id === id);
+    if (!ev) return;
+    try {
+      const payload = {
+        title: ev.title,
+        category: 'Sự kiện',
+        badgeClass: 'bg-amber-500 text-white',
+        image: ev.imageUrl,
+        desc: ev.description,
+        content: JSON.stringify({
+          eventType: ev.eventType,
+          location: ev.location,
+          startDate: ev.startDate,
+          endDate: ev.endDate,
+          organizer: ev.organizer,
+          contactPhone: ev.contactPhone,
+          contactEmail: ev.contactEmail,
+          maxParticipants: ev.maxParticipants,
+          link: ev.link,
+          status: ev.status,
+        }),
+        published: !ev.published,
+      };
+      await socialService.update(id, payload);
+      load();
+    } catch (err) {
+      console.error("Failed to toggle publish status", err);
+    }
   };
 
   const formatDate = (d) => {
@@ -357,14 +470,34 @@ const AdminEventsPage = () => {
                         <span className="material-symbols-outlined text-slate-600 text-sm">image</span>
                       )}
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => setViewEvent(ev)}
-                      className="text-left hover:text-amber-400 transition-colors"
-                    >
-                      <p className="font-bold text-white leading-tight">{ev.title}</p>
-                      <p className="text-[11px] text-slate-500 mt-0.5">{ev.organizer || '—'}</p>
-                    </button>
+                    <div>
+                      <button
+                        type="button"
+                        onClick={() => setViewEvent(ev)}
+                        className="text-left hover:text-amber-400 transition-colors font-bold text-white leading-tight"
+                      >
+                        {ev.title}
+                      </button>
+                      <div className="flex items-center gap-2 mt-1 flex-wrap">
+                        <span className="text-[11px] text-slate-500">{ev.organizer || '—'}</span>
+                        {ev.imageUrl && (
+                          <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded-full flex items-center gap-0.5 border ${
+                            ev.cloudinaryStatus === 'Uploaded' 
+                              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
+                              : ev.cloudinaryStatus === 'Pending' 
+                              ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20 animate-pulse' 
+                              : ev.cloudinaryStatus === 'Failed' 
+                              ? 'bg-red-500/10 text-red-400 border-red-500/20' 
+                              : 'bg-slate-700/50 text-slate-400 border-slate-700'
+                          }`}>
+                            <span className="material-symbols-outlined text-[8px]">{
+                              ev.cloudinaryStatus === 'Uploaded' ? 'cloud_done' : ev.cloudinaryStatus === 'Pending' ? 'sync' : ev.cloudinaryStatus === 'Failed' ? 'cloud_off' : 'cloud'
+                            }</span>
+                            {ev.cloudinaryStatus === 'Uploaded' ? 'Cloudinary' : ev.cloudinaryStatus === 'Pending' ? 'Đang đẩy...' : ev.cloudinaryStatus === 'Failed' ? 'Lỗi đẩy' : 'Chưa đẩy'}
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </td>
                 <td className="p-3 hidden md:table-cell">
