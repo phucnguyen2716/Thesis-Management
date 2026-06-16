@@ -7,13 +7,46 @@ const NewsPage = () => {
   const [filter, setFilter] = useState('All');
   const [allNewsItems, setAllNewsItems] = useState([]);
 
-  const categories = ['All', 'Tin mới', 'Hướng dẫn', 'Tính năng', 'Báo chí'];
+  const categories = ['All', 'Tin mới', 'Hướng dẫn', 'Tính năng', 'Báo chí', 'Sự kiện'];
 
   useEffect(() => {
-    const load = () => setAllNewsItems(getSocialPosts());
+    const load = () => {
+      const posts = getSocialPosts();
+      
+      // Load events from localStorage
+      let eventsList = [];
+      try {
+        const raw = localStorage.getItem('adminEvents');
+        eventsList = raw ? JSON.parse(raw) : [];
+      } catch (e) {
+        console.error(e);
+      }
+      
+      // Map events to match news card format
+      const mappedEvents = eventsList.filter(e => e.published).map(e => ({
+        id: e.id,
+        title: e.title,
+        date: e.startDate ? new Date(e.startDate).toLocaleDateString('vi-VN') : '',
+        category: 'Sự kiện',
+        badgeClass: 'bg-amber-600 text-white',
+        image: e.imageUrl || 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&q=80&w=800',
+        desc: e.description || '',
+        published: e.published,
+        createdAt: e.createdAt || Date.now(),
+      }));
+      
+      // Combine and sort by createdAt descending
+      const combined = [...posts, ...mappedEvents].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+      setAllNewsItems(combined);
+    };
+    
     load();
     window.addEventListener('admin-content-updated', load);
-    return () => window.removeEventListener('admin-content-updated', load);
+    window.addEventListener('admin-events-updated', load);
+    return () => {
+      window.removeEventListener('admin-content-updated', load);
+      window.removeEventListener('admin-events-updated', load);
+    };
   }, []);
 
   const filteredNews = filter === 'All' 

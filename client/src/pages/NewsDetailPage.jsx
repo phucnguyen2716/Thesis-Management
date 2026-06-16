@@ -5,26 +5,80 @@ const NewsDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  // Mock data for demonstration
-  const newsDetail = {
-    title: "Công bố danh sách các sáng kiến tiêu biểu học kỳ 1 năm 2024",
-    date: "20/10/2024",
-    author: "Phòng Quản lý Khoa học",
-    category: "Tin mới",
-    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuDVaKckFBO6OahgQhL5POM9HkyyecIPbbQpO1dWLvQHUSBcj49wyeR69ByLr8G1HshrXjAzidE5A-wOT6RA7V7eLvC33ch_y8-bNDvNRg1HwmmnaJTAcz8NBYG9tH7A-4q9Aydwy8_z9zEL6dgejrSFafcXOHrBluNSxzC-1l68EVFbA93qGEExIzjN4r7IEyBbD-vnEDCAtJDWdRszsVJdArxh12IA2eUzDBOvizUG5zZuFjD1jL69T8qDOK5VDX_pqXpNUf76mRsk",
-    content: `
-      <p className="mb-6">Hội đồng chuyên môn UEF vừa chính thức công bố danh sách 10 sáng kiến xuất sắc nhất trong học kỳ 1 năm 2024. Đây là những công trình nghiên cứu mang tính đột phá, có khả năng ứng dụng cao vào thực tiễn quản lý và giảng dạy tại trường.</p>
-      <h3 className="text-2xl font-black text-on-surface mb-4">Tiêu chí lựa chọn</h3>
-      <p className="mb-6">Các đề tài được đánh giá dựa trên 3 trụ cột chính: Tính mới (Novelty), Khả thi (Feasibility) và Tác động xã hội (Impact). Thuật toán AI Gemini cũng đã hỗ trợ hội đồng trong việc trích xuất các ý tưởng cốt lõi và kiểm tra tính nguyên bản của từng bài viết thông qua mô hình BM25.</p>
-      <h3 className="text-2xl font-black text-on-surface mb-4">Các đề tài nổi bật</h3>
-      <ul className="list-disc pl-6 mb-6 space-y-2">
-        <li>Ứng dụng Blockchain trong quản lý văn bằng chứng chỉ.</li>
-        <li>Hệ thống gợi ý học tập cá nhân hóa cho sinh viên khối ngành kinh tế.</li>
-        <li>Giải pháp giảm thiểu rác thải nhựa trong khuôn viên đại học.</li>
-      </ul>
-      <p className="mb-6 font-medium">Nhà trường sẽ tổ chức buổi lễ vinh danh và trao giải cho các nhóm tác giả vào cuối tháng này tại Hội trường Liberty. Mời các bạn sinh viên và giảng viên cùng tham dự để giao lưu và học hỏi kinh nghiệm nghiên cứu.</p>
-    `
-  };
+  const newsDetail = React.useMemo(() => {
+    // 1. Check if it is an event (evt-...)
+    if (id?.startsWith('evt-')) {
+      try {
+        const raw = localStorage.getItem('adminEvents');
+        const list = raw ? JSON.parse(raw) : [];
+        const ev = list.find(e => e.id === id);
+        if (ev) {
+          return {
+            title: ev.title,
+            date: ev.startDate ? new Date(ev.startDate).toLocaleDateString('vi-VN') : '',
+            author: ev.organizer || 'Ban Tổ Chức',
+            category: 'Sự kiện',
+            image: ev.imageUrl || 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&q=80&w=800',
+            content: `
+              <p class="mb-4 font-bold text-lg text-primary">Thời gian diễn ra: ${ev.startDate ? new Date(ev.startDate).toLocaleDateString('vi-VN') : ''} ${ev.endDate && ev.endDate !== ev.startDate ? ` đến ${new Date(ev.endDate).toLocaleDateString('vi-VN')}` : ''}</p>
+              <p class="mb-4 font-bold text-slate-700">Địa điểm: ${ev.location || 'Trực tuyến'}</p>
+              ${ev.maxParticipants ? `<p class="mb-4">Số lượng người tham gia tối đa: <strong>${ev.maxParticipants} người</strong></p>` : ''}
+              <div class="mb-6 leading-relaxed whitespace-pre-line text-on-surface-variant font-medium">${ev.description || 'Không có mô tả chi tiết cho sự kiện này.'}</div>
+              ${(ev.contactPhone || ev.contactEmail) ? `
+                <div class="p-4 bg-surface-container rounded-xl border border-outline-variant mt-6 text-sm">
+                  <h4 class="font-bold text-on-surface mb-2">Thông tin liên hệ:</h4>
+                  ${ev.contactPhone ? `<p>Điện thoại: ${ev.contactPhone}</p>` : ''}
+                  ${ev.contactEmail ? `<p>Email: ${ev.contactEmail}</p>` : ''}
+                </div>
+              ` : ''}
+            `,
+            link: ev.link,
+            isEvent: true,
+          };
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    // 2. Otherwise search in news posts
+    try {
+      const raw = localStorage.getItem('adminSocialPosts');
+      const list = raw ? JSON.parse(raw) : [];
+      const post = list.find(p => p.id === id);
+      if (post) {
+        return {
+          title: post.title,
+          date: post.date || new Date(post.createdAt).toLocaleDateString('vi-VN'),
+          author: post.author || 'Phòng Quản lý Khoa học',
+          category: post.category || 'Tin mới',
+          image: post.image || 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&q=80&w=800',
+          content: post.content ? post.content : `<p>${post.desc}</p>`,
+          link: post.sourceLink || post.link,
+          isEvent: false,
+        };
+      }
+    } catch (e) {
+      console.error(e);
+    }
+
+    return null;
+  }, [id]);
+
+  if (!newsDetail) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-background p-6">
+        <span className="material-symbols-outlined text-6xl text-slate-400 mb-4">error</span>
+        <h2 className="text-2xl font-black text-on-surface mb-2">Không tìm thấy bài viết hoặc sự kiện</h2>
+        <button
+          onClick={() => navigate('/news')}
+          className="mt-4 px-6 py-2 bg-primary text-white rounded-xl font-bold uppercase text-xs tracking-wider"
+        >
+          Quay lại danh sách
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col bg-background min-h-screen animate-in fade-in duration-500">
@@ -58,49 +112,54 @@ const NewsDetailPage = () => {
       {/* Content Section */}
       <section className="px-8 md:px-16 lg:px-24 py-16 max-w-[1000px] mx-auto w-full">
         <div className="prose prose-lg max-w-none text-on-surface-variant leading-loose font-medium mb-12">
-          {/* Using dangerouslySetInnerHTML to simulate rich content for mock */}
           <div dangerouslySetInnerHTML={{ __html: newsDetail.content }} />
         </div>
 
         {/* External Link Section */}
-        <div className="mb-16 p-8 bg-surface-container rounded-[2rem] border border-outline-variant flex flex-col md:flex-row items-center justify-between gap-6">
-           <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-primary shadow-sm">
-                 <span className="material-symbols-outlined">link</span>
-              </div>
-              <div>
-                <h4 className="text-sm font-black text-on-surface">Tham khảo bài viết gốc</h4>
-                <p className="text-[10px] text-on-surface-variant font-medium">Xem chi tiết tại website chính thức của UEF.</p>
-              </div>
-           </div>
-           <a href="https://uef.edu.vn" target="_blank" rel="noreferrer" className="px-8 py-3 bg-white text-primary rounded-xl font-black text-[10px] uppercase tracking-widest border border-outline-variant hover:bg-primary hover:text-on-primary transition-all">Truy cập ngay</a>
-        </div>
+        {newsDetail.link && (
+          <div className="mb-16 p-8 bg-surface-container rounded-[2rem] border border-outline-variant flex flex-col md:flex-row items-center justify-between gap-6">
+             <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-primary shadow-sm">
+                   <span className="material-symbols-outlined">link</span>
+                </div>
+                <div>
+                  <h4 className="text-sm font-black text-on-surface">
+                    {newsDetail.isEvent ? 'Liên kết sự kiện' : 'Tham khảo bài viết gốc'}
+                  </h4>
+                  <p className="text-[10px] text-on-surface-variant font-medium">Xem chi tiết tại website liên kết.</p>
+                </div>
+             </div>
+             <a href={newsDetail.link} target="_blank" rel="noreferrer" className="px-8 py-3 bg-white text-primary rounded-xl font-black text-[10px] uppercase tracking-widest border border-outline-variant hover:bg-primary hover:text-on-primary transition-all">Truy cập ngay</a>
+          </div>
+        )}
 
         {/* Google Form Registration Section */}
-        <div className="mb-16 bg-gradient-to-br from-primary to-primary-container rounded-[3rem] p-12 text-on-primary shadow-2xl relative overflow-hidden group">
-           <span className="material-symbols-outlined absolute -right-8 -top-8 text-[12rem] opacity-10 rotate-12 group-hover:scale-110 transition-transform duration-700">assignment</span>
-           <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
-              <div className="flex-1 text-center md:text-left">
-                <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 rounded-full mb-6 border border-white/20">
-                   <span className="material-symbols-outlined text-sm">edit_note</span>
-                   <span className="text-[10px] font-black uppercase tracking-widest">Đăng ký trực tuyến</span>
+        {newsDetail.isEvent && newsDetail.link && (
+          <div className="mb-16 bg-gradient-to-br from-primary to-primary-container rounded-[3rem] p-12 text-on-primary shadow-2xl relative overflow-hidden group">
+             <span className="material-symbols-outlined absolute -right-8 -top-8 text-[12rem] opacity-10 rotate-12 group-hover:scale-110 transition-transform duration-700">assignment</span>
+             <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+                <div className="flex-1 text-center md:text-left">
+                  <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 rounded-full mb-6 border border-white/20">
+                     <span className="material-symbols-outlined text-sm">edit_note</span>
+                     <span className="text-[10px] font-black uppercase tracking-widest">Đăng ký trực tuyến</span>
+                  </div>
+                  <h3 className="text-3xl font-black mb-4 tracking-tight">Sẵn sàng tham gia?</h3>
+                  <p className="text-sm font-medium opacity-80 leading-relaxed max-w-md">
+                     Vui lòng click vào nút bên dưới để mở liên kết đăng ký chính thức của sự kiện.
+                  </p>
                 </div>
-                <h3 className="text-3xl font-black mb-4 tracking-tight">Sẵn sàng tham gia?</h3>
-                <p className="text-sm font-medium opacity-80 leading-relaxed max-w-md">
-                   Vui lòng điền thông tin vào biểu mẫu Google Form chính thức để chúng tôi có thể sắp xếp chỗ ngồi và tài liệu cho bạn tốt nhất.
-                </p>
-              </div>
-              <a 
-                href="https://forms.gle" 
-                target="_blank" 
-                rel="noreferrer" 
-                className="shrink-0 px-12 py-5 bg-white text-primary rounded-[1.5rem] font-black uppercase tracking-[0.2em] text-xs shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-3"
-              >
-                Mở Google Form
-                <span className="material-symbols-outlined text-lg">open_in_new</span>
-              </a>
-           </div>
-        </div>
+                <a 
+                  href={newsDetail.link} 
+                  target="_blank" 
+                  rel="noreferrer" 
+                  className="shrink-0 px-12 py-5 bg-white text-primary rounded-[1.5rem] font-black uppercase tracking-[0.2em] text-xs shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-3"
+                >
+                  Đăng ký ngay
+                  <span className="material-symbols-outlined text-lg">open_in_new</span>
+                </a>
+             </div>
+          </div>
+        )}
 
         {/* Share & Actions */}
         <div className="mt-16 pt-8 border-t border-outline-variant flex flex-col md:flex-row justify-between items-center gap-8">
