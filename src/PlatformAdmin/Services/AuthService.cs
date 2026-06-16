@@ -52,7 +52,7 @@ public class AuthService : IAuthService
 
         var token = GenerateJwt(user);
         var refresh = GenerateRefreshToken();
-        return new LoginResponse(token, refresh, user.FullName, user.Email, user.Role, user.Id);
+        return new LoginResponse(token, refresh, user.FullName, user.Email, user.Role, user.Id, user.Phone, user.Department);
     }
 
     public async Task<LoginResponse> RegisterAsync(RegisterRequest request)
@@ -76,7 +76,7 @@ public class AuthService : IAuthService
 
         var token = GenerateJwt(user);
         var refresh = GenerateRefreshToken();
-        return new LoginResponse(token, refresh, user.FullName, user.Email, user.Role, user.Id);
+        return new LoginResponse(token, refresh, user.FullName, user.Email, user.Role, user.Id, user.Phone, user.Department);
     }
 
     public async Task<LoginResponse> LoginWithGoogleAsync(string googleToken)
@@ -172,7 +172,7 @@ public class AuthService : IAuthService
 
         var token = GenerateJwt(user);
         var refresh = GenerateRefreshToken();
-        return new LoginResponse(token, refresh, user.FullName, user.Email, user.Role, user.Id);
+        return new LoginResponse(token, refresh, user.FullName, user.Email, user.Role, user.Id, user.Phone, user.Department);
     }
 
     public Task<bool> RevokeTokenAsync(string token)

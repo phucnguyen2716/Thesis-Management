@@ -1,4 +1,4 @@
-﻿namespace PlatformAdmin.DTOs.Auth;
+namespace PlatformAdmin.DTOs.Auth;
 
 public record LoginRequest(string Email, string Password);
 
@@ -8,7 +8,9 @@ public record LoginResponse(
     string FullName,
     string Email,
     string Role,
-    int UserId
+    int UserId,
+    string? Phone = null,
+    string? Department = null
 );
 
 public record RegisterRequest(

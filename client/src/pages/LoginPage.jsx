@@ -68,10 +68,33 @@ const LoginPage = () => {
           fullName: data.fullName,
           email: data.email,
           role: data.role,
+          phone: data.phone || '',
+          department: data.department || '',
           studentId: data.role === 'Student' ? 'SV' + String(data.userId).padStart(3, '0') : null,
-          faculty: 'Computer Science',
+          faculty: data.department || 'Computer Science',
         })
       );
+
+      // Seed lecturerProfile khi Advisor đăng nhập lần đầu
+      if (data.role === 'Advisor') {
+        const existing = localStorage.getItem('lecturerProfile');
+        if (!existing) {
+          localStorage.setItem('lecturerProfile', JSON.stringify({
+            fullName: data.fullName || '',
+            email: data.email || '',
+            faculty: data.department || '',
+            academicTitle: (data.fullName || '').split('.').length > 1
+              ? data.fullName.substring(0, data.fullName.lastIndexOf('.') + 1).trim()
+              : 'Giảng viên',
+            phone: data.phone || '',
+            employeeId: 'GV' + String(data.userId).padStart(3, '0'),
+            bio: '',
+            expertise: '',
+            avatarUrl: '',
+            majorIds: [],
+          }));
+        }
+      }
 
       if (data.role === 'Admin') navigate('/admin');
       else if (data.role === 'Advisor') navigate('/lecturer');
