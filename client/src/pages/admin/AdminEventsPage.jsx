@@ -356,7 +356,7 @@ const AdminEventsPage = () => {
                   </button>
                 </td>
                 <td className="p-3 hidden md:table-cell">
-                  <span className="text-xs font-semibold text-slate-300 bg-slate-800 px-2 py-1 rounded-md">
+                  <span className="text-xs font-semibold text-slate-300 bg-slate-800 px-2 py-1 rounded-md whitespace-nowrap">
                     {ev.eventType}
                   </span>
                 </td>
@@ -490,6 +490,17 @@ const AdminEventsPage = () => {
                   <a href={viewEvent.link} target="_blank" rel="noopener noreferrer" className="text-amber-400 text-sm hover:underline break-all">
                     {viewEvent.link}
                   </a>
+                </div>
+              )}
+              {viewEvent.imageUrl?.trim() && (
+                <div>
+                  <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">Hình ảnh</p>
+                  <img
+                    src={viewEvent.imageUrl}
+                    alt={viewEvent.title}
+                    className="w-full h-48 object-cover rounded-xl border border-slate-700"
+                    onError={e => { e.target.style.display = 'none'; }}
+                  />
                 </div>
               )}
             </div>
@@ -667,6 +678,35 @@ const AdminEventsPage = () => {
                   placeholder="https://..."
                 />
               </label>
+
+              {/* Image */}
+              <label className="block">
+                <span className="text-[10px] font-bold text-slate-500 uppercase">Hình ảnh sự kiện (URL)</span>
+                <input
+                  value={form.imageUrl}
+                  onChange={e => set('imageUrl', e.target.value)}
+                  className="mt-1 w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-white text-sm"
+                  placeholder="https://example.com/event-image.jpg"
+                />
+              </label>
+              {form.imageUrl?.trim() && (
+                <div className="relative rounded-xl overflow-hidden border border-slate-700 bg-slate-800">
+                  <img
+                    src={form.imageUrl}
+                    alt="Preview"
+                    className="w-full h-48 object-cover"
+                    onError={e => { e.target.style.display = 'none'; }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => set('imageUrl', '')}
+                    className="absolute top-2 right-2 w-7 h-7 bg-black/60 hover:bg-red-500 text-white rounded-full flex items-center justify-center transition-colors"
+                    title="Xóa hình"
+                  >
+                    <span className="material-symbols-outlined text-sm">close</span>
+                  </button>
+                </div>
+              )}
 
               {/* Published */}
               <label className="flex items-center gap-3 cursor-pointer">
