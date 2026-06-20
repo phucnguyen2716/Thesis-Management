@@ -171,7 +171,6 @@ Admin có thể kích hoạt thủ công: `POST /api/thesis/seed-drive-samples` 
 |---|---|---|
 | **Frontend** | http://localhost:5173 | Giao diện React SPA |
 | **Backend API** | http://localhost:5145 | .NET Core Web API & Hangfire |
-| **Plagiarism Checker** | http://localhost:5000 | Dịch vụ trích xuất PDF/Word và quét đạo văn |
 | **Swagger** | http://localhost:5145/swagger | Tài liệu kiểm thử API |
 | **Hangfire Dashboard** | http://localhost:5145/hangfire | Quản lý tác vụ ngầm |
 | **Health Dependencies** | http://localhost:5145/api/health/dependencies | Kiểm tra Elasticsearch + RabbitMQ |
@@ -790,23 +789,122 @@ Hệ thống đi kèm cơ chế tự động gieo dữ liệu mẫu (Database Se
 
 ---
 
-### 3. Khởi chạy Dịch vụ Quét đạo văn (Plagiarism Checker Service)
+## 🧱 Thiết kế Kiến trúc Hệ thống (System Architecture & Component UML)
 
-**Yêu cầu:** Đã cài đặt [ Node.js ](https://nodejs.org/).
+Hệ thống eThesis được xây dựng theo mô hình **Kiến trúc hướng Dịch vụ (Service-Oriented Architecture - SOA) / Monolith Module hóa** với các dịch vụ được phân tách rõ ràng theo nghiệp vụ. Hệ thống sử dụng RabbitMQ làm Message Broker để điều phối các tác vụ nền bất đồng bộ và cơ sở dữ liệu PostgreSQL cho tầng lưu trữ.
 
-1. Mở một cửa sổ Terminal mới và di chuyển vào thư mục dịch vụ quét đạo văn:
-   ```bash
-   cd Check-plagarism-repo
-   ```
-2. Thực hiện cài đặt các thư viện phụ thuộc:
-   ```bash
-   npm install
-   ```
-3. Khởi động dịch vụ:
-   ```bash
-   npm run dev
-   ```
-4. Dịch vụ sẽ hoạt động tại địa chỉ: `http://localhost:5000`. Dịch vụ này xử lý việc trích xuất văn bản từ tài liệu tải lên (PDF, Word) và cung cấp API quét trùng khớp.
+### 📊 Sơ đồ Kiến trúc Tổng thể (Overall Architecture Diagram)
+
+Dưới đây là sơ đồ chi tiết mô tả các tầng kiến trúc, sự tương tác giữa Frontend, các dịch vụ Backend và các thành phần bên thứ ba:
+
+```mermaid
+graph TD
+    classDef client fill:#38bdf8,stroke:#0284c7,stroke-width:2px,color:#fff;
+    classDef service fill:#0d9488,stroke:#0f766e,stroke-width:2px,color:#fff;
+    classDef external fill:#f59e0b,stroke:#d97706,stroke-width:2px,color:#fff;
+    classDef store fill:#6366f1,stroke:#4f46e5,stroke-width:2px,color:#fff;
+    classDef broker fill:#ec4899,stroke:#db2777,stroke-width:2px,color:#fff;
+
+    subgraph ClientLayer ["Client Application"]
+        FE[React 19 Frontend SPA<br/>Vite / Tailwind CSS]:::client
+    end
+
+    subgraph APILayer ["Backend Services (ASP.NET Core 8)"]
+        PA[PlatformAdmin Service<br/>Port 5145]:::service
+        MP[MediaProcessing Service<br/>Port 5010]:::service
+        NS[Notification Service<br/>Port 5020]:::service
+        SM[SocialMedia Service<br/>Port 5030]:::service
+        BC[BuildingBlocks / SharedContracts]:::service
+    end
+
+    subgraph BrokerLayer ["Messaging & Jobs"]
+        RMQ[RabbitMQ Message Broker<br/>plagiarism-scan-queue & media-jobs]:::broker
+        HF[Hangfire Server<br/>Background Sync Jobs]:::broker
+    end
+
+    subgraph DataStorage ["Data & Search Layer"]
+        DB[(PostgreSQL Database<br/>Port 5432)]:::store
+        ES[(Elasticsearch Cluster<br/>Port 9200)]:::store
+    end
+
+    subgraph ExternalServices ["External Cloud Services & Tools"]
+        GD[Google Drive API<br/>Academic Storage]:::external
+        GEM[Google Gemini AI API<br/>Multimodal PDF Analysis]:::external
+        CLD[Cloudinary API<br/>Post Image CDN]:::external
+        LO[LibreOffice Converter<br/>Word to PDF]:::external
+    end
+
+    FE -->|HTTP / REST APIs| PA
+    FE -->|HTTP / REST APIs| MP
+    FE -->|HTTP / REST APIs| SM
+    FE -->|WebSockets / SignalR| NS
+
+    PA -.->|References| BC
+    MP -.->|References| BC
+    SM -.->|References| BC
+    NS -.->|References| BC
+
+    PA -->|Read/Write| DB
+    MP -->|Read/Write| DB
+    SM -->|Read/Write| DB
+
+    PA -->|Search / Index BM25| ES
+
+    PA -->|Schedule Jobs| HF
+    HF -->|Trigger Sync| GD
+
+    PA -->|Publish Scan Message| RMQ
+    RMQ -->|Consume Job| PA
+    
+    PA -->|Multimodal PDF Data| GEM
+    
+    SM -->|Upload Post Images| CLD
+    
+    MP -->|Invoke Convert| LO
+    
+    PA -.->|Signal Status| NS
+```
+
+### 🧩 Mô tả Chi tiết Kiến trúc từng Service
+
+#### 1. 🏢 PlatformAdmin Service (Cổng 5145 - Core Service)
+*   **Vai trò:** Dịch vụ trung tâm điều phối toàn bộ nghiệp vụ quản trị học thuật của hệ thống.
+*   **Công nghệ sử dụng:** ASP.NET Core 8.0 Web API, Entity Framework Core, Hangfire, RabbitMQ Client.
+*   **Trách nhiệm chính:**
+    *   Quản lý các thực thể chính của hệ thống như Sinh viên (`Student`), Giảng viên (`Advisor`), Đề tài (`Theses`), Hội đồng (`Committees`).
+    *   Thực hiện đồng bộ 2 chiều đệ quy với Google Drive (`GoogleDriveStorageService`) qua các tác vụ nền định kỳ của Hangfire.
+    *   Cung cấp API khởi chạy tiến trình quét đạo văn.
+    *   Tích hợp Elasticsearch cho tìm kiếm toàn văn và xếp hạng BM25 nội bộ.
+    *   Đọc và truyền tải trực tiếp tệp PDF dưới dạng luồng dữ liệu byte (byte stream) lên Google Gemini API để thực hiện so khớp và tìm nguồn trên Internet.
+
+#### 2. 🎬 MediaProcessing Service (Cổng 5010)
+*   **Vai trò:** Dịch vụ độc lập xử lý và định dạng tài liệu, tối ưu hóa các tệp tin đa phương tiện.
+*   **Công nghệ sử dụng:** ASP.NET Core 8.0, CLI Wrapper.
+*   **Trách nhiệm chính:**
+    *   Xử lý việc chuyển đổi định dạng tài liệu đồ án từ Word (`.docx`) sang PDF (`.pdf`) bằng cách gọi LibreOffice CLI ở chế độ headless.
+    *   Tối ưu hóa dung lượng tệp PDF và tạo hình ảnh thu nhỏ (thumbnails) để hiển thị mượt mà trên giao diện đọc sách 3D Flipbook của client.
+    *   Tiếp nhận các công việc xử lý tệp từ hàng đợi công việc của RabbitMQ để tránh gây nghẽn dịch vụ chính.
+
+#### 3. 🔔 Notification Service (Cổng 5020)
+*   **Vai trò:** Hệ thống phát thông báo thời gian thực đến người dùng.
+*   **Công nghệ sử dụng:** ASP.NET Core SignalR, WebSockets.
+*   **Trách nhiệm chính:**
+    *   Duy trì các kết nối Socket liên tục với trình duyệt của người dùng (Sinh viên, Giảng viên, Admin).
+    *   Đẩy thông báo tức thời ngay khi có cập nhật trạng thái mới (Ví dụ: thông báo kết quả quét đạo văn hoàn thành, giảng viên phê duyệt/từ chối đề tài).
+
+#### 4. 💬 SocialMedia Service (Cổng 5030)
+*   **Vai trò:** Quản lý tương tác, tin tức khoa học và các bài đăng trên cổng thông tin sinh viên.
+*   **Công nghệ sử dụng:** ASP.NET Core, CloudinaryDotNet, Hangfire.
+*   **Trách nhiệm chính:**
+    *   Quản lý các thực thể bài đăng tin tức (`SocialPosts`) và bình luận trao đổi.
+    *   Sử dụng Hangfire Background Jobs để tải lên và tối ưu hóa hình ảnh của bài viết lên đám mây Cloudinary một cách bất đồng bộ, giúp nâng cao tốc độ phản hồi của API khi đăng bài.
+
+#### 5. 📦 BuildingBlocks / SharedContracts
+*   **Vai trò:** Thư viện dùng chung làm nền tảng kết nối cho các service.
+*   **Công nghệ sử dụng:** Class Library .NET.
+*   **Trách nhiệm chính:**
+    *   Cung cấp cấu hình kết nối Elasticsearch dùng chung (`ElasticSearchRepository.cs`).
+    *   Định nghĩa các DTOs, Contracts, Interfaces dùng chung để đảm bảo tính nhất quán dữ liệu giữa các module dịch vụ khác nhau.
 
 ---
 
@@ -1125,7 +1223,7 @@ Hệ thống eThesis cung cấp module quét đạo văn nâng cao tích hợp h
 
 *   **Lớp Đối chiếu Nội bộ (BM25):** Tự động so sánh văn bản đệ trình với kho cơ sở dữ liệu các đồ án/khóa luận hiện có trên hệ thống để tính điểm tương quan TF-IDF/BM25.
 *   **Lớp Tìm kiếm và Cắt nghĩa Ngữ nghĩa (Gemini AI):**
-    *   Đọc và trích xuất dữ liệu thô từ các tệp tải lên (PDF, Word, Text) thông qua dịch vụ Node.js trên cổng `5000`.
+    *   Truyền tải trực tiếp tệp tin tài liệu dưới dạng luồng dữ liệu byte (byte stream) từ backend C# lên Google Gemini API nhờ khả năng xử lý đa phương thức (multimodal) bản xứ của mô hình AI.
     *   Kết nối trực tiếp với **Google Gemini API** (sử dụng model `gemini-1.5-flash` / `gemini-2.0-flash`) bằng khóa API được giảng viên/admin cung cấp trực tiếp tại giao diện.
     *   API Key này tự động được truyền dưới dạng Header `X-Gemini-API-Key` xuống API Backend, sau đó được đóng gói chuyển tiếp qua RabbitMQ tới worker xử lý ngầm, đảm bảo khóa API không bị mất kể cả khi quét bất đồng bộ qua hàng đợi.
     *   Gemini AI tiến hành đối chiếu nội dung, tìm kiếm và trích xuất các nguồn tham chiếu thực tế trên Internet (arXiv, Wikipedia, GitHub, IEEE, ACM, Springer, Hugging Face,...) kèm theo tỷ lệ tương đồng và câu trùng khớp, giải quyết triệt để vấn đề "dán nguồn ảo" hoặc báo cáo tĩnh 100%.
