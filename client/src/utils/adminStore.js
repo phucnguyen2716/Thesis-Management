@@ -19,6 +19,9 @@ export const getAdminUsers = async () => {
     }));
   } catch (err) {
     console.error("Error fetching admin users from API:", err);
+    if (err.response?.status === 403) {
+      console.warn("⚠️ FORBIDDEN: Currently logged-in user role is NOT 'Admin'. Please log in with admin@ethesis.edu.vn / 123 to view system users statistics.");
+    }
     return [];
   }
 };
@@ -81,6 +84,9 @@ export const getLoginAudit = async () => {
     }));
   } catch (err) {
     console.error("Error fetching login audit logs:", err);
+    if (err.response?.status === 403) {
+      console.warn("⚠️ FORBIDDEN: Currently logged-in user role is NOT 'Admin'. Please log in with admin@ethesis.edu.vn / 123 to view login logs.");
+    }
     return [];
   }
 };

@@ -8,10 +8,18 @@ import Profile from './pages/Profile';
 import StudentGames from './pages/StudentGames';
 import FlipbookPage from './pages/FlipbookPage';
 
-const ProtectedRoute = ({ children }) => {
+const ProtectedRoute = ({ children, allowedRole }) => {
   const token = localStorage.getItem('token');
   if (!token) {
     return <Navigate to="/login" replace />;
+  }
+  if (allowedRole) {
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    if (user.role !== allowedRole) {
+      if (user.role === 'Admin') return <Navigate to="/admin" replace />;
+      if (user.role === 'Advisor') return <Navigate to="/lecturer" replace />;
+      return <Navigate to="/" replace />;
+    }
   }
   return children;
 };
@@ -41,7 +49,7 @@ import AdminLoginAuditPage from './pages/admin/AdminLoginAuditPage';
 import AdminThesesPage from './pages/admin/AdminThesesPage';
 
 import AdminEventsPage from './pages/admin/AdminEventsPage';
-import AdminPlagiarismFlowPage from './pages/admin/AdminPlagiarismFlowPage';
+
 
 
 function App() {
@@ -59,7 +67,7 @@ function App() {
         <Route
           path="/admin"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRole="Admin">
               <AdminLayout />
             </ProtectedRoute>
           }
@@ -73,14 +81,12 @@ function App() {
 
           <Route path="theses/:category" element={<AdminThesesPage />} />
           <Route path="events" element={<AdminEventsPage />} />
-          <Route path="plagiarism-flow" element={<AdminPlagiarismFlowPage />} />
-
         </Route>
 
         <Route
           path="/lecturer"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRole="Advisor">
               <LecturerLayout />
             </ProtectedRoute>
           }

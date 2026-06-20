@@ -16,7 +16,6 @@ const NAV = [
       { label: 'Khóa luận', path: '/admin/theses/thesis' },
     ],
   },
-  { label: 'Flow đạo văn', icon: 'radar', path: '/admin/plagiarism-flow' },
   { label: 'Audit login', icon: 'history', path: '/admin/audit' },
 ];
 
