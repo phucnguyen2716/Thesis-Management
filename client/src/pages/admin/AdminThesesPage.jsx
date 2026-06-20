@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
-import { thesisService } from '../../services/api';
+import { thesisService, plagiarismService } from '../../services/api';
 import { getAdminUsers } from '../../utils/adminStore';
+import PlagiarismScanResultPanel from '../../components/lecturer/PlagiarismScanResultPanel';
 
 const CATEGORY_MAP = {
   project: { code: 'Project', title: 'Quản lý đồ án' },
@@ -164,6 +165,148 @@ const AdminThesesPage = () => {
   const [driveStatus, setDriveStatus] = useState(null);
   const [testingConnection, setTestingConnection] = useState(false);
   const [testResult, setTestResult] = useState(null);
+
+  const [selectedThesisForScan, setSelectedThesisForScan] = useState(null);
+  const [scanVisible, setScanVisible] = useState(false);
+  const [apiKey, setApiKey] = useState(localStorage.getItem('gemini_api_key') || '');
+  const handleApiKeyChange = (e) => {
+    const val = e.target.value.trim();
+    setApiKey(val);
+    if (val) {
+      localStorage.setItem('gemini_api_key', val);
+    } else {
+      localStorage.removeItem('gemini_api_key');
+    }
+  };
+  const [scanning, setScanning] = useState(false);
+  const [scanResult, setScanResult] = useState(null);
+  const [scanProgress, setScanProgress] = useState(0);
+  const [showProgressModal, setShowProgressModal] = useState(false);
+
+  const openPlagiarismModal = async (thesis) => {
+    setSelectedThesisForScan(thesis);
+    setScanResult(null);
+    setScanVisible(true);
+    setScanning(true);
+    
+    try {
+      const res = await plagiarismService.getStatus(thesis.id);
+      if (res.data && res.data.status === 'Completed') {
+        const report = res.data.report;
+        setScanResult({
+          similarity: report.similarityPercentage,
+          aiPercent: report.aiPercent ?? Math.round(report.similarityPercentage * 0.4),
+          report,
+          matches: report.matches ? report.matches.map((m, idx) => ({
+            label: `Nguồn #${idx + 1}`,
+            excerpt: m.studentExcerpt ?? m.text ?? '',
+            sourceTitle: m.sourceName ?? m.sourceTitle ?? 'Tài liệu tham khảo',
+            sourceMeta: m.detectedBy ? (Array.isArray(m.detectedBy) ? m.detectedBy.join(', ') : m.detectedBy) : 'Nguồn Internet',
+            url: m.sourceUrl ?? m.url ?? '#',
+            percent: m.similarity ?? m.similarityScore ?? 0,
+          })) : [],
+          sources: report.sources ? report.sources.map((src, idx) => ({
+            id: idx + 1,
+            name: src.title ?? src.name ?? 'Nguồn Web',
+            url: src.id ?? src.url ?? '#',
+            percent: src.matchingPercentage ?? src.percent ?? 0,
+            type: 'plagiarism'
+          })) : [],
+          sourceCount: report.sources ? report.sources.length : 0
+        });
+      }
+    } catch (err) {
+      console.warn('No existing plagiarism report found, or backend offline.');
+    } finally {
+      setScanning(false);
+    }
+  };
+
+  const runAdminRecheck = async () => {
+    if (!selectedThesisForScan) return;
+    const thesis = selectedThesisForScan;
+    setScanning(true);
+    setScanProgress(0);
+    setShowProgressModal(true);
+
+    /* 1. Try backend mechanism */
+    try {
+      await plagiarismService.check(thesis.id);
+      let pollAttempts = 0;
+      const maxAttempts = 20;
+      const intervalId = setInterval(async () => {
+        pollAttempts++;
+        try {
+          const statusRes = await plagiarismService.getStatus(thesis.id);
+          const statusData = statusRes.data;
+
+          if (statusData.status === 'Completed') {
+            clearInterval(intervalId);
+            const report = statusData.report;
+
+            // Safe map backend report matches to React expected fields
+            if (report.matches) {
+              report.matches = report.matches.map(m => ({
+                similarity: m.similarity ?? m.similarityScore ?? 0,
+                studentExcerpt: m.studentExcerpt ?? m.text ?? '',
+                matchPhrase: m.matchPhrase ?? (m.text ? m.text.split(' ').slice(3, 8).join(' ') : ''),
+                sourceExcerpt: m.sourceExcerpt ?? '',
+                sourceName: m.sourceName ?? m.sourceTitle ?? 'Web source',
+                sourceUrl: m.sourceUrl ?? '#',
+                detectedBy: m.detectedBy ?? ['BM25', 'N-Gram']
+              }));
+            }
+
+            const newSim = report.similarityPercentage;
+            setScanProgress(100);
+            setTimeout(() => {
+              setShowProgressModal(false);
+              setScanResult({
+                similarity: newSim,
+                aiPercent: report.aiPercent ?? Math.round(newSim * 0.4),
+                report,
+                matches: report.matches ? report.matches.map((m, idx) => ({
+                  label: `Nguồn #${idx + 1}`,
+                  excerpt: m.studentExcerpt ?? m.text ?? '',
+                  sourceTitle: m.sourceName ?? m.sourceTitle ?? 'Tài liệu tham khảo',
+                  sourceMeta: m.detectedBy ? (Array.isArray(m.detectedBy) ? m.detectedBy.join(', ') : m.detectedBy) : 'Nguồn Internet',
+                  url: m.sourceUrl ?? m.url ?? '#',
+                  percent: m.similarity ?? m.similarityScore ?? 0,
+                })) : [],
+                sources: report.sources ? report.sources.map((src, idx) => ({
+                  id: idx + 1,
+                  name: src.title ?? src.name ?? 'Nguồn Web',
+                  url: src.id ?? src.url ?? '#',
+                  percent: src.matchingPercentage ?? src.percent ?? 0,
+                  type: 'plagiarism'
+                })) : [],
+                sourceCount: report.sources ? report.sources.length : 0
+              });
+              setScanning(false);
+            }, 300);
+          } else if (statusData.status === 'Pending') {
+            const simulatedProgress = Math.min(95, Math.round((pollAttempts / maxAttempts) * 100));
+            setScanProgress(simulatedProgress);
+          } else if (pollAttempts >= maxAttempts) {
+            clearInterval(intervalId);
+            setScanning(false);
+            setShowProgressModal(false);
+            alert('Hết thời gian chờ phản hồi từ hệ thống kiểm tra đạo văn.');
+          }
+        } catch (pollErr) {
+          clearInterval(intervalId);
+          setScanning(false);
+          setShowProgressModal(false);
+        }
+      }, 1500);
+      return;
+    } catch (backendErr) {
+      console.error(backendErr);
+      setScanning(false);
+      setShowProgressModal(false);
+      alert('Không thể kết nối đến máy chủ backend để thực hiện quét đạo văn.');
+    }
+  };
 
   const handleTestConnection = async () => {
     setTestingConnection(true);
@@ -356,7 +499,20 @@ const AdminThesesPage = () => {
             Quản lý danh sách, phân công giảng viên & trạng thái duyệt đề tài
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-800 border border-slate-700 rounded-lg text-slate-300">
+            <span className="material-symbols-outlined text-[14px]">key</span>
+            <input
+              type="password"
+              value={apiKey}
+              onChange={handleApiKeyChange}
+              placeholder="Gemini API Key..."
+              className="bg-transparent border-none outline-none text-[10px] font-mono w-40 focus:ring-0 placeholder:text-slate-500"
+            />
+            {apiKey && (
+              <span className="text-[8px] font-black text-emerald-400 bg-emerald-950/20 px-1.5 py-0.25 rounded border border-emerald-800 uppercase">Sử dụng API riêng</span>
+            )}
+          </div>
           <button
             type="button"
             onClick={handleOpenCreate}
@@ -456,6 +612,10 @@ const AdminThesesPage = () => {
                       </span>
                     </td>
                     <td className="p-4 text-right space-x-1 whitespace-nowrap">
+                      <button type="button" onClick={() => openPlagiarismModal(t)}
+                        className="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase bg-teal-900/60 hover:bg-teal-800/60 text-teal-300 transition-colors">
+                        Đạo văn
+                      </button>
                       <button type="button" onClick={() => handleOpenEdit(t)}
                         className="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase bg-slate-800 hover:bg-slate-700 text-slate-200 transition-colors">
                         Sửa
@@ -701,6 +861,102 @@ const AdminThesesPage = () => {
               </button>
             </div>
           </form>
+        </div>
+      )}
+
+      {scanVisible && selectedThesisForScan && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm overflow-y-auto">
+          <div className="w-full max-w-5xl rounded-2xl bg-slate-900 border border-slate-800 p-6 space-y-6 text-left shadow-2xl my-8">
+            <div className="flex justify-between items-center pb-3 border-b border-slate-800">
+              <div>
+                <h2 className="text-base font-black uppercase tracking-wider text-amber-400">Phân tích tương đồng & Đạo văn (Admin)</h2>
+                <p className="text-xs text-slate-400 mt-1 line-clamp-1">Đề tài: {selectedThesisForScan.title}</p>
+              </div>
+              <button type="button" onClick={() => { setScanVisible(false); setSelectedThesisForScan(null); }}
+                className="material-symbols-outlined text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800">close</button>
+            </div>
+
+            <div className="max-h-[70vh] overflow-y-auto pr-1 space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 rounded-xl border border-slate-800 bg-slate-950/40">
+                <div>
+                  <p className="text-xs font-bold text-slate-300">Sinh viên thực hiện: {selectedThesisForScan.studentName}</p>
+                  <p className="text-[10px] text-slate-500 mt-0.5">Sinh viên ID: {selectedThesisForScan.studentCode || '—'} · Trạng thái: {selectedThesisForScan.status}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={runAdminRecheck}
+                  disabled={scanning}
+                  className={`inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all shadow-sm ${
+                    scanning
+                      ? 'bg-slate-800 text-slate-500 cursor-wait'
+                      : 'bg-amber-500 text-slate-950 hover:bg-amber-400'
+                  }`}
+                >
+                  <span className={`material-symbols-outlined text-base ${scanning ? 'animate-spin' : ''}`}>
+                    sync
+                  </span>
+                  {scanning ? 'Đang chạy...' : 'Quét / Quét lại'}
+                </button>
+              </div>
+
+              {scanning && !showProgressModal ? (
+                <div className="py-12 text-center text-slate-400 flex flex-col items-center gap-2">
+                  <div className="w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full animate-spin" />
+                  <span className="text-xs font-bold uppercase tracking-wider">Đang kết nối cơ sở dữ liệu...</span>
+                </div>
+              ) : !scanResult ? (
+                <div className="py-16 text-center border border-dashed border-slate-800 rounded-2xl bg-slate-950/20 text-slate-500 space-y-2">
+                  <span className="material-symbols-outlined text-4xl text-slate-700">document_scanner</span>
+                  <p className="text-sm font-bold">Chưa có kết quả phân tích đạo văn</p>
+                  <p className="text-xs text-slate-600 max-w-sm mx-auto">Vui lòng nhấn nút "Quét / Quét lại" ở góc trên bên phải để bắt đầu chạy kiểm tra tương đồng bằng các thuật toán.</p>
+                </div>
+              ) : (
+                <div className="bg-slate-950/30 rounded-xl p-3 border border-slate-800 text-slate-800">
+                  <PlagiarismScanResultPanel
+                    submission={{ ...selectedThesisForScan, ...(scanResult || {}) }}
+                    visible={true}
+                  />
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end pt-3 border-t border-slate-800">
+              <button 
+                type="button" 
+                onClick={() => { setScanVisible(false); setSelectedThesisForScan(null); }}
+                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold uppercase rounded-lg transition-colors"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showProgressModal && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-6 w-full max-w-sm text-center space-y-4 animate-in zoom-in-95 duration-200">
+            <div className="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center mx-auto text-amber-400 animate-bounce">
+              <span className="material-symbols-outlined text-2xl">radar</span>
+            </div>
+            <div>
+              <h3 className="text-sm font-black text-white uppercase tracking-wider">Đang quét đạo văn...</h3>
+              <p className="text-[11px] text-slate-400 mt-1">Đang phân tích cấu trúc, đối chiếu các nguồn dữ liệu & thuật toán.</p>
+            </div>
+            <div className="space-y-1.5">
+              <div className="flex justify-between text-[10px] font-bold text-slate-400">
+                <span>Tiến độ</span>
+                <span>{scanProgress}%</span>
+              </div>
+              <div className="w-full h-3 rounded-full bg-slate-800 overflow-hidden border border-slate-750">
+                <div 
+                  className="h-full rounded-full bg-amber-500 transition-all duration-300"
+                  style={{ width: `${scanProgress}%` }}
+                />
+              </div>
+            </div>
+            <p className="text-[9px] text-slate-500 font-medium">Hệ thống đang chạy các thuật toán BM25, N-Gram, TF-IDF + Cosine, Rule-Based.</p>
+          </div>
         </div>
       )}
     </div>

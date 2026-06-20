@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using PlatformAdmin.Data;
 using PlatformAdmin.Entities;
 using PlatformAdmin.Attributes;
+using PlatformAdmin.Services;
 using BuildingBlocks.SharedContracts;
 using RabbitMQ.Client;
 
@@ -21,11 +22,13 @@ namespace PlatformAdmin.Controllers
     {
         private readonly IElasticSearchRepository<PlagiarismDocument> _esRepo;
         private readonly AppDbContext _db;
+        private readonly IPlagiarismService _plagiarismService;
 
-        public PlagiarismController(IElasticSearchRepository<PlagiarismDocument> esRepo, AppDbContext db)
+        public PlagiarismController(IElasticSearchRepository<PlagiarismDocument> esRepo, AppDbContext db, IPlagiarismService plagiarismService)
         {
             _esRepo = esRepo;
             _db = db;
+            _plagiarismService = plagiarismService;
         }
 
         /// <summary>
@@ -61,6 +64,12 @@ namespace PlatformAdmin.Controllers
             _db.PlagiarismReports.RemoveRange(oldReports);
             await _db.SaveChangesAsync();
 
+            string? geminiApiKey = Request.Headers["X-Gemini-API-Key"].ToString();
+            if (string.IsNullOrWhiteSpace(geminiApiKey))
+            {
+                geminiApiKey = null;
+            }
+
             try
             {
                 var factory = new ConnectionFactory() { HostName = "localhost" };
@@ -72,7 +81,7 @@ namespace PlatformAdmin.Controllers
                                      autoDelete: false,
                                      arguments: null);
 
-                var messageObj = new { ThesisId = thesisId };
+                var messageObj = new { ThesisId = thesisId, GeminiApiKey = geminiApiKey };
                 var messageBody = JsonSerializer.Serialize(messageObj);
                 var body = Encoding.UTF8.GetBytes(messageBody);
 
@@ -86,8 +95,17 @@ namespace PlatformAdmin.Controllers
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"RabbitMQ publishing failed: {ex.Message}");
-                return StatusCode(StatusCodes.Status503ServiceUnavailable, new { message = "RabbitMQ connection failed. Please ensure RabbitMQ is running." });
+                Console.WriteLine($"RabbitMQ publishing failed: {ex.Message}. Falling back to synchronous inline scan...");
+                try
+                {
+                    await _plagiarismService.ProcessPlagiarismCheckAsync(thesisId, geminiApiKey);
+                    return Ok(new { queued = false, message = "Plagiarism scan completed synchronously." });
+                }
+                catch (Exception syncEx)
+                {
+                    Console.WriteLine($"Synchronous plagiarism check failed: {syncEx.Message}");
+                    return StatusCode(StatusCodes.Status500InternalServerError, new { message = $"Plagiarism check failed: {syncEx.Message}" });
+                }
             }
 
             return Accepted(new { queued = true, message = "Plagiarism scan has been queued." });
@@ -168,6 +186,8 @@ namespace PlatformAdmin.Controllers
         public DateTime CheckedAt { get; set; }
         public List<PlagiarismSourceDetail> Sources { get; set; } = new();
         public List<PlagiarismMatchDetail> Matches { get; set; } = new();
+        public List<PlagiarismBM25Result> BM25Files { get; set; } = new();
+        public Dictionary<string, double>? AlgorithmScores { get; set; }
     }
 
     public class PlagiarismSourceDetail
@@ -185,5 +205,17 @@ namespace PlatformAdmin.Controllers
         public string SourceTitle { get; set; } = string.Empty;
         public string SourceStudent { get; set; } = string.Empty;
         public double SimilarityScore { get; set; }
+        public string SourceExcerpt { get; set; } = string.Empty;
+        public string SourceUrl { get; set; } = string.Empty;
+        public List<string> DetectedBy { get; set; } = new();
+    }
+
+    public class PlagiarismBM25Result
+    {
+        public string Title { get; set; } = string.Empty;
+        public string Author { get; set; } = string.Empty;
+        public string Year { get; set; } = string.Empty;
+        public double Bm25Score { get; set; }
+        public double Ngram { get; set; }
     }
 }

@@ -11,6 +11,7 @@ const LecturerEventProposalPage = () => {
   const [proposals, setProposals] = useState([]);
   const [title, setTitle] = useState('');
   const [link, setLink] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
   const [note, setNote] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -70,6 +71,7 @@ const LecturerEventProposalPage = () => {
       id: `prop-${Date.now()}`,
       title: title.trim(),
       link: link.trim(),
+      imageUrl: imageUrl.trim(),
       note: note.trim(),
       lecturerName,
       status: 'pending',
@@ -89,6 +91,7 @@ const LecturerEventProposalPage = () => {
 
     setTitle('');
     setLink('');
+    setImageUrl('');
     setNote('');
     setIsLoading(false);
     setIsSuccess(true);
@@ -176,6 +179,29 @@ const LecturerEventProposalPage = () => {
               }
             </div>
 
+            {/* Optional image URL */}
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-black text-slate-500 uppercase tracking-wider block">
+                URL hình ảnh sự kiện <span className="text-slate-300 font-medium">(tuỳ chọn)</span>
+              </label>
+              <div className="relative">
+                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px] pointer-events-none">image</span>
+                <input
+                  type="url"
+                  value={imageUrl}
+                  onChange={e => setImageUrl(e.target.value)}
+                  placeholder="https://example.com/image.jpg"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 text-sm font-medium focus:outline-none focus:border-teal-700 focus:ring-2 focus:ring-teal-100 transition-all bg-slate-50/40"
+                />
+              </div>
+              {imageUrl && (
+                <div className="mt-2 rounded-xl overflow-hidden border border-slate-200 h-24">
+                  <img src={imageUrl} alt="preview" className="w-full h-full object-cover" onError={e => { e.target.style.display = 'none'; }} />
+                </div>
+              )}
+              <p className="text-[10px] text-slate-400 font-medium">Ảnh đại diện cho sự kiện (nếu có)</p>
+            </div>
+
             {/* Optional note */}
             <div className="space-y-1.5">
               <label className="text-[11px] font-black text-slate-500 uppercase tracking-wider block">
@@ -227,49 +253,57 @@ const LecturerEventProposalPage = () => {
             </span>
           </div>
 
-          <div className="space-y-3 max-h-[540px] overflow-y-auto pr-0.5">
+          <div className="space-y-3 max-h-[600px] overflow-y-auto pr-0.5">
             {proposals.length > 0 ? proposals.map(prop => {
               const s = STATUS_MAP[prop.status] || STATUS_MAP.pending;
               return (
-                <div key={prop.id} className="p-4 rounded-xl border border-slate-100 bg-slate-50/60 space-y-2 hover:border-slate-200 transition-all">
-                  {/* Title + badge */}
-                  <div className="flex items-start justify-between gap-3">
-                    <h3 className="font-extrabold text-sm text-slate-800 leading-snug flex-1">{prop.title}</h3>
-                    <span className={`shrink-0 px-2.5 py-0.5 rounded-full font-bold text-[9px] uppercase border ${s.bg}`}>
-                      {s.label}
-                    </span>
-                  </div>
-
-                  {/* Link */}
-                  <a
-                    href={prop.link}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1 text-[10px] text-teal-700 font-bold hover:underline break-all"
-                  >
-                    <span className="material-symbols-outlined text-[13px]">open_in_new</span>
-                    {prop.link}
-                  </a>
-
-                  {/* Lecturer note */}
-                  {prop.note && (
-                    <p className="text-[10px] text-slate-500 font-medium leading-relaxed italic border-l-2 border-slate-200 pl-2">
-                      {prop.note}
-                    </p>
-                  )}
-
-                  {/* Admin reply */}
-                  {prop.adminNote && (
-                    <div className={`text-[10px] font-bold p-2.5 rounded-lg border flex items-start gap-1.5
-                      ${prop.status === 'approved' ? 'bg-emerald-50 border-emerald-100 text-emerald-700' : 'bg-red-50 border-red-100 text-red-700'}`}>
-                      <span className="material-symbols-outlined text-[13px] mt-0.5 shrink-0">admin_panel_settings</span>
-                      <span>Admin: {prop.adminNote}</span>
+                <div key={prop.id} className="rounded-xl border border-slate-100 bg-slate-50/60 overflow-hidden hover:border-slate-200 transition-all">
+                  {/* Image thumbnail if provided */}
+                  {prop.imageUrl && (
+                    <div className="h-32 overflow-hidden">
+                      <img src={prop.imageUrl} alt="" className="w-full h-full object-cover" onError={e => { e.target.parentElement.style.display = 'none'; }} />
                     </div>
                   )}
+                  <div className="p-4 space-y-2">
+                    {/* Title + badge */}
+                    <div className="flex items-start justify-between gap-3">
+                      <h3 className="font-extrabold text-sm text-slate-800 leading-snug flex-1">{prop.title}</h3>
+                      <span className={`shrink-0 px-2.5 py-0.5 rounded-full font-bold text-[9px] uppercase border ${s.bg}`}>
+                        {s.label}
+                      </span>
+                    </div>
 
-                  <p className="text-[10px] text-slate-400 font-medium">
-                    Gửi lúc: {new Date(prop.createdAt).toLocaleString('vi-VN')}
-                  </p>
+                    {/* Link */}
+                    <a
+                      href={prop.link}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 text-[10px] text-teal-700 font-bold hover:underline break-all"
+                    >
+                      <span className="material-symbols-outlined text-[13px]">open_in_new</span>
+                      {prop.link}
+                    </a>
+
+                    {/* Lecturer note */}
+                    {prop.note && (
+                      <p className="text-[10px] text-slate-500 font-medium leading-relaxed italic border-l-2 border-slate-200 pl-2">
+                        {prop.note}
+                      </p>
+                    )}
+
+                    {/* Admin reply */}
+                    {prop.adminNote && (
+                      <div className={`text-[10px] font-bold p-2.5 rounded-lg border flex items-start gap-1.5
+                        ${prop.status === 'approved' ? 'bg-emerald-50 border-emerald-100 text-emerald-700' : 'bg-red-50 border-red-100 text-red-700'}`}>
+                        <span className="material-symbols-outlined text-[13px] mt-0.5 shrink-0">admin_panel_settings</span>
+                        <span>Admin: {prop.adminNote}</span>
+                      </div>
+                    )}
+
+                    <p className="text-[10px] text-slate-400 font-medium">
+                      Gửi lúc: {new Date(prop.createdAt).toLocaleString('vi-VN')}
+                    </p>
+                  </div>
                 </div>
               );
             }) : (

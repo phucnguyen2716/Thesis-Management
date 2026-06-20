@@ -5,8 +5,7 @@ const NAV = [
   { label: 'Tổng quan', icon: 'dashboard', path: '/admin' },
   { label: 'Sinh viên', icon: 'school', path: '/admin/students' },
   { label: 'Giảng viên', icon: 'co_present', path: '/admin/advisors' },
-  { label: 'Social media', icon: 'campaign', path: '/admin/social' },
-  { label: 'Sự kiện', icon: 'event', path: '/admin/events' },
+  { label: 'Tin tức & Sự kiện', icon: 'campaign', path: '/admin/events' },
   {
     label: 'Quản lý đề tài',
     icon: 'inventory_2',
@@ -17,6 +16,7 @@ const NAV = [
       { label: 'Khóa luận', path: '/admin/theses/thesis' },
     ],
   },
+  { label: 'Flow đạo văn', icon: 'radar', path: '/admin/plagiarism-flow' },
   { label: 'Audit login', icon: 'history', path: '/admin/audit' },
 ];
 

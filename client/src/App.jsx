@@ -24,6 +24,7 @@ import FavoritesPage from './pages/FavoritesPage';
 import GuidelinesPage from './pages/GuidelinesPage';
 import SupportPage from './pages/SupportPage';
 import ThesisPracticePage from './pages/ThesisPracticePage';
+import SchedulePage from './pages/SchedulePage';
 import LecturerLayout from './components/LecturerLayout';
 import LecturerDashboard from './pages/lecturer/LecturerDashboard';
 import LecturerControllerPage from './pages/lecturer/LecturerControllerPage';
@@ -37,9 +38,10 @@ import AdminLayout from './components/AdminLayout';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminUsersPage from './pages/admin/AdminUsersPage';
 import AdminLoginAuditPage from './pages/admin/AdminLoginAuditPage';
-import AdminSocialPage from './pages/admin/AdminSocialPage';
 import AdminThesesPage from './pages/admin/AdminThesesPage';
+
 import AdminEventsPage from './pages/admin/AdminEventsPage';
+import AdminPlagiarismFlowPage from './pages/admin/AdminPlagiarismFlowPage';
 
 
 function App() {
@@ -67,9 +69,11 @@ function App() {
           <Route path="advisors" element={<AdminUsersPage fixedRole="Advisor" />} />
           <Route path="users" element={<AdminUsersPage />} />
           <Route path="audit" element={<AdminLoginAuditPage />} />
-          <Route path="social" element={<AdminSocialPage />} />
+          <Route path="social" element={<Navigate to="/admin/events" replace />} />
+
           <Route path="theses/:category" element={<AdminThesesPage />} />
           <Route path="events" element={<AdminEventsPage />} />
+          <Route path="plagiarism-flow" element={<AdminPlagiarismFlowPage />} />
 
         </Route>
 
@@ -108,6 +112,7 @@ function App() {
           <Route path="favorites" element={<FavoritesPage />} />
           <Route path="support" element={<SupportPage />} />
           <Route path="practice" element={<ThesisPracticePage />} />
+          <Route path="schedule" element={<SchedulePage />} />
         </Route>
       </Routes>
     </BrowserRouter>

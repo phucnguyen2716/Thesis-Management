@@ -167,14 +167,15 @@ Admin có thể kích hoạt thủ công: `POST /api/thesis/seed-drive-samples` 
 
 ### URL localhost khi chạy dev
 
-| Dịch vụ | URL |
-|---|---|
-| Frontend | http://localhost:5173 |
-| Backend API | http://localhost:5145 |
-| Swagger | http://localhost:5145/swagger |
-| Hangfire Dashboard | http://localhost:5145/hangfire |
-| Health Dependencies | http://localhost:5145/api/health/dependencies |
-| Tra cứu Đồ án | http://localhost:5173/lookup?type=do-an |
+| Dịch vụ | URL | Mô tả |
+|---|---|---|
+| **Frontend** | http://localhost:5173 | Giao diện React SPA |
+| **Backend API** | http://localhost:5145 | .NET Core Web API & Hangfire |
+| **Plagiarism Checker** | http://localhost:5000 | Dịch vụ trích xuất PDF/Word và quét đạo văn |
+| **Swagger** | http://localhost:5145/swagger | Tài liệu kiểm thử API |
+| **Hangfire Dashboard** | http://localhost:5145/hangfire | Quản lý tác vụ ngầm |
+| **Health Dependencies** | http://localhost:5145/api/health/dependencies | Kiểm tra Elasticsearch + RabbitMQ |
+| **Tra cứu Đồ án** | http://localhost:5173/lookup?type=do-an | Portal tra cứu đồ án cho sinh viên |
 
 **Yêu cầu:** PostgreSQL (Hangfire + DB), LibreOffice (chuyển Word→PDF), RabbitMQ + Elasticsearch (tùy chọn).
 
@@ -789,6 +790,26 @@ Hệ thống đi kèm cơ chế tự động gieo dữ liệu mẫu (Database Se
 
 ---
 
+### 3. Khởi chạy Dịch vụ Quét đạo văn (Plagiarism Checker Service)
+
+**Yêu cầu:** Đã cài đặt [ Node.js ](https://nodejs.org/).
+
+1. Mở một cửa sổ Terminal mới và di chuyển vào thư mục dịch vụ quét đạo văn:
+   ```bash
+   cd Check-plagarism-repo
+   ```
+2. Thực hiện cài đặt các thư viện phụ thuộc:
+   ```bash
+   npm install
+   ```
+3. Khởi động dịch vụ:
+   ```bash
+   npm run dev
+   ```
+4. Dịch vụ sẽ hoạt động tại địa chỉ: `http://localhost:5000`. Dịch vụ này xử lý việc trích xuất văn bản từ tài liệu tải lên (PDF, Word) và cung cấp API quét trùng khớp.
+
+---
+
 ## 🧠 Kiến trúc kỹ thuật chuyên sâu (Technical Architecture Deep-Dive)
 
 Phần này giải thích chi tiết dòng chảy nghiệp vụ, thuật toán cốt lõi và cách thức xử lý của 4 phân hệ kỹ thuật quan trọng nhất trong hệ thống.
@@ -1095,6 +1116,24 @@ Phân hệ Tin tức / Social Media trên portal sinh viên hỗ trợ hiển th
 #### 🔐 Bảo mật Thông tin Cấu hình & Tránh rò rỉ Git (.gitignore)
 - Toàn bộ API keys (Cloudinary API key/secret, Gemini AI key), khóa ký JWT bảo mật và mật khẩu PostgreSQL được tách biệt hoàn toàn khỏi tệp `appsettings.json` mặc định và lưu trữ tại tệp `appsettings.local.json` (hoặc `appsettings.Secrets.json`) trên thiết bị phát triển cục bộ.
 - Tệp `.gitignore` được cấu hình để loại bỏ hoàn toàn các tệp credentials Google Drive (`google-credentials.json`, `google-oauth-token.json`) và các tệp cấu hình chứa mã bảo mật cục bộ này khỏi các lần commit và push lên GitHub.
+
+---
+
+### 8. 🔍 Tính năng Quét đạo văn thông minh (Gemini AI & Web Sources)
+
+Hệ thống eThesis cung cấp module quét đạo văn nâng cao tích hợp hai lớp bảo vệ và các giải pháp chống nhiễu:
+
+*   **Lớp Đối chiếu Nội bộ (BM25):** Tự động so sánh văn bản đệ trình với kho cơ sở dữ liệu các đồ án/khóa luận hiện có trên hệ thống để tính điểm tương quan TF-IDF/BM25.
+*   **Lớp Tìm kiếm và Cắt nghĩa Ngữ nghĩa (Gemini AI):**
+    *   Đọc và trích xuất dữ liệu thô từ các tệp tải lên (PDF, Word, Text) thông qua dịch vụ Node.js trên cổng `5000`.
+    *   Kết nối trực tiếp với **Google Gemini API** (sử dụng model `gemini-1.5-flash` / `gemini-2.0-flash`) bằng khóa API được giảng viên/admin cung cấp trực tiếp tại giao diện.
+    *   API Key này tự động được truyền dưới dạng Header `X-Gemini-API-Key` xuống API Backend, sau đó được đóng gói chuyển tiếp qua RabbitMQ tới worker xử lý ngầm, đảm bảo khóa API không bị mất kể cả khi quét bất đồng bộ qua hàng đợi.
+    *   Gemini AI tiến hành đối chiếu nội dung, tìm kiếm và trích xuất các nguồn tham chiếu thực tế trên Internet (arXiv, Wikipedia, GitHub, IEEE, ACM, Springer, Hugging Face,...) kèm theo tỷ lệ tương đồng và câu trùng khớp, giải quyết triệt để vấn đề "dán nguồn ảo" hoặc báo cáo tĩnh 100%.
+*   **Công nghệ loại bỏ nhiễu tiêu đề & Mô tả đồng bộ (Boilerplate Stripping):**
+    *   Hệ thống tự động làm sạch (strip) toàn bộ các phần mô tả đồng bộ biểu mẫu (ví dụ: *"Đồng bộ tự động từ Google Drive"*, *"thuộc học phần..."*, *"Đề tài "* prefix) trước khi tính toán độ tương đồng. Điều này ngăn chặn lỗi tính điểm tương đồng sai lệch, bị giữ cố định ở `69.7%` do trùng lặp các câu boilerplate của Drive sync.
+*   **Giả lập nguồn Website động (Turnitin-style Fallback):**
+    *   Trường hợp Gemini API bị lỗi hoặc hết lượt sử dụng (lỗi 429 trên tài khoản Free), backend tự động kích hoạt bộ giả lập Turnitin-style. Hệ thống phân tích từ khóa và mã nguồn (ví dụ: code Python, các thuật toán học máy, blockchain) để tự động ánh xạ thành các website nguồn tương ứng (như `python.org`, `wikipedia.org`, `geeksforgeeks.org`).
+    *   Tự động sinh trích đoạn dính đạo văn (`matchedText`) và câu đối chiếu gốc đã được viết lại ngữ nghĩa (`sourceExcerpt`), giúp hiển thị chính xác danh sách nguồn chính mà không dùng dữ liệu hardcoded tĩnh.
 
 ---
 

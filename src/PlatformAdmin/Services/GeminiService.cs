@@ -4,6 +4,7 @@ using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using PlatformAdmin.DTOs.Thesis;
@@ -13,35 +14,50 @@ namespace PlatformAdmin.Services
     public class GeminiService : IGeminiService
     {
         private readonly HttpClient _httpClient;
-        private readonly string? _apiKey;
-        private readonly bool _useMock;
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly string? _defaultApiKey;
+        private readonly bool _defaultUseMock;
         private readonly ILogger<GeminiService> _logger;
 
-        public GeminiService(HttpClient httpClient, IConfiguration configuration, ILogger<GeminiService> logger)
+        public GeminiService(HttpClient httpClient, IConfiguration configuration, IHttpContextAccessor httpContextAccessor, ILogger<GeminiService> logger)
         {
             _httpClient = httpClient;
+            _httpContextAccessor = httpContextAccessor;
             _logger = logger;
-            _apiKey = configuration["Gemini:ApiKey"];
-            _useMock = string.IsNullOrEmpty(_apiKey) || configuration.GetValue<bool>("Gemini:UseMock", true);
+            _defaultApiKey = configuration["Gemini:ApiKey"];
+            _defaultUseMock = configuration.GetValue<bool>("Gemini:UseMock", true);
+        }
 
-            if (_useMock)
+        private (string? apiKey, bool useMock) GetGeminiConfig()
+        {
+            try
             {
-                _logger.LogWarning("Gemini API key is not configured or UseMock is set to true. Gemini Service is running in Mock/Simulation mode.");
+                var headerKey = _httpContextAccessor.HttpContext?.Request.Headers["X-Gemini-API-Key"].ToString();
+                if (!string.IsNullOrWhiteSpace(headerKey))
+                {
+                    return (headerKey.Trim(), false);
+                }
             }
+            catch (Exception ex)
+            {
+                _logger.LogWarning("Failed to read X-Gemini-API-Key header: " + ex.Message);
+            }
+            return (_defaultApiKey?.Trim(), string.IsNullOrEmpty(_defaultApiKey) || _defaultUseMock);
         }
 
         public async Task<PreFilterResult> AnalyzePromptAsync(string prompt)
         {
-            _logger.LogInformation("Sandwich Pre-Filter: Analyzing prompt safety and function calling intent: '{Prompt}'", prompt);
+            var (apiKey, useMock) = GetGeminiConfig();
+            _logger.LogInformation("Sandwich Pre-Filter: Analyzing prompt safety and function calling intent: '{Prompt}' (Mock: {Mock})", prompt, useMock);
 
-            if (_useMock)
+            if (useMock)
             {
                 return SimulatePreFilter(prompt);
             }
 
             try
             {
-                var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={_apiKey}";
+                var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={apiKey}";
                 
                 var requestBody = new
                 {
@@ -115,16 +131,17 @@ namespace PlatformAdmin.Services
 
         public async Task<string> GenerateResponseWithContextAsync(string originalPrompt, string executionResult)
         {
-            _logger.LogInformation("Generating final natural language response using execution data.");
+            var (apiKey, useMock) = GetGeminiConfig();
+            _logger.LogInformation("Generating final natural language response. (Mock: {Mock})", useMock);
 
-            if (_useMock)
+            if (useMock)
             {
                 return FormatExecutionResult(originalPrompt, executionResult);
             }
 
             try
             {
-                var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={_apiKey}";
+                var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={apiKey}";
                 var promptWithContext = $"Original User Intent: {originalPrompt}\n\nExecution Result Data: {executionResult}\n\nTask: Draft a highly professional, polite, and descriptive response summarizing the action completed. Maintain a positive tone and do not output any inappropriate terms. IMPORTANT: If the Execution Result Data contains any [THESIS_CARD:id=...|title=...|student=...] tags, you MUST preserve them exactly as they are in your response without modification so the client UI can render them as rich card components.";
 
                 var requestBody = new
@@ -331,16 +348,17 @@ namespace PlatformAdmin.Services
 
         public async Task<PostFilterResult> AnalyzeResponseAsync(string generatedResponse)
         {
-            _logger.LogInformation("Sandwich Post-Filter: Verifying AI output safety: '{Response}'", generatedResponse);
+            var (apiKey, useMock) = GetGeminiConfig();
+            _logger.LogInformation("Sandwich Post-Filter: Verifying AI output safety (Mock: {Mock})", useMock);
 
-            if (_useMock)
+            if (useMock)
             {
                 return SimulatePostFilter(generatedResponse);
             }
 
             try
             {
-                var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={_apiKey}";
+                var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={apiKey}";
                 var safetyCheckPrompt = $"Analyze the following response text for any violent, hateful, offensive words, or statements inciting harm.\n\nResponse to evaluate: \"{generatedResponse}\"\n\nReturn a JSON output with the exact schema:\n{{\n  \"isViolent\": true/false,\n  \"violationReason\": \"reason if true else null\",\n  \"filteredResponse\": \"the original response, or redacted version if minor violations occurred\"\n}}";
 
                 var requestBody = new
@@ -384,16 +402,17 @@ namespace PlatformAdmin.Services
 
         public async Task<ThesisPracticeEvaluationResult> EvaluateThesisPracticeAsync(string content, string thesisTitle, string chapterId, string chapterLabel, List<string> requiredSections)
         {
-            _logger.LogInformation("Evaluating thesis practice content. Title: '{Title}', Chapter: '{Chapter}'", thesisTitle, chapterLabel);
+            var (apiKey, useMock) = GetGeminiConfig();
+            _logger.LogInformation("Evaluating thesis practice content. Title: '{Title}', Chapter: '{Chapter}' (Mock: {Mock})", thesisTitle, chapterLabel, useMock);
 
-            if (_useMock)
+            if (useMock)
             {
                 return SimulatePracticeEvaluation(content, thesisTitle, chapterId, chapterLabel, requiredSections);
             }
 
             try
             {
-                var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={_apiKey}";
+                var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={apiKey}";
 
                 var systemPrompt = $"You are an academic expert grading university graduation thesis drafts.\n" +
                     $"Evaluate the logical coherence, semantic relevance, and scientific tone of the following student draft text.\n\n" +

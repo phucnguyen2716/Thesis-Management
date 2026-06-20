@@ -89,6 +89,7 @@ builder.Services.AddScoped<ICommentService, CommentService>();
 builder.Services.AddScoped<ISocialService, SocialService>();
 builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
+builder.Services.AddScoped<IPlagiarismService, PlagiarismService>();
 builder.Services.AddSingleton<IGoogleDriveStorageService, GoogleDriveStorageService>();
 builder.Services.AddSingleton<ILibreOfficePdfConverter, LibreOfficePdfConverter>();
 builder.Services.AddSingleton<IDriveSampleDataSeeder, DriveSampleDataSeeder>();
@@ -97,6 +98,7 @@ builder.Services.AddHttpClient();
 // Chatbot Double-Guardrail and ShellScope DI registrations
 builder.Services.AddSingleton(typeof(IElasticSearchRepository<>), typeof(ElasticSearchRepository<>));
 builder.Services.AddSingleton<IShellScopeFactory, ShellScopeFactory>();
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddHttpClient<IGeminiService, GeminiService>();
 builder.Services.AddHostedService<PlagiarismQueueConsumer>();
 builder.Services.AddHostedService<DriveSyncSchedulerService>();
@@ -244,26 +246,98 @@ using (var scope = app.Services.CreateScope())
                 Console.WriteLine($"Corrected category encoding for {corruptedPosts.Count} posts.");
             }
 
-            // Update posts 1, 2, 3 with professional googleusercontent image URLs (which will trigger Cloudinary upload)
+            // Update posts 1, 2, 3 with professional googleusercontent image URLs and long contents
             var post1 = context.SocialPosts.Find(1);
-            if (post1 != null && !post1.Image.Contains("aida-public/AB6AXuDVaKckFBO6OahgQhL5POM9H"))
+            if (post1 != null)
             {
-                post1.Image = "https://lh3.googleusercontent.com/aida-public/AB6AXuDVaKckFBO6OahgQhL5POM9HkyyecIPbbQpO1dWLvQHUSBcj49wyeR69ByLr8G1HshrXjAzidE5A-wOT6RA7V7eLvC33ch_y8-bNDvNRg1HwmmnaJTAcz8NBYG9tH7A-4q9Aydwy8_z9zEL6dgejrSFafcXOHrBluNSxzC-1l68EVFbA93qGEExIzjN4r7IEyBbD-vnEDCAtJDWdRszsVJdArxh12IA2eUzDBOvizUG5zZuFjD1jL69T8qDOK5VDX_pqXpNUf76mRsk";
-                post1.CloudinaryStatus = "None";
+                post1.Title = "Công bố danh sách các sáng kiến tiêu biểu học kỳ 1 năm 2024";
+                post1.Desc = "Hội đồng chuyên môn Khoa học và Công nghệ nhà trường đã hoàn tất công tác đánh giá, chấm điểm và chính thức công bố danh sách 10 sáng kiến tiêu biểu nhất trong học kỳ 1 năm học 2024 - 2025. Các đề tài đạt giải năm nay trải rộng trên nhiều lĩnh vực mũi nhọc như Trí tuệ nhân tạo, Công nghệ mạng thế hệ mới, Hệ thống nhúng và IoT, mở ra nhiều hướng phát triển thực tiễn đầy triển vọng.";
+                post1.Content = "Sau hơn 2 tháng làm việc nghiêm túc, khách quan và chuyên nghiệp, Hội đồng chuyên môn Khoa học và Công nghệ nhà trường đã hoàn tất việc đánh giá toàn diện hơn 80 đề tài nộp về từ các Khoa thành viên. Ban tổ chức xin chúc mừng 10 sáng kiến tiêu biểu nhất đã xuất sắc vượt qua các vòng phản biện gắt gao để đạt chứng nhận cấp Trường. Các đề tài đạt giải không chỉ thể hiện sự đầu tư bài bản về mặt học thuật mà còn giải quyết trực tiếp nhiều bài toán thực tế của doanh nghiệp và xã hội. Những nghiên cứu tiêu biểu bao gồm dự án phát hiện vi phạm giao thông bằng AI của nhóm sinh viên CNTT, và giải pháp tối ưu hệ thống IoT trong nông nghiệp công nghệ cao của sinh viên Điện tử.\n\nHội đồng đánh giá năm nay quy tụ các phó giáo sư, tiến sĩ đầu ngành cùng các giám đốc công nghệ từ các tập đoàn đối tác lớn, đảm bảo tính thực tiễn cao cho mỗi đề tài được lựa chọn. Theo quy chế mới, các nhóm tác giả sở hữu đề tài tiêu biểu sẽ nhận được gói tài trợ phát triển sản phẩm trị giá lên tới 50 triệu đồng mỗi đề tài từ Quỹ Phát triển Khoa học Công nghệ nhà trường. Bên cạnh đó, Văn phòng Chuyển giao Công nghệ và Sở hữu Trí tuệ sẽ trực tiếp hỗ trợ 100% chi phí đăng ký bảo hộ quyền tác giả hoặc sáng chế cho các sáng kiến này, đồng thời kết nối trực tiếp các nhóm nghiên cứu với mạng lưới hơn 50 doanh nghiệp đối tác lớn để thực hiện chuyển giao công nghệ hoặc ươm tạo doanh nghiệp khởi nghiệp (spin-off) ngay trong khuôn viên trường trong học kỳ tới.";
+                if (!post1.Image.Contains("aida-public/AB6AXuDVaKckFBO6OahgQhL5POM9H"))
+                {
+                    post1.Image = "https://lh3.googleusercontent.com/aida-public/AB6AXuDVaKckFBO6OahgQhL5POM9HkyyecIPbbQpO1dWLvQHUSBcj49wyeR69ByLr8G1HshrXjAzidE5A-wOT6RA7V7eLvC33ch_y8-bNDvNRg1HwmmnaJTAcz8NBYG9tH7A-4q9Aydwy8_z9zEL6dgejrSFafcXOHrBluNSxzC-1l68EVFbA93qGEExIzjN4r7IEyBbD-vnEDCAtJDWdRszsVJdArxh12IA2eUzDBOvizUG5zZuFjD1jL69T8qDOK5VDX_pqXpNUf76mRsk";
+                    post1.CloudinaryStatus = "None";
+                }
             }
 
             var post2 = context.SocialPosts.Find(2);
-            if (post2 != null && !post2.Image.Contains("aida-public/AB6AXuC9CBcdVbi_lVPZdj1fMXkDrm"))
+            if (post2 != null)
             {
-                post2.Image = "https://lh3.googleusercontent.com/aida-public/AB6AXuC9CBcdVbi_lVPZdj1fMXkDrm6UXNpgAQzAbT5BzIzcVc1wXGTHcmwvFTTaIEgcFm1wFyYIkxuYp8LKwSkizyelJ4bjIqymKLSgFfukFSODI8QlHCdYgYlzoIpXWPGJ6pwNFnkIc54kH5CFyy19WYTo0HdQ9cSVQ1CNsuV41pZn1z5hhO7krZslwN6YtBpL_fRpzCvXn5HpiOcH4ntw_v0VI8GftCgk9T6IiQz7ikPDYxY5Gr4t4CGGG3_-YsRIM4rMsyCMlTMvyufS";
-                post2.CloudinaryStatus = "None";
+                post2.Title = "Hướng dẫn tra cứu và tham khảo kho dữ liệu sáng kiến học thuật";
+                post2.Desc = "Để hỗ trợ sinh viên trong quá trình học tập, nghiên cứu và làm đồ án tốt nghiệp, Ban Thư viện phối hợp cùng Khoa CNTT xây dựng tài liệu hướng dẫn tra cứu kho dữ liệu số hóa. Hệ thống mới tích hợp công cụ tìm kiếm thông minh theo từ khóa, ngành học và mã số giảng viên hướng dẫn, giúp việc tiếp cận kho tri thức số hóa trở nên dễ dàng và nhanh chóng hơn bao giờ hết.";
+                post2.Content = "Nhằm nâng cao chất lượng tự học và thúc đẩy phong trào nghiên cứu khoa học trong sinh viên, Thư viện số chính thức giới thiệu cẩm nang hướng dẫn sử dụng kho dữ liệu sáng kiến học thuật số hóa. Sinh viên có thể truy cập hệ thống trực tuyến thông qua tài khoản sinh viên được cấp. Quy trình tra cứu gồm 4 bước đơn giản: 1. Đăng nhập hệ thống; 2. Sử dụng thanh tìm kiếm thông minh kết hợp các bộ lọc chuyên sâu (Lĩnh vực, Học kỳ, Giảng viên); 3. Đọc tóm tắt và đánh giá mức độ tương quan của đề tài; 4. Đăng ký mượn bản PDF đầy đủ hoặc tham khảo trực tuyến qua trình đọc sách tương tác.\n\nKho dữ liệu học thuật số hóa hiện lưu giữ hơn 5.000 đề tài khóa luận tốt nghiệp, đồ án môn học tiêu biểu và các bài báo khoa học đã được công bố của sinh viên và giảng viên qua các thời kỳ. Hệ thống mới được trang bị công nghệ nhận dạng ký tự quang học (OCR) tiên tiến, cho phép sinh viên tìm kiếm trực tiếp các cụm từ nằm sâu trong nội dung tài liệu quét cũ. Để phục vụ tốt nhất cho quá trình trích dẫn và nghiên cứu, hệ thống cũng tích hợp công cụ tự động xuất file trích dẫn chuẩn APA, MLA hoặc IEEE, tương thích tốt với các phần mềm quản lý thư mục phổ biến như Mendeley, EndNote và Zotero. Ban quản lý cũng lưu ý sinh viên tuân thủ nghiêm ngặt các quy định về trích dẫn tài liệu tham khảo để tránh các vi phạm liên quan đến quyền tác giả và đạo văn trong nghiên cứu khoa học.";
+                if (!post2.Image.Contains("aida-public/AB6AXuC9CBcdVbi_lVPZdj1fMXkDrm"))
+                {
+                    post2.Image = "https://lh3.googleusercontent.com/aida-public/AB6AXuC9CBcdVbi_lVPZdj1fMXkDrm6UXNpgAQzAbT5BzIzcVc1wXGTHcmwvFTTaIEgcFm1wFyYIkxuYp8LKwSkizyelJ4bjIqymKLSgFfukFSODI8QlHCdYgYlzoIpXWPGJ6pwNFnkIc54kH5CFyy19WYTo0HdQ9cSVQ1CNsuV41pZn1z5hhO7krZslwN6YtBpL_fRpzCvXn5HpiOcH4ntw_v0VI8GftCgk9T6IiQz7ikPDYxY5Gr4t4CGGG3_-YsRIM4rMsyCMlTMvyufS";
+                    post2.CloudinaryStatus = "None";
+                }
             }
 
             var post3 = context.SocialPosts.Find(3);
-            if (post3 != null && !post3.Image.Contains("aida-public/AB6AXuANxGO4D6ojuZlYk7MEhtq_38"))
+            if (post3 != null)
             {
-                post3.Image = "https://lh3.googleusercontent.com/aida-public/AB6AXuANxGO4D6ojuZlYk7MEhtq_38tsfUs324mV9MOXepahz-7q_MfJXjqjvHbgLt27PAjQquIgxNbU4l8TFLxxTqokf9fiaJRq8mxeZIqQU-_fhU1ho_Omjv4xl_49kl_cJIIr3tyg5-3Lu3GYiLPM2N3psKIdMJtF-p6DcwYjflkXf24kayQ57904JAS0eyc8PMffw-nv4NNzDqKse0KbLJ4YWmW0Hqys7UoOYciK4A2BTM_k2g3B1Slq6NwqcMgwtqtuEWUyLaQ7lH_W";
-                post3.CloudinaryStatus = "None";
+                post3.Title = "Hệ thống AI Gemini hỗ trợ phân tích và tóm tắt sáng kiến";
+                post3.Desc = "Nhà trường chính thức đưa vào thử nghiệm hệ thống Trí tuệ nhân tạo (AI) tích hợp mô hình ngôn ngữ lớn Gemini của Google. Hệ thống mới này sẽ hỗ trợ sinh viên tóm tắt các tài liệu nghiên cứu dày hàng trăm trang, phân tích xu hướng đề tài tự động, đồng thời cung cấp giao diện chấm điểm cấu trúc bài viết và kiểm tra mức độ trùng lặp nội dung theo thời gian thực.";
+                post3.Content = "Nằm trong chiến lược xây dựng Đại học Thông minh và Chuyển đổi số toàn diện, hệ thống eThesis chính thức tích hợp trợ lý học thuật AI Gemini. Trợ lý AI này cung cấp 3 tính năng cốt lõi cho sinh viên và giảng viên: Thứ nhất là 'Tóm tắt thông minh', giúp trích xuất các luận điểm, phương pháp và kết quả chính của một bài nghiên cứu dài chỉ trong vài giây; Thứ hai là 'Kiểm tra cấu trúc', AI sẽ đối chiếu bản thảo của sinh viên với các tiêu chuẩn trình bày khóa luận tốt nghiệp để đưa ra nhận xét định dạng, từ ngữ và lỗi ngữ pháp; Thứ ba là 'Gợi ý tài liệu liên quan', dựa trên ngữ nghĩa của bản thảo để đề xuất các bài báo khoa học liên quan trực tiếp.\n\nĐiểm đặc biệt của hệ thống tích hợp AI Gemini là mô hình bảo mật dữ liệu cấp cao. Toàn bộ bản thảo đồ án hoặc nghiên cứu do sinh viên đăng tải lên để phân tích sẽ được xử lý trong một phân vùng bảo mật riêng biệt và cam kết không sử dụng để huấn luyện lại mô hình công cộng, đảm bảo tuyệt đối tính bản quyền và tránh rò rỉ ý tưởng công nghệ trước khi công bố. Trong giai đoạn thử nghiệm đầu tiên (từ nay đến hết tháng 8/2026), mỗi tài khoản sinh viên sẽ được cung cấp 50 lượt sử dụng AI miễn phí mỗi ngày. Mọi ý kiến phản hồi về chất lượng phản hồi của AI có thể gửi trực tiếp qua nút đóng góp ý kiến ở góc phải màn hình để đội ngũ phát triển tinh chỉnh thuật toán tốt hơn trước khi chính thức vận hành thương mại vào học kỳ sau.";
+                if (!post3.Image.Contains("aida-public/AB6AXuANxGO4D6ojuZlYk7MEhtq_38"))
+                {
+                    post3.Image = "https://lh3.googleusercontent.com/aida-public/AB6AXuANxGO4D6ojuZlYk7MEhtq_38tsfUs324mV9MOXepahz-7q_MfJXjqjvHbgLt27PAjQquIgxNbU4l8TFLxxTqokf9fiaJRq8mxeZIqQU-_fhU1ho_Omjv4xl_49kl_cJIIr3tyg5-3Lu3GYiLPM2N3psKIdMJtF-p6DcwYjflkXf24kayQ57904JAS0eyc8PMffw-nv4NNzDqKse0KbLJ4YWmW0Hqys7UoOYciK4A2BTM_k2g3B1Slq6NwqcMgwtqtuEWUyLaQ7lH_W";
+                    post3.CloudinaryStatus = "None";
+                }
+            }
+
+            var post4 = context.SocialPosts.Find(4);
+            if (post4 == null)
+            {
+                post4 = new SocialPost
+                {
+                    Id = 4,
+                    Title = "Phát động Cuộc thi Khởi nghiệp Sáng tạo và Đổi mới Công nghệ Liên trường 2025",
+                    Category = "Báo chí",
+                    BadgeClass = "bg-red-600 text-white",
+                    Image = "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1000&q=80",
+                    Desc = "Với mục tiêu thúc đẩy tinh thần đổi mới sáng tạo và phát triển các giải pháp công nghệ mang tính thực tiễn cao, Ban Tổ chức chính thức công bố phát động Cuộc thi Khởi nghiệp Sáng tạo & Đổi mới Công nghệ Liên trường quy tụ hơn 15 trường đại học lớn trên toàn quốc như UEF, HUTECH, ĐHQG-HCM, Bách Khoa... Cuộc thi mang đến cơ hội lớn giúp sinh viên đưa các đề tài nghiên cứu khoa học từ giảng đường vào giải quyết trực tiếp các bài toán chuyển đổi số, tối ưu hoá năng lượng và ứng dụng AI thực tế của doanh nghiệp hiện nay.",
+                    Content = "Sáng ngày 16/06/2026, tại hội trường lớn, Lễ ký kết và chính thức phát động Cuộc thi Khởi nghiệp Sáng tạo và Đổi mới Công nghệ Liên trường đã diễn ra long trọng với sự tham gia của đại diện Sở Khoa học và Công nghệ, Ban giám hiệu các trường cùng hơn 1.000 sinh viên. Cuộc thi năm nay lấy chủ đề 'Chuyển đổi số và Phát triển bền vững', khuyến khích ứng dụng AI, Blockchain, IoT và Big Data. Cơ cấu giải thưởng năm nay được nâng lên tổng trị giá hơn 600 triệu đồng tiền mặt cùng gói hỗ trợ hạ tầng đám mây trị giá hàng chục nghìn USD từ Google Cloud và AWS.\n\nCuộc thi năm nay đánh dấu sự hợp tác sâu rộng giữa 15 trường đại học lớn trên toàn quốc, mở ra một sân chơi liên kết liên ngành quy mô lớn chưa từng có. Theo thể lệ cuộc thi, các đội thi được phép tuyển thành viên liên trường để kết hợp các thế mạnh chuyên môn khác nhau, ví dụ nhóm kỹ thuật từ trường CNTT, nhóm kinh doanh từ trường Kinh tế và nhóm truyền thông từ trường Xã hội nhân văn. Quy trình cuộc thi gồm 3 giai đoạn: Vòng Sơ loại ý tưởng (đến hết ngày 30/08) chọn ra Top 30; Vòng Bán kết & Huấn luyện (Bootcamp) kéo dài 2 tuần tại vườn ươm doanh nghiệp công nghệ cao với sự đồng hành 1-1 từ các Mentor là các Founder đã gọi vốn thành công; và Vòng Chung kết & Triển lãm (Tháng 11) thuyết trình gọi vốn trực tiếp trước các quỹ đầu tư mạo hiểm quốc tế. Đây là bệ phóng vững chắc đưa nghiên cứu khoa học của sinh viên tiệm cận nhu cầu thực tế của doanh nghiệp và xã hội.",
+                    Published = true,
+                    CloudinaryStatus = "None",
+                    CreatedAt = DateTime.UtcNow.AddDays(-10)
+                };
+                context.SocialPosts.Add(post4);
+            }
+            else
+            {
+                post4.Title = "Phát động Cuộc thi Khởi nghiệp Sáng tạo và Đổi mới Công nghệ Liên trường 2025";
+                post4.Image = "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1000&q=80";
+                post4.Desc = "Với mục tiêu thúc đẩy tinh thần đổi mới sáng tạo và phát triển các giải pháp công nghệ mang tính thực tiễn cao, Ban Tổ chức chính thức công bố phát động Cuộc thi Khởi nghiệp Sáng tạo & Đổi mới Công nghệ Liên trường quy tụ hơn 15 trường đại học lớn trên toàn quốc như UEF, HUTECH, ĐHQG-HCM, Bách Khoa... Cuộc thi mang đến cơ hội lớn giúp sinh viên đưa các đề tài nghiên cứu khoa học từ giảng đường vào giải quyết trực tiếp các bài toán chuyển đổi số, tối ưu hoá năng lượng và ứng dụng AI thực tế của doanh nghiệp hiện nay.";
+                post4.Content = "Sáng ngày 16/06/2026, tại hội trường lớn, Lễ ký kết và chính thức phát động Cuộc thi Khởi nghiệp Sáng tạo và Đổi mới Công nghệ Liên trường đã diễn ra long trọng với sự tham gia của đại diện Sở Khoa học và Công nghệ, Ban giám hiệu các trường cùng hơn 1.000 sinh viên. Cuộc thi năm nay lấy chủ đề 'Chuyển đổi số và Phát triển bền vững', khuyến khích ứng dụng AI, Blockchain, IoT và Big Data. Cơ cấu giải thưởng năm nay được nâng lên tổng trị giá hơn 600 triệu đồng tiền mặt cùng gói hỗ trợ hạ tầng đám mây trị giá hàng chục nghìn USD từ Google Cloud và AWS.\n\nCuộc thi năm nay đánh dấu sự hợp tác sâu rộng giữa 15 trường đại học lớn trên toàn quốc, mở ra một sân chơi liên kết liên ngành quy mô lớn chưa từng có. Theo thể lệ cuộc thi, các đội thi được phép tuyển thành viên liên trường để kết hợp các thế mạnh chuyên môn khác nhau, ví dụ nhóm kỹ thuật từ trường CNTT, nhóm kinh doanh từ trường Kinh tế và nhóm truyền thông từ trường Xã hội nhân văn. Quy trình cuộc thi gồm 3 giai đoạn: Vòng Sơ loại ý tưởng (đến hết ngày 30/08) chọn ra Top 30; Vòng Bán kết & Huấn luyện (Bootcamp) kéo dài 2 tuần tại vườn ươm doanh nghiệp công nghệ cao với sự đồng hành 1-1 từ các Mentor là các Founder đã gọi vốn thành công; và Vòng Chung kết & Triển lãm (Tháng 11) thuyết trình gọi vốn trực tiếp trước các quỹ đầu tư mạo hiểm quốc tế. Đây là bệ phóng vững chắc đưa nghiên cứu khoa học của sinh viên tiệm cận nhu cầu thực tế của doanh nghiệp và xã hội.";
+                post4.CloudinaryStatus = "None";
+            }
+
+            var post5 = context.SocialPosts.Find(5);
+            if (post5 == null)
+            {
+                post5 = new SocialPost
+                {
+                    Id = 5,
+                    Title = "Chung kết Cuộc thi Ý tưởng Đổi mới Sáng tạo Xanh Liên trường: Điểm hẹn của các giải pháp phát triển bền vững",
+                    Category = "Báo chí",
+                    BadgeClass = "bg-emerald-600 text-white",
+                    Image = "https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=1000&q=80",
+                    Desc = "Vượt qua hơn 200 đề tài nghiên cứu từ 18 trường Đại học đối tác trên khắp cả nước, Top 10 dự án công nghệ xanh xuất sắc nhất đã bước vào vòng Chung kết xếp hạng đầy kịch tính. Các dự án nổi bật năm nay tập trung vào công nghệ xử lý rác thải hữu cơ thông minh, vật liệu sinh học thay thế nhựa dùng một lần và ứng dụng mô hình học sâu (Deep Learning) tối ưu hóa năng lượng cho các toà nhà thông minh. Sự kiện nhận được sự quan tâm lớn từ giới chuyên môn, các cơ quan báo chí truyền thông cùng các nhà tài trợ lớn.",
+                    Content = "Đêm Chung kết Cuộc thi Ý tưởng Sáng tạo Xanh Liên trường vừa khép lại với những màn tranh tài nảy lửa giữa các tài năng trẻ đến từ nhiều trường đại học hàng đầu cả nước. Sau hơn 5 giờ thuyết trình và phản biện trực tiếp với Hội đồng giám khảo, dự án 'Hệ thống quản lý và tối ưu hóa năng lượng thông minh cho đô thị lớn' sử dụng trí tuệ nhân tạo của nhóm sinh viên liên trường đã xuất sắc giành ngôi vị Quán quân. Hội đồng giám khảo gồm các chuyên gia đầu ngành trong nước và quốc tế đánh giá cao tính thực tiễn và khả năng triển khai thương mại của các đề tài năm nay. Nhiều dự án đã có sản phẩm thử nghiệm thực tế (MVP) hoạt động rất ổn định và bắt đầu thử nghiệm thương mại hoá ở quy mô nhỏ.\n\nBên cạnh giải Quán quân, giải Nhì đã thuộc về dự án 'Vật liệu xây dựng sinh học sản xuất từ phế phẩm nông nghiệp tái chế' và giải Ba trao cho 'Hệ thống lọc nước nhiễm mặn quy mô hộ gia đình ứng dụng năng lượng mặt trời'. Tổng giải thưởng trị giá 150 triệu đồng tiền mặt cùng gói ươm tạo doanh nghiệp công nghệ cao trong vòng 1 năm tại Khu Công nghệ cao TP.HCM đã được trao trực tiếp cho đội thi xứng đáng nhất. Đại diện Hội đồng Giám khảo nhận xét: 'Chúng tôi thực sự bất ngờ trước sự trưởng thành trong tư duy và kỹ năng trình bày dự án của sinh viên. Các bạn không chỉ có kiến thức kỹ thuật vững chắc mà còn có tầm nhìn chiến lược về kinh doanh, marketing và ý thức trách nhiệm cao với cộng đồng, môi trường. Đây chính là thế hệ trẻ tiên phong sẽ dẫn dắt cuộc cách mạng xanh và chuyển đổi số tại Việt Nam trong tương lai.' Ban tổ trì cuộc thi cũng tiết lộ rằng ngay tại đêm chung kết, 3 dự án xuất sắc nhất đã nhận được thư bày tỏ ý định đầu tư vòng thiên thần từ các quỹ đầu tư mạo hiểm nội địa với tổng giá trị cam kết ban đầu lên đến 2 tỷ đồng.",
+                    Published = true,
+                    CloudinaryStatus = "None",
+                    CreatedAt = DateTime.UtcNow.AddDays(-5)
+                };
+                context.SocialPosts.Add(post5);
+            }
+            else
+            {
+                post5.Title = "Chung kết Cuộc thi Ý tưởng Đổi mới Sáng tạo Xanh Liên trường: Điểm hẹn của các giải pháp phát triển bền vững";
+                post5.Image = "https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=1000&q=80";
+                post5.Desc = "Vượt qua hơn 200 đề tài nghiên cứu từ 18 trường Đại học đối tác trên khắp cả nước, Top 10 dự án công nghệ xanh xuất sắc nhất đã bước vào vòng Chung kết xếp hạng đầy kịch tính. Các dự án nổi bật năm nay tập trung vào công nghệ xử lý rác thải hữu cơ thông minh, vật liệu sinh học thay thế nhựa dùng một lần và ứng dụng mô hình học sâu (Deep Learning) tối ưu hóa năng lượng cho các toà nhà thông minh. Sự kiện nhận được sự quan tâm lớn từ giới chuyên môn, các cơ quan báo chí truyền thông cùng các nhà tài trợ lớn.";
+                post5.Content = "Đêm Chung kết Cuộc thi Ý tưởng Sáng tạo Xanh Liên trường vừa khép lại với những màn tranh tài nảy lửa giữa các tài năng trẻ đến từ nhiều trường đại học hàng đầu cả nước. Sau hơn 5 giờ thuyết trình và phản biện trực tiếp với Hội đồng giám khảo, dự án 'Hệ thống quản lý và tối ưu hóa năng lượng thông minh cho đô thị lớn' sử dụng trí tuệ nhân tạo của nhóm sinh viên liên trường đã xuất sắc giành ngôi vị Quán quân. Hội đồng giám khảo gồm các chuyên gia đầu ngành trong nước và quốc tế đánh giá cao tính thực tiễn và khả năng triển khai thương mại của các đề tài năm nay. Nhiều dự án đã có sản phẩm thử nghiệm thực tế (MVP) hoạt động rất ổn định và bắt đầu thử nghiệm thương mại hoá ở quy mô nhỏ.\n\nBên cạnh giải Quán quân, giải Nhì đã thuộc về dự án 'Vật liệu xây dựng sinh học sản xuất từ phế phẩm nông nghiệp tái chế' và giải Ba trao cho 'Hệ thống lọc nước nhiễm mặn quy mô hộ gia đình ứng dụng năng lượng mặt trời'. Tổng giải thưởng trị giá 150 triệu đồng tiền mặt cùng gói ươm tạo doanh nghiệp công nghệ cao trong vòng 1 năm tại Khu Công nghệ cao TP.HCM đã được trao trực tiếp cho đội thi xứng đáng nhất. Đại diện Hội đồng Giám khảo nhận xét: 'Chúng tôi thực sự bất ngờ trước sự trưởng thành trong tư duy và kỹ năng trình bày dự án của sinh viên. Các bạn không chỉ có kiến thức kỹ thuật vững chắc mà còn có tầm nhìn chiến lược về kinh doanh, marketing và ý thức trách nhiệm cao với cộng đồng, môi trường. Đây chính là thế hệ trẻ tiên phong sẽ dẫn dắt cuộc cách mạng xanh và chuyển đổi số tại Việt Nam trong tương lai.' Ban tổ trì cuộc thi cũng tiết lộ rằng ngay tại đêm chung kết, 3 dự án xuất sắc nhất đã nhận được thư bày tỏ ý định đầu tư vòng thiên thần từ các quỹ đầu tư mạo hiểm nội địa với tổng giá trị cam kết ban đầu lên đến 2 tỷ đồng.";
+                post5.CloudinaryStatus = "None";
             }
 
             context.SaveChanges();

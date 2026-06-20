@@ -134,7 +134,8 @@ const NewsPage = () => {
               {allNewsItems.filter(n => n.category === 'Báo chí').map((news, idx) => (
                 <div 
                   key={news.id}
-                  className="bg-white rounded-[3rem] p-4 flex flex-col md:flex-row gap-8 hover:shadow-2xl transition-all border border-outline-variant/50 group"
+                  onClick={() => navigate(`/news/${news.id}`)}
+                  className="bg-white rounded-[3rem] p-4 flex flex-col md:flex-row gap-8 hover:shadow-2xl transition-all border border-outline-variant/50 group cursor-pointer"
                 >
                   <div className="w-full md:w-[400px] h-[250px] rounded-[2.5rem] overflow-hidden">
                     <img src={news.image} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" alt="" />
@@ -154,9 +155,12 @@ const NewsPage = () => {
                     </p>
                     <div className="flex items-center gap-4">
                       <button className="px-6 py-3 bg-on-surface text-white rounded-xl text-[10px] font-black uppercase tracking-widest">
-                        Xem bài gốc
+                        Xem bài chi tiết
                       </button>
-                      <button className="text-primary font-black text-[10px] uppercase tracking-widest flex items-center gap-2">
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); alert('Đã sao chép liên kết chia sẻ!'); }}
+                        className="text-primary font-black text-[10px] uppercase tracking-widest flex items-center gap-2"
+                      >
                         Chia sẻ <span className="material-symbols-outlined text-sm">share</span>
                       </button>
                     </div>

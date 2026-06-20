@@ -9,6 +9,10 @@ api.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  const geminiKey = localStorage.getItem('gemini_api_key');
+  if (geminiKey) {
+    config.headers['X-Gemini-API-Key'] = geminiKey;
+  }
   return config;
 });
 
@@ -65,10 +69,61 @@ export const chatbotService = {
   getHistory: () => api.get('/chatbot/history'),
 };
 
+export const geminiService = {
+  analyze: (prompt) => api.post('/chatbot/chat', { prompt }),
+};
+
+
+
 export const plagiarismService = {
   check: (thesisId) => api.post(`/plagiarism/check/${thesisId}`),
   getStatus: (thesisId) => api.get(`/plagiarism/status/${thesisId}`),
   seed: () => api.post('/plagiarism/seed'),
+};
+
+/**
+ * Gọi trực tiếp Check-plagarism-repo server (port 5000) với streaming NDJSON.
+ * @param {string} text - Văn bản cần kiểm tra
+ * @param {(progress: number) => void} onProgress - Callback tiến độ 0-100
+ * @returns {Promise<object>} - Kết quả cuối: { overallScore, plagiarismPercentage, totalSentences, plagiarizedSentences, results }
+ */
+export const realPlagiarismCheck = async (text, onProgress) => {
+  const response = await fetch('http://localhost:5000/api/plagiarism-check', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Plagiarism server error: ${response.status}`);
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let finalResult = null;
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop(); // keep incomplete line
+    for (const line of lines) {
+      if (!line.trim()) continue;
+      try {
+        const msg = JSON.parse(line);
+        if (msg.type === 'progress' && onProgress) {
+          onProgress(msg.progress);
+        } else if (msg.type === 'complete') {
+          finalResult = msg.result;
+        }
+      } catch { /* ignore malformed line */ }
+    }
+  }
+
+  if (!finalResult) throw new Error('Không nhận được kết quả từ máy chủ kiểm tra đạo văn.');
+  return finalResult;
 };
 
 export const socialService = {
