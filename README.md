@@ -1175,7 +1175,7 @@ Luồng hoạt động chính của Chatbot đi qua 3 lớp bảo vệ và xử 
 ```mermaid
 sequenceDiagram
     autonumber
-    actor User as Sinh viên/Giảng viên
+    actor User as User (Student/Lecturer)
     participant Client as Frontend (Vite)
     participant Auth as JWT Auth Handler
     participant Controller as ChatbotController (API)
@@ -1183,31 +1183,31 @@ sequenceDiagram
     participant DB as PostgreSQL Database
     participant BM25 as BM25 Ranker Engine
 
-    User->>Client: Nhập câu lệnh tìm kiếm (Ví dụ: "tìm đề tài AI")
-    Client->>Controller: Gửi HTTP POST /api/chatbot/chat (Kèm Bearer JWT Token)
-    Controller->>Auth: Xác thực Token & trích xuất UserId
-    Auth-->>Controller: Trả về UserId (nếu có)
+    User->>Client: Input search query (e.g. "AI thesis")
+    Client->>Controller: POST /api/chatbot/chat (with JWT)
+    Controller->>Auth: Validate Token & Extract UserId
+    Auth-->>Controller: Return UserId (if authorized)
     
-    Note over Controller, Gemini: Lớp 1: Pre-Filter (Sandwich Guardrail)
-    Controller->>Gemini: Phân tích Prompt (Kiểm tra độc hại & Nhận diện Intent)
-    Gemini-->>Controller: Xác nhận an toàn & Nhận diện: SearchThesisCommand(query)
+    Note over Controller, Gemini: Layer 1: Pre-Filter (Sandwich Guardrail)
+    Controller->>Gemini: Analyze Prompt (Safety & Intent Check)
+    Gemini-->>Controller: Safety OK & Intent: SearchThesisCommand(query)
 
-    Note over Controller, BM25: Lớp 2: Function Routing & BM25 Ranking
-    Controller->>DB: Lấy tất cả đề tài (DB + Seeded Mock)
-    DB-->>Controller: Trả về danh sách đề tài ứng viên
-    Controller->>BM25: Gửi truy vấn và danh sách đề tài ứng viên
-    BM25->>BM25: Tokenize, tính IDF và chấm điểm BM25 từng tiêu đề
-    BM25-->>Controller: Trả về Top 3 đề tài có điểm BM25 cao nhất
+    Note over Controller, BM25: Layer 2: Function Routing & BM25 Ranking
+    Controller->>DB: Fetch candidate theses (DB + Seeded Mock)
+    DB-->>Controller: Return candidate list
+    Controller->>BM25: Send query & candidate list
+    BM25->>BM25: Tokenize, calculate IDF & BM25 score
+    BM25-->>Controller: Return Top 3 BM25 ranked theses
 
-    Note over Controller, Gemini: Lớp 3: Post-Filter (Sandwich Guardrail)
-    Controller->>Gemini: Gửi Prompt gốc + Kết quả BM25 để sinh câu trả lời tự nhiên
-    Gemini-->>Controller: Trả về nội dung có chứa Markdown Links
-    Controller->>Gemini: Quét đầu ra (Đảm bảo an toàn nội dung sinh ra)
-    Gemini-->>Controller: Xác nhận nội dung sạch
+    Note over Controller, Gemini: Layer 3: Post-Filter (Sandwich Guardrail)
+    Controller->>Gemini: Send original prompt + BM25 results
+    Gemini-->>Controller: Return answer with Markdown Links
+    Controller->>Gemini: Scan output (Safety & Validity Check)
+    Gemini-->>Controller: Verify clean output
 
-    Controller->>DB: Lưu ChatHistory (Prompt, Message, Success, UserId)
-    Controller-->>Client: Trả về kết quả JSON (Message, Diagnostics)
-    Client->>User: Hiển thị danh sách đề tài kèm link Đọc Sách 3D / Xem chi tiết
+    Controller->>DB: Save ChatHistory
+    Controller-->>Client: Return JSON response
+    Client->>User: Display results with Flipbook links
 ```
 
 #### 🛡️ Chi tiết các đặc tính cốt lõi của Chatbot:
