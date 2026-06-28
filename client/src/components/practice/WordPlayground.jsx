@@ -355,10 +355,23 @@ const WordPlayground = () => {
 
   const applyTemplate = tpl => {
     if (!editorRef.current) return;
-    if (editorRef.current.innerText.trim() && !window.confirm('Thay nội dung hiện tại bằng mẫu? Dữ liệu soạn thảo cũ sẽ mất.')) return;
-    editorRef.current.innerHTML = tpl.html;
-    setActiveTemplateId(tpl.id);
-    scheduleSave();
+    
+    const proceed = () => {
+      editorRef.current.innerHTML = tpl.html;
+      setActiveTemplateId(tpl.id);
+      scheduleSave();
+    };
+
+    if (editorRef.current.innerText.trim()) {
+      setCustomAlert({
+        type: 'warning',
+        title: 'Xác nhận thay thế',
+        message: 'Thay nội dung hiện tại bằng mẫu? Dữ liệu soạn thảo cũ sẽ mất.',
+        onConfirm: proceed
+      });
+    } else {
+      proceed();
+    }
   };
 
   const handlePrint = () => window.print();
@@ -1491,19 +1504,47 @@ const WordPlayground = () => {
             <p className="text-xs text-slate-600 leading-relaxed font-semibold mb-6">
               {customAlert.message}
             </p>
-            <button
-              type="button"
-              onClick={() => setCustomAlert(null)}
-              className={`w-full py-2.5 rounded-xl text-xs font-black uppercase tracking-wider text-white transition-all shadow ${
-                customAlert.type === 'success' 
-                  ? 'bg-emerald-600 hover:bg-emerald-500' 
-                  : customAlert.type === 'warning' 
-                    ? 'bg-amber-500 hover:bg-amber-400' 
-                    : 'bg-rose-600 hover:bg-rose-500'
-              }`}
-            >
-              Đồng ý & Đóng
-            </button>
+            {customAlert.onConfirm ? (
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setCustomAlert(null)}
+                  className="flex-1 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider text-slate-500 bg-slate-100 hover:bg-slate-200 transition-all border border-outline-variant/60"
+                >
+                  Hủy bỏ
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    customAlert.onConfirm();
+                    setCustomAlert(null);
+                  }}
+                  className={`flex-1 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider text-white transition-all shadow ${
+                    customAlert.type === 'success' 
+                      ? 'bg-emerald-600 hover:bg-emerald-500' 
+                      : customAlert.type === 'warning' 
+                        ? 'bg-amber-500 hover:bg-amber-400' 
+                        : 'bg-rose-600 hover:bg-rose-500'
+                  }`}
+                >
+                  Xác nhận
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setCustomAlert(null)}
+                className={`w-full py-2.5 rounded-xl text-xs font-black uppercase tracking-wider text-white transition-all shadow ${
+                  customAlert.type === 'success' 
+                    ? 'bg-emerald-600 hover:bg-emerald-500' 
+                    : customAlert.type === 'warning' 
+                      ? 'bg-amber-500 hover:bg-amber-400' 
+                      : 'bg-rose-600 hover:bg-rose-500'
+                }`}
+              >
+                Đồng ý & Đóng
+              </button>
+            )}
           </div>
         </div>
       )}

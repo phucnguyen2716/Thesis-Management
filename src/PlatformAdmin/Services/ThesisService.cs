@@ -40,10 +40,11 @@ public class ThesisService : IThesisService
         t.Subject,
         t.SubjectCode,
         t.Category,
+        t.Batch,
         t.Submissions?.Select(s => new ThesisSubmissionDto(s.Id, s.FileName, s.FilePath, s.FileSize, s.SubmittedAt)).ToList()
     );
 
-    public async Task<ThesisListResponse> GetAllAsync(int page, int pageSize, string? status, string? search, int? studentId, int? advisorId, string? category = null)
+    public async Task<ThesisListResponse> GetAllAsync(int page, int pageSize, string? status, string? search, int? studentId, int? advisorId, string? category = null, int? batch = null)
     {
         var q = BaseQuery().AsQueryable();
         if (!string.IsNullOrEmpty(status)) q = q.Where(t => t.Status == status);
@@ -63,6 +64,7 @@ public class ThesisService : IThesisService
         }
 
         if (!string.IsNullOrEmpty(category)) q = q.Where(t => t.Category == category);
+        if (batch.HasValue) q = q.Where(t => t.Batch == batch.Value);
 
         var total = await q.CountAsync();
         var items = await q.OrderByDescending(t => t.CreatedAt)
@@ -91,7 +93,8 @@ public class ThesisService : IThesisService
             SubjectCode = request.SubjectCode,
             Category = request.Category,
             AdvisorId = request.AdvisorId == 0 ? null : request.AdvisorId,
-            FilePath = request.FilePath
+            FilePath = request.FilePath,
+            Batch = request.Batch
         };
         _db.Theses.Add(thesis);
         await _db.SaveChangesAsync();
@@ -114,6 +117,7 @@ public class ThesisService : IThesisService
         thesis.Subject = request.Subject;
         thesis.SubjectCode = request.SubjectCode;
         thesis.Category = request.Category;
+        thesis.Batch = request.Batch;
         if (request.StudentId.HasValue && request.StudentId.Value != 0)
         {
             thesis.StudentId = request.StudentId.Value;

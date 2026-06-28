@@ -88,6 +88,9 @@ const emptyForm = (categoryCode) => ({
   studentId: '',
   advisorId: '',
   status: 'Pending',
+  batch: 1,
+  filePath: '',
+  submissions: [],
 });
 
 // ─── Google Drive + Lookup panel (Hangfire tự đồng bộ) ───────────────────────
@@ -154,6 +157,7 @@ const AdminThesesPage = () => {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [majorFilter, setMajorFilter] = useState('all');
+  const [batchFilter, setBatchFilter] = useState('all');
 
   const [users, setUsers] = useState([]);
   const [modal, setModal] = useState(null);
@@ -182,6 +186,48 @@ const AdminThesesPage = () => {
   const [scanResult, setScanResult] = useState(null);
   const [scanProgress, setScanProgress] = useState(0);
   const [showProgressModal, setShowProgressModal] = useState(false);
+  const [toast, setToast] = useState(null);
+  const [confirmModal, setConfirmModal] = useState(null);
+
+  const showToastMessage = (type, message) => {
+    setToast({ type, message });
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  const showConfirm = (message, onConfirm) => {
+    setConfirmModal({ message, onConfirm });
+  };
+
+  const handleDownload = async (filePath, fileName) => {
+    if (filePath.startsWith('http')) {
+      window.open(filePath, '_blank');
+      showToastMessage('success', `Đang mở liên kết: ${fileName}`);
+      return;
+    }
+
+    const fileUrl = filePath.startsWith('http') ? filePath : `http://localhost:5145${filePath}`;
+    showToastMessage('success', `Đang chuẩn bị tải xuống: ${fileName}...`);
+
+    try {
+      const response = await fetch(fileUrl);
+      if (!response.ok) throw new Error('Không thể tải tệp tin');
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      showToastMessage('success', `Đã tải xuống thành công: ${fileName}!`);
+    } catch (error) {
+      console.error('Lỗi khi tải file:', error);
+      // Fallback
+      window.open(fileUrl, '_blank');
+      showToastMessage('success', `Đã mở tải xuống cho: ${fileName}`);
+    }
+  };
 
   const openPlagiarismModal = async (thesis) => {
     setSelectedThesisForScan(thesis);
@@ -291,7 +337,7 @@ const AdminThesesPage = () => {
             clearInterval(intervalId);
             setScanning(false);
             setShowProgressModal(false);
-            alert('Hết thời gian chờ phản hồi từ hệ thống kiểm tra đạo văn.');
+            showToastMessage('error', 'Hết thời gian chờ phản hồi từ hệ thống kiểm tra đạo văn.');
           }
         } catch (pollErr) {
           clearInterval(intervalId);
@@ -304,7 +350,7 @@ const AdminThesesPage = () => {
       console.error(backendErr);
       setScanning(false);
       setShowProgressModal(false);
-      alert('Không thể kết nối đến máy chủ backend để thực hiện quét đạo văn.');
+      showToastMessage('error', 'Không thể kết nối đến máy chủ backend để thực hiện quét đạo văn.');
     }
   };
 
@@ -366,6 +412,7 @@ const AdminThesesPage = () => {
         search: search.trim() || undefined,
         status: statusFilter !== 'all' ? statusFilter : undefined,
         category: catConfig.code,
+        batch: batchFilter !== 'all' ? parseInt(batchFilter) : undefined,
       });
       let items = res.data.items || [];
       if (majorFilter !== 'all') items = items.filter(t => t.major === majorFilter);
@@ -379,7 +426,7 @@ const AdminThesesPage = () => {
   };
 
   useEffect(() => { loadUsers(); }, []);
-  useEffect(() => { setPage(1); loadTheses(); }, [category, search, statusFilter, majorFilter]);
+  useEffect(() => { setPage(1); loadTheses(); }, [category, search, statusFilter, majorFilter, batchFilter]);
   useEffect(() => { loadTheses(); }, [page]);
   useEffect(() => {
     if (isProject) {
@@ -395,11 +442,11 @@ const AdminThesesPage = () => {
     const oauthError = params.get('error');
 
     if (googleConnected === 'true') {
-      alert('Kết nối Google Drive thành công! Dung lượng lưu trữ của bạn hiện đã được áp dụng.');
+      showToastMessage('success', 'Kết nối Google Drive thành công! Dung lượng lưu trữ của bạn hiện đã được áp dụng.');
       window.history.replaceState({}, document.title, window.location.pathname);
       loadDriveStatus();
     } else if (googleConnected === 'false') {
-      alert(`Kết nối Google Drive thất bại: ${oauthError || 'Unknown error'}`);
+      showToastMessage('error', `Kết nối Google Drive thất bại: ${oauthError || 'Unknown error'}`);
       window.history.replaceState({}, document.title, window.location.pathname);
     }
   }, []);
@@ -422,6 +469,9 @@ const AdminThesesPage = () => {
       studentName: thesis.studentName || '',
       advisorId:   thesis.advisorId || '',
       status:      thesis.status || 'Pending',
+      batch:       thesis.batch || 1,
+      filePath:    thesis.filePath || '',
+      submissions: thesis.submissions || [],
     });
     setError('');
     setModal({ mode: 'edit', id: thesis.id });
@@ -445,6 +495,8 @@ const AdminThesesPage = () => {
         studentId:   parseInt(form.studentId),
         advisorId:   form.advisorId ? parseInt(form.advisorId) : null,
         status:      form.status,
+        batch:       parseInt(form.batch) || 1,
+        filePath:    form.filePath,
       };
       if (modal.mode === 'create') {
         await thesisService.create(payload);
@@ -461,15 +513,17 @@ const AdminThesesPage = () => {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Bạn có chắc muốn xóa đề tài này?')) return;
-    try {
-      await thesisService.delete(id);
-      loadTheses();
-    } catch (err) {
-      console.error('Error deleting thesis:', err);
-      alert('Không thể xóa đề tài này.');
-    }
+  const handleDelete = (id) => {
+    showConfirm('Bạn có chắc muốn xóa đề tài này?', async () => {
+      try {
+        await thesisService.delete(id);
+        loadTheses();
+        showToastMessage('success', 'Đã xóa đề tài thành công!');
+      } catch (err) {
+        console.error('Error deleting thesis:', err);
+        showToastMessage('error', 'Không thể xóa đề tài này.');
+      }
+    });
   };
 
   const setFormField = (k, v) => setForm(prev => ({ ...prev, [k]: v }));
@@ -558,9 +612,20 @@ const AdminThesesPage = () => {
             ))}
           </select>
         </label>
+
+        <label className="text-[10px] font-bold text-slate-500 uppercase">
+          Đợt đăng ký
+          <select value={batchFilter} onChange={e => setBatchFilter(e.target.value)}
+            className="mt-1 w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-white text-sm focus:outline-none">
+            <option value="all">Tất cả đợt</option>
+            <option value="1">Đợt 1</option>
+            <option value="2">Đợt 2</option>
+          </select>
+        </label>
+
         <div className="flex items-end">
           <button type="button"
-            onClick={() => { setSearch(''); setStatusFilter('all'); setMajorFilter('all'); }}
+            onClick={() => { setSearch(''); setStatusFilter('all'); setMajorFilter('all'); setBatchFilter('all'); }}
             className="w-full py-2 rounded-lg border border-slate-600 hover:border-slate-500 text-slate-300 text-xs font-bold transition-colors">
             Xóa bộ lọc
           </button>
@@ -588,7 +653,12 @@ const AdminThesesPage = () => {
                 {theses.map(t => (
                   <tr key={t.id} className="hover:bg-slate-800/40 transition-colors">
                     <td className="p-4 max-w-sm">
-                      <div className="font-bold text-white leading-snug">{t.title}</div>
+                      <div className="font-bold text-white leading-snug flex items-center gap-2">
+                        {t.title}
+                        <span className="shrink-0 text-[9px] font-black px-1.5 py-0.5 rounded bg-slate-800/80 text-amber-400 border border-slate-700/80">
+                          Đợt {t.batch || 1}
+                        </span>
+                      </div>
                       {t.description && <div className="text-xs text-slate-400 mt-1 line-clamp-1">{t.description}</div>}
                     </td>
                     <td className="p-4">
@@ -808,16 +878,27 @@ const AdminThesesPage = () => {
                 </label>
               </div>
 
-              {/* Chuyên ngành */}
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500">
-                Chuyên ngành
-                <select value={form.major} onChange={e => handleMajorChange(e.target.value)}
-                  className="mt-1.5 w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-amber-500">
-                  {Object.entries(MAJOR_DISPLAY).map(([k, v]) => (
-                    <option key={k} value={k}>{v}</option>
-                  ))}
-                </select>
-              </label>
+              {/* Chuyên ngành + Đợt đăng ký */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500">
+                  Chuyên ngành
+                  <select value={form.major} onChange={e => handleMajorChange(e.target.value)}
+                    className="mt-1.5 w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-amber-500">
+                    {Object.entries(MAJOR_DISPLAY).map(([k, v]) => (
+                      <option key={k} value={k}>{v}</option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500">
+                  Đợt đăng ký
+                  <select value={form.batch} onChange={e => setFormField('batch', parseInt(e.target.value))}
+                    className="mt-1.5 w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-amber-500">
+                    <option value="1">Đợt 1</option>
+                    <option value="2">Đợt 2</option>
+                  </select>
+                </label>
+              </div>
 
               {/* Học phần — CHỈ HIỆN VỚI ĐỒ ÁN */}
               {isProject && (
@@ -845,6 +926,81 @@ const AdminThesesPage = () => {
                       </span>
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* Danh sách tài liệu đính kèm (Submissions) */}
+              {modal.mode === 'edit' && (
+                <div className="rounded-xl border border-slate-800 bg-slate-950/40 p-4 space-y-3">
+                  <p className="text-[10px] font-black uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                    <span className="material-symbols-outlined text-sm">folder_open</span>
+                    Danh sách tài liệu đính kèm ({form.submissions?.length || 0})
+                  </p>
+                  
+                  <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                    {form.submissions && form.submissions.length > 0 ? (
+                      form.submissions.map((sub, idx) => (
+                        <div key={sub.id || idx} className="p-3 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between gap-3 hover:border-slate-700 transition-colors">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <span className={`material-symbols-outlined text-lg shrink-0 ${
+                              sub.fileName.toLowerCase().endsWith('.pdf') ? 'text-red-400' :
+                              sub.fileName.toLowerCase().endsWith('.xlsx') || sub.fileName.toLowerCase().endsWith('.xls') ? 'text-emerald-400' :
+                              sub.fileName.toLowerCase().endsWith('.mp4') || sub.fileName.toLowerCase().endsWith('.mkv') ? 'text-blue-400' : 'text-slate-400'
+                            }`}>
+                              {sub.fileName.toLowerCase().endsWith('.pdf') ? 'description' :
+                               sub.fileName.toLowerCase().endsWith('.xlsx') || sub.fileName.toLowerCase().endsWith('.xls') ? 'table_chart' :
+                               sub.fileName.toLowerCase().endsWith('.mp4') || sub.fileName.toLowerCase().endsWith('.mkv') ? 'video_file' : 'draft'}
+                            </span>
+                            <div className="min-w-0">
+                              <p className="text-xs font-semibold text-slate-200 truncate max-w-[200px]" title={sub.fileName}>
+                                {sub.fileName}
+                              </p>
+                              <p className="text-[9px] text-slate-500 mt-0.5">
+                                {(sub.fileSize / 1024).toFixed(1)} KB · {new Date(sub.submittedAt).toLocaleDateString('vi-VN')}
+                              </p>
+                            </div>
+                          </div>
+                          
+                          <button
+                            type="button"
+                            onClick={() => handleDownload(sub.filePath, sub.fileName)}
+                            className="px-2.5 py-1.5 rounded-lg text-[9px] font-black uppercase bg-slate-800 hover:bg-slate-700 text-slate-200 flex items-center gap-1 transition-colors shrink-0 cursor-pointer border-none"
+                          >
+                            <span className="material-symbols-outlined text-[11px]">download</span>
+                            Tải về
+                          </button>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 border-dashed text-center text-slate-500 text-xs py-4">
+                        Chưa có tài liệu đính kèm.
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="pt-2 border-t border-slate-800">
+                    <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-2">Tải lên tài liệu mới (PDF, Excel, Video, ...)</p>
+                    <input
+                      type="file"
+                      onChange={async (e) => {
+                        const file = e.target.files[0];
+                        if (!file) return;
+                        try {
+                          const res = await thesisService.upload(modal.id, file);
+                          // Refresh thesis to get updated submissions list
+                          const detailRes = await thesisService.getById(modal.id);
+                          const updatedThesis = detailRes.data;
+                          setFormField('filePath', updatedThesis.filePath);
+                          setFormField('submissions', updatedThesis.submissions || []);
+                          showToastMessage('success', 'Tải lên tài liệu thành công!');
+                        } catch (err) {
+                          console.error(err);
+                          showToastMessage('error', 'Tải lên thất bại: ' + (err.response?.data?.message || err.message));
+                        }
+                      }}
+                      className="block w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-slate-800 file:text-slate-200 hover:file:bg-slate-700 cursor-pointer"
+                    />
+                  </div>
                 </div>
               )}
             </div>
@@ -956,6 +1112,53 @@ const AdminThesesPage = () => {
               </div>
             </div>
             <p className="text-[9px] text-slate-500 font-medium">Hệ thống đang chạy các thuật toán BM25, N-Gram, TF-IDF + Cosine, Rule-Based.</p>
+          </div>
+        </div>
+      )}
+
+      {toast && (
+        <div className="fixed bottom-5 right-5 z-[9999] p-4 rounded-xl border flex items-center gap-3 shadow-2xl animate-in slide-in-from-bottom-5 duration-300 bg-slate-900 border-slate-800">
+          <span className={`material-symbols-outlined ${toast.type === 'success' ? 'text-emerald-400' : 'text-red-400'}`}>
+            {toast.type === 'success' ? 'check_circle' : 'error'}
+          </span>
+          <span className="text-xs font-semibold text-slate-200">{toast.message}</span>
+        </div>
+      )}
+
+      {/* Confirm Modal */}
+      {confirmModal && (
+        <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-slate-900 border border-slate-850 rounded-[2rem] shadow-2xl max-w-sm w-full p-6 animate-in scale-in-95 duration-200 text-center">
+            <div className="w-14 h-14 rounded-2xl mx-auto flex items-center justify-center mb-4 shadow bg-amber-500/10 text-amber-500 border border-amber-500/20">
+              <span className="material-symbols-outlined text-2xl">
+                warning
+              </span>
+            </div>
+            <h3 className="text-sm font-black text-white uppercase tracking-wider mb-2">
+              Xác nhận hành động
+            </h3>
+            <p className="text-xs text-slate-400 leading-relaxed font-semibold mb-6">
+              {confirmModal.message}
+            </p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setConfirmModal(null)}
+                className="flex-1 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider text-slate-300 bg-slate-800 hover:bg-slate-700 transition-all border border-slate-700"
+              >
+                Hủy bỏ
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  confirmModal.onConfirm();
+                  setConfirmModal(null);
+                }}
+                className="flex-1 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider text-slate-950 bg-amber-500 hover:bg-amber-400 transition-all shadow"
+              >
+                Xác nhận
+              </button>
+            </div>
           </div>
         </div>
       )}

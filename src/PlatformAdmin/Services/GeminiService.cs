@@ -131,6 +131,20 @@ namespace PlatformAdmin.Services
 
         public async Task<string> GenerateResponseWithContextAsync(string originalPrompt, string executionResult)
         {
+            var lower = originalPrompt.ToLowerInvariant();
+            if (lower.Contains("luyện tập") || lower.Contains("luyen tap") || lower.Contains("tập viết") || lower.Contains("tap viet") || lower.Contains("practice") || lower.Contains("soạn thảo") || lower.Contains("soan thao"))
+            {
+                bool isEnglish = IsEnglishPrompt(originalPrompt);
+                if (isEnglish)
+                {
+                    return "To start practicing academic drafting or writing your research paper, simply type the `/practice` command in this chat box, or click here: [Practice](/practice) to access the standard A4 simulated editing space!";
+                }
+                else
+                {
+                    return "Để bắt đầu luyện tập soạn thảo nội dung báo cáo hoặc viết đề tài chuẩn học thuật, bạn hãy nhập lệnh `/practice` ngay tại đây, hoặc nhấp vào liên kết sau: [Luyện đồ án](/practice). Hệ thống sẽ chuyển hướng bạn đến phòng soạn thảo giả lập trang A4 chuẩn UEF!";
+                }
+            }
+
             var (apiKey, useMock) = GetGeminiConfig();
             _logger.LogInformation("Generating final natural language response. (Mock: {Mock})", useMock);
 
@@ -185,7 +199,7 @@ namespace PlatformAdmin.Services
                 }
                 
                 // About Website
-                if (lower.Contains("what is this") || lower.Contains("what website") || lower.Contains("about") || lower.Contains("website gì") || lower.Contains("trang web gì"))
+                if (lower.Contains("what is this") || lower.Contains("what website") || lower.Contains("about") || lower.Contains("website gì") || lower.Contains("trang web gì") || lower.Contains("how it work") || lower.Contains("how does it work") || lower.Contains("how this work") || lower.Contains("how to use"))
                 {
                     return "Welcome to **eThesis**! This is an academic Digital Library platform. Here, you can search for outstanding graduation theses and specialization reports, read them using our beautiful 3D Flipbook viewer, practice writing academic chapters in a standard A4 editor, and even play fun intellectual games in the Arena to relax!";
                 }
@@ -269,7 +283,7 @@ namespace PlatformAdmin.Services
                 }
 
                 // About Website
-                if (lower.Contains("đây là") || lower.Contains("trang web gì") || lower.Contains("web gì") || lower.Contains("website gì") || lower.Contains("day la") || lower.Contains("trang gi") || lower.Contains("đây là trang"))
+                if (lower.Contains("đây là") || lower.Contains("trang web gì") || lower.Contains("web gì") || lower.Contains("website gì") || lower.Contains("day la") || lower.Contains("trang gi") || lower.Contains("đây là trang") || lower.Contains("hoạt động") || lower.Contains("hoat dong") || lower.Contains("giới thiệu") || lower.Contains("gioi thieu"))
                 {
                     return "Chào mừng bạn đến với **eThesis**! Đây là **Thư viện số Học thuật & Tra cứu Đề tài Thông minh** dành riêng cho sinh viên UEF. Tại đây, bạn có thể tra cứu và tham khảo kho khóa luận/chuyên đề xuất sắc của các khóa trước, đọc sách định dạng 3D Flipbook sinh động, luyện tập soạn thảo bài viết chuẩn A4 và giải trí với các trò chơi trí tuệ!";
                 }
@@ -693,6 +707,15 @@ namespace PlatformAdmin.Services
         private PreFilterResult SimulatePreFilter(string prompt)
         {
             var lower = prompt.ToLowerInvariant();
+
+            if (lower.Contains("luyện tập") || lower.Contains("luyen tap") || lower.Contains("tập viết") || lower.Contains("tap viet") || lower.Contains("practice") || lower.Contains("soạn thảo") || lower.Contains("soan thao"))
+            {
+                return new PreFilterResult
+                {
+                    IsViolent = false,
+                    RequestFunctionCall = false
+                };
+            }
 
             if (lower.Contains("kill") || lower.Contains("bomb") || lower.Contains("murder") || lower.Contains("violent") || lower.Contains("attack"))
             {

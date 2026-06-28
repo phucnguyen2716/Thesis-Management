@@ -161,7 +161,7 @@ namespace PlatformAdmin.Services
             string? geminiApiKey = !string.IsNullOrWhiteSpace(overrideApiKey) ? overrideApiKey : GetGeminiApiKey();
             PlagiarismReport? report = null;
 
-            bool useGemini = !string.IsNullOrEmpty(geminiApiKey) && geminiApiKey != "AIzaSyB9EM5E5KELcbtOKu2BpNX2jLPU2uNbW9g";
+            bool useGemini = !string.IsNullOrEmpty(geminiApiKey) && geminiApiKey != "AIzaSyB9EM5E5KELcbtOKu2BpNX2jLPU2uNbW9g" && thesis.Category != "Topic" && thesis.Category != "Thesis";
 
             if (useGemini)
             {

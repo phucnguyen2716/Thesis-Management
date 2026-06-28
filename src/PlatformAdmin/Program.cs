@@ -147,7 +147,13 @@ if (!Directory.Exists(uploadPath)) Directory.CreateDirectory(uploadPath);
 app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(uploadPath),
-    RequestPath = "/uploads"
+    RequestPath = "/uploads",
+    OnPrepareResponse = ctx =>
+    {
+        ctx.Context.Response.Headers["Access-Control-Allow-Origin"] = "*";
+        ctx.Context.Response.Headers["Access-Control-Allow-Headers"] = "*";
+        ctx.Context.Response.Headers["Access-Control-Allow-Methods"] = "*";
+    }
 });
 
 var tempPdfPath = Path.Combine(Directory.GetCurrentDirectory(), builder.Configuration["GoogleDrive:TemporaryPdfLocalPath"] ?? "temporary_pdf");
@@ -155,7 +161,13 @@ if (!Directory.Exists(tempPdfPath)) Directory.CreateDirectory(tempPdfPath);
 app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(tempPdfPath),
-    RequestPath = "/temporary_pdf"
+    RequestPath = "/temporary_pdf",
+    OnPrepareResponse = ctx =>
+    {
+        ctx.Context.Response.Headers["Access-Control-Allow-Origin"] = "*";
+        ctx.Context.Response.Headers["Access-Control-Allow-Headers"] = "*";
+        ctx.Context.Response.Headers["Access-Control-Allow-Methods"] = "*";
+    }
 });
 
 // Database initialization & migrations
@@ -177,6 +189,7 @@ using (var scope = app.Services.CreateScope())
                 context.Database.ExecuteSqlRaw("ALTER TABLE \"Theses\" ADD COLUMN IF NOT EXISTS \"Subject\" VARCHAR(500);");
                 context.Database.ExecuteSqlRaw("ALTER TABLE \"Theses\" ADD COLUMN IF NOT EXISTS \"SubjectCode\" VARCHAR(100);");
                 context.Database.ExecuteSqlRaw("ALTER TABLE \"Theses\" ADD COLUMN IF NOT EXISTS \"Category\" VARCHAR(50) DEFAULT 'Project';");
+                context.Database.ExecuteSqlRaw("ALTER TABLE \"Theses\" ADD COLUMN IF NOT EXISTS \"Batch\" INTEGER DEFAULT 1;");
                 context.Database.ExecuteSqlRaw(@"UPDATE ""Theses"" SET ""Category"" = 'Project', ""Major"" = 'ai', ""Subject"" = 'Phát triển ứng dụng trí tuệ nhân tạo', ""SubjectCode"" = 'ITE1174E' WHERE ""Id"" = 2 AND (""Major"" IS NULL OR ""Major"" = '');");
                 context.Database.ExecuteSqlRaw(@"UPDATE ""Theses"" SET ""Category"" = 'Thesis', ""Major"" = 'ai' WHERE ""Id"" = 1 AND (""Major"" IS NULL OR ""Major"" = '');");
                 context.Database.ExecuteSqlRaw(@"UPDATE ""Theses"" SET ""Category"" = 'Topic', ""Major"" = 'networking' WHERE ""Id"" = 3 AND (""Major"" IS NULL OR ""Major"" = '');");
@@ -222,6 +235,7 @@ using (var scope = app.Services.CreateScope())
                 try { context.Database.ExecuteSqlRaw("ALTER TABLE Theses ADD Subject NVARCHAR(500);"); } catch { }
                 try { context.Database.ExecuteSqlRaw("ALTER TABLE Theses ADD SubjectCode NVARCHAR(100);"); } catch { }
                 try { context.Database.ExecuteSqlRaw("ALTER TABLE Theses ADD Category NVARCHAR(50) DEFAULT 'Project';"); } catch { }
+                try { context.Database.ExecuteSqlRaw("ALTER TABLE Theses ADD Batch INT DEFAULT 1;"); } catch { }
                 try { context.Database.ExecuteSqlRaw("ALTER TABLE SocialPosts ADD CloudinaryStatus NVARCHAR(50) DEFAULT 'None';"); } catch { }
             }
         }

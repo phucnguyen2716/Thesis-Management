@@ -15,6 +15,19 @@ const ProfileFileVault = ({ portal = PROFILE_PORTALS.student, theme = 'student' 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
+  // Custom alert/confirm/toast states
+  const [toast, setToast] = useState(null);
+  const [confirmModal, setConfirmModal] = useState(null);
+
+  const showToastMessage = (type, message) => {
+    setToast({ type, message });
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  const showConfirm = (message, onConfirm) => {
+    setConfirmModal({ message, onConfirm });
+  };
+
   const isLecturer = theme === 'lecturer';
   const accentBtn = isLecturer
     ? 'bg-teal-900 hover:bg-teal-950'
@@ -83,20 +96,22 @@ const ProfileFileVault = ({ portal = PROFILE_PORTALS.student, theme = 'student' 
     }
   };
 
-  const onRemove = async id => {
-    if (!window.confirm('Xóa file này khỏi kho lưu trữ?')) return;
-    setBusy(true);
-    try {
-      await deleteProfileFile(id);
-      await refresh();
-      if (portal === PROFILE_PORTALS.student) {
-        window.dispatchEvent(new Event('profile-files-updated'));
+  const onRemove = id => {
+    showConfirm('Xóa file này khỏi kho lưu trữ?', async () => {
+      setBusy(true);
+      try {
+        await deleteProfileFile(id);
+        await refresh();
+        if (portal === PROFILE_PORTALS.student) {
+          window.dispatchEvent(new Event('profile-files-updated'));
+        }
+        showToastMessage('success', 'Đã xóa file thành công!');
+      } catch {
+        setError('Xóa file thất bại.');
+      } finally {
+        setBusy(false);
       }
-    } catch {
-      setError('Xóa file thất bại.');
-    } finally {
-      setBusy(false);
-    }
+    });
   };
 
   return (
@@ -183,6 +198,55 @@ const ProfileFileVault = ({ portal = PROFILE_PORTALS.student, theme = 'student' 
           {files.length} file · portal {portal}
         </p>
       </div>
+      {/* Toast Notification */}
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-[9999] p-4 rounded-2xl border flex items-center gap-3 shadow-xl bg-white border-outline-variant/60 text-on-surface animate-fade-in transition-all">
+          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${toast.type === 'success' ? 'bg-emerald-500/10' : 'bg-red-500/10'}`}>
+            <span className={`material-symbols-outlined text-lg ${toast.type === 'success' ? 'text-emerald-600' : 'text-red-500'}`}>
+              {toast.type === 'success' ? 'check_circle' : 'error'}
+            </span>
+          </div>
+          <span className="text-xs font-black text-on-surface tracking-wide">{toast.message}</span>
+        </div>
+      )}
+
+      {/* Confirm Modal */}
+      {confirmModal && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-white rounded-[2rem] border border-outline-variant/60 shadow-2xl max-w-sm w-full p-6 animate-in scale-in-95 duration-200 text-center">
+            <div className="w-14 h-14 rounded-2xl mx-auto flex items-center justify-center mb-4 shadow bg-amber-100 text-amber-600">
+              <span className="material-symbols-outlined text-2xl">
+                warning
+              </span>
+            </div>
+            <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider mb-2">
+              Xác nhận hành động
+            </h3>
+            <p className="text-xs text-slate-600 leading-relaxed font-semibold mb-6">
+              {confirmModal.message}
+            </p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setConfirmModal(null)}
+                className="flex-1 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider text-slate-500 bg-slate-100 hover:bg-slate-200 transition-all border border-outline-variant/60"
+              >
+                Hủy bỏ
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  confirmModal.onConfirm();
+                  setConfirmModal(null);
+                }}
+                className={`flex-1 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider text-white transition-all shadow ${accentBtn}`}
+              >
+                Xác nhận
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 };

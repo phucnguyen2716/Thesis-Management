@@ -30,6 +30,19 @@ const LecturerPracticeManagerPage = () => {
   const [teacherFeedback, setTeacherFeedback] = useState('');
   const [teacherRubric, setTeacherRubric] = useState({ content: 8, method: 8, originality: 8, presentation: 8 });
 
+  // Custom alert/confirm/toast states
+  const [toast, setToast] = useState(null);
+  const [confirmModal, setConfirmModal] = useState(null);
+
+  const showToastMessage = (type, message) => {
+    setToast({ type, message });
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  const showConfirm = (message, onConfirm) => {
+    setConfirmModal({ message, onConfirm });
+  };
+
   const loadAllData = () => {
     setTemplates(loadTemplates());
     setSubmissions(loadPracticeSubmissions().sort((a, b) => b.updatedAt - a.updatedAt));
@@ -117,16 +130,20 @@ const LecturerPracticeManagerPage = () => {
 
   // Xóa template
   const handleDeleteTemplate = (id) => {
-    if (!window.confirm('Bạn có chắc chắn muốn xóa template này không?')) return;
-    const updated = templates.filter(t => t.id !== id);
-    saveTemplates(updated);
+    showConfirm('Bạn có chắc chắn muốn xóa template này không?', () => {
+      const updated = templates.filter(t => t.id !== id);
+      saveTemplates(updated);
+      showToastMessage('success', 'Đã xóa template thành công!');
+    });
   };
 
   // Reset templates mặc định
   const handleResetTemplates = () => {
-    if (!window.confirm('Bạn có muốn khôi phục danh sách các template mặc định (gồm Chương 1, 2, 3)? Toàn bộ template tùy chỉnh sẽ bị ghi đè.')) return;
-    localStorage.removeItem('thesisPracticeTemplates');
-    loadAllData();
+    showConfirm('Bạn có muốn khôi phục danh sách các template mặc định (gồm Chương 1, 2, 3)? Toàn bộ template tùy chỉnh sẽ bị ghi đè.', () => {
+      localStorage.removeItem('thesisPracticeTemplates');
+      loadAllData();
+      showToastMessage('success', 'Đã khôi phục các template mặc định!');
+    });
   };
 
   // Mở modal chấm điểm bài nộp
@@ -148,7 +165,7 @@ const LecturerPracticeManagerPage = () => {
     if (!selectedSub) return;
     const grade = Number(teacherGrade);
     if (isNaN(grade) || grade < 0 || grade > 10) {
-      alert('Điểm số phải nằm trong khoảng từ 0 đến 10!');
+      showToastMessage('error', 'Điểm số phải nằm trong khoảng từ 0 đến 10!');
       return;
     }
 
@@ -160,12 +177,15 @@ const LecturerPracticeManagerPage = () => {
 
     setShowGradingModal(false);
     setSelectedSub(null);
+    showToastMessage('success', 'Đã cập nhật điểm số và nhận xét thành công!');
   };
 
   // Xóa bài nộp sinh viên
   const handleDeleteSub = (id) => {
-    if (!window.confirm('Bạn có chắc chắn muốn xóa bài nộp này không?')) return;
-    deletePracticeSubmission(id);
+    showConfirm('Bạn có chắc chắn muốn xóa bài nộp này không?', () => {
+      deletePracticeSubmission(id);
+      showToastMessage('success', 'Đã xóa bài nộp thành công!');
+    });
   };
 
   return (
@@ -628,6 +648,56 @@ const LecturerPracticeManagerPage = () => {
                   </button>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-[9999] p-4 rounded-2xl border flex items-center gap-3 shadow-xl bg-white border-slate-200/60 text-slate-800 animate-fade-in transition-all">
+          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${toast.type === 'success' ? 'bg-emerald-500/10' : 'bg-red-500/10'}`}>
+            <span className={`material-symbols-outlined text-lg ${toast.type === 'success' ? 'text-emerald-600' : 'text-red-500'}`}>
+              {toast.type === 'success' ? 'check_circle' : 'error'}
+            </span>
+          </div>
+          <span className="text-xs font-black text-slate-800 tracking-wide">{toast.message}</span>
+        </div>
+      )}
+
+      {/* Confirm Modal */}
+      {confirmModal && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-white rounded-[2rem] border border-slate-200/60 shadow-2xl max-w-sm w-full p-6 animate-in scale-in-95 duration-200 text-center">
+            <div className="w-14 h-14 rounded-2xl mx-auto flex items-center justify-center mb-4 shadow bg-amber-100 text-amber-600">
+              <span className="material-symbols-outlined text-2xl">
+                warning
+              </span>
+            </div>
+            <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider mb-2">
+              Xác nhận hành động
+            </h3>
+            <p className="text-xs text-slate-600 leading-relaxed font-semibold mb-6">
+              {confirmModal.message}
+            </p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setConfirmModal(null)}
+                className="flex-1 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider text-slate-500 bg-slate-100 hover:bg-slate-200 transition-all border border-slate-200"
+              >
+                Hủy bỏ
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  confirmModal.onConfirm();
+                  setConfirmModal(null);
+                }}
+                className="flex-1 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider text-white bg-teal-800 hover:bg-teal-900 transition-all shadow"
+              >
+                Xác nhận
+              </button>
             </div>
           </div>
         </div>

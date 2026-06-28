@@ -170,6 +170,12 @@ const LecturerControllerPage = () => {
   const [scanning, setScanning] = useState(false);
   const [scanProgress, setScanProgress] = useState(0);
   const [showProgressModal, setShowProgressModal] = useState(false);
+  const [toast, setToast] = useState(null);
+
+  const showToast = (message, type = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   useEffect(() => {
     const load = () => setFlowConfig(getPlagiarismFlow());
@@ -337,7 +343,7 @@ const LecturerControllerPage = () => {
             setSubmissions(prev =>
               prev.map(s => s.id === selected.id ? { ...s, checkedAgo: 'Hết thời gian chờ' } : s)
             );
-            alert("Hết thời gian chờ phản hồi từ hệ thống kiểm tra đạo văn.");
+            showToast("Hết thời gian chờ phản hồi từ hệ thống kiểm tra đạo văn.", "error");
           }
         } catch (pollErr) {
           console.error("Error polling plagiarism status:", pollErr);
@@ -739,6 +745,16 @@ const LecturerControllerPage = () => {
             </div>
             <p className="text-[9px] text-slate-400 font-medium">Hệ thống đang chạy các thuật toán BM25, N-Gram, TF-IDF + Cosine, Rule-Based.</p>
           </div>
+        </div>
+      )}
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-[9999] p-4 rounded-2xl border flex items-center gap-3 shadow-xl bg-white border-outline-variant/60 text-on-surface animate-fade-in transition-all">
+          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${toast.type === 'success' ? 'bg-emerald-500/10' : 'bg-red-500/10'}`}>
+            <span className={`material-symbols-outlined text-lg ${toast.type === 'success' ? 'text-emerald-600' : 'text-red-500'}`}>
+              {toast.type === 'success' ? 'check_circle' : 'error'}
+            </span>
+          </div>
+          <span className="text-xs font-black text-on-surface tracking-wide">{toast.message}</span>
         </div>
       )}
     </div>

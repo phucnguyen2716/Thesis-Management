@@ -26,6 +26,7 @@ public class Thesis
     public string? Subject { get; set; }
     public string? SubjectCode { get; set; }
     public string Category { get; set; } = "Project"; // Project | Topic | Thesis
+    public int Batch { get; set; } = 1;
 
     public ICollection<ThesisReview> Reviews { get; set; } = new List<ThesisReview>();
     public ICollection<ThesisSubmission> Submissions { get; set; } = new List<ThesisSubmission>();

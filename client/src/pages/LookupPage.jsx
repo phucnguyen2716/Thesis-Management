@@ -176,6 +176,22 @@ const DO_AN_MAJORS = {
 const ALL_RESULTS = [];
 
 // ─── Main Component ──────────────────────────────────────────────────────────
+const getFileIcon = (fileName) => {
+  const ext = fileName.split('.').pop().toLowerCase();
+  if (ext === 'pdf') return { icon: 'picture_as_pdf', color: 'text-red-500' };
+  if (['doc', 'docx'].includes(ext)) return { icon: 'description', color: 'text-blue-500' };
+  if (['xls', 'xlsx'].includes(ext)) return { icon: 'table_chart', color: 'text-emerald-500' };
+  if (['ppt', 'pptx'].includes(ext)) return { icon: 'slideshow', color: 'text-amber-500' };
+  if (['mp4', 'mkv', 'avi'].includes(ext)) return { icon: 'video_file', color: 'text-violet-500' };
+  return { icon: 'insert_drive_file', color: 'text-gray-500' };
+};
+
+const formatSize = (bytes) => {
+  if (!bytes) return '0 KB';
+  if (bytes > 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  return (bytes / 1024).toFixed(0) + ' KB';
+};
+
 const LookupPage = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -185,7 +201,74 @@ const LookupPage = () => {
   const [dbTheses, setDbTheses] = useState([]);
   const [documentViewMode, setDocumentViewMode] = useState(() => localStorage.getItem('documentViewPreference') || '3d');
   const [currentPage, setCurrentPage] = useState(1);
+  const [toast, setToast] = useState(null);
+  const [convertingFile, setConvertingFile] = useState(null);
   const itemsPerPage = 6;
+
+  const showToastMessage = (type, message) => {
+    setToast({ type, message });
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  const handleDownload = async (filePath, fileName) => {
+    if (filePath.startsWith('http')) {
+      window.open(filePath, '_blank');
+      showToastMessage('success', `Đang mở liên kết: ${fileName}`);
+      return;
+    }
+
+    const fileUrl = filePath.startsWith('http') ? filePath : `http://localhost:5145${filePath}`;
+    showToastMessage('success', `Đang chuẩn bị tải xuống: ${fileName}...`);
+
+    try {
+      const response = await fetch(fileUrl);
+      if (!response.ok) throw new Error('Không thể tải tệp tin');
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      showToastMessage('success', `Đã tải xuống thành công: ${fileName}!`);
+    } catch (error) {
+      console.error('Lỗi khi tải file:', error);
+      window.open(fileUrl, '_blank');
+      showToastMessage('success', `Đã mở tải xuống cho: ${fileName}`);
+    }
+  };
+
+  const handleReadFile3D = async (sub) => {
+    const ext = sub.fileName.split('.').pop().toLowerCase();
+    const isDocOrXls = ['docx', 'doc', 'xlsx', 'xls'].includes(ext);
+
+    if (isDocOrXls) {
+      setConvertingFile(sub.id || sub.fileName);
+      showToastMessage('success', 'Đang chuyển đổi tài liệu sang PDF...');
+      try {
+        const res = await thesisService.convertDriveFile(sub.filePath);
+        if (res.data && res.data.success) {
+          const convertedPath = res.data.localPath;
+          showToastMessage('success', 'Chuyển đổi thành công! Đang mở sách 3D...');
+          window.open(`/theses/${previewThesis.id}/flipbook?file=${encodeURIComponent(convertedPath)}`, '_blank');
+        } else {
+          throw new Error('Chuyển đổi thất bại');
+        }
+      } catch (err) {
+        console.error(err);
+        showToastMessage('error', 'Chuyển đổi lỗi. Đang mở tệp tin gốc...');
+        window.open(sub.filePath.startsWith('http') ? sub.filePath : `http://localhost:5145${sub.filePath}`, '_blank');
+      } finally {
+        setConvertingFile(null);
+      }
+    } else if (ext === 'pdf') {
+      window.open(`/theses/${previewThesis.id}/flipbook?file=${encodeURIComponent(sub.filePath)}`, '_blank');
+    } else {
+      handleDownload(sub.filePath, sub.fileName);
+    }
+  };
 
   useEffect(() => {
     setCurrentPage(1);
@@ -215,7 +298,8 @@ const LookupPage = () => {
             similarityLevel: 'safe',
             desc: t.description || 'Chưa có mô tả chi tiết cho đề tài này.',
             tags: t.major ? [`#${t.major}`] : ['#research'],
-            pdfUrl: t.filePath || '/Document%20Detail.pdf'
+            pdfUrl: t.filePath || '/Document%20Detail.pdf',
+            submissions: t.submissions || []
           }));
           setDbTheses(mapped);
         }
@@ -240,7 +324,8 @@ const LookupPage = () => {
       similarity: thesis.similarity || "10%",
       similarityLevel: thesis.similarityLevel || "safe",
       description: thesis.description || thesis.desc || "Chưa có mô tả chi tiết.",
-      tags: thesis.tags || ["#research"]
+      tags: thesis.tags || ["#research"],
+      submissions: thesis.submissions || []
     });
     setShowPreviewModal(true);
   };
@@ -688,12 +773,6 @@ const LookupPage = () => {
                     </div>
 
                     <div className="mt-auto">
-                      <p className="text-[11px] text-on-surface-variant leading-relaxed font-medium mb-4 opacity-60 line-clamp-2 italic">"{r.desc}"</p>
-                      <div className="flex flex-wrap gap-1.5 mb-4">
-                        {r.tags.slice(0, 3).map((tag, i) => (
-                          <span key={i} className="text-[8px] font-black text-on-surface-variant/30 uppercase tracking-widest">#{tag}</span>
-                        ))}
-                      </div>
                       <div className="flex items-center justify-between pt-4 border-t border-outline-variant/10">
                         <button
                           onClick={() => navigate(`/theses/${r.id}`, { state: r })}
@@ -819,148 +898,195 @@ const LookupPage = () => {
       </div>
 
       {/* Quick Preview Modal (Glassmorphic UEF Style) */}
-      {showPreviewModal && previewThesis && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-[2.5rem] border border-outline-variant shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 md:p-10 relative flex flex-col gap-6">
-            
-            {/* Close Button */}
-            <button
-              onClick={() => setShowPreviewModal(false)}
-              className="absolute right-6 top-6 w-10 h-10 rounded-full hover:bg-surface-container flex items-center justify-center transition-all cursor-pointer text-on-surface-variant border-none bg-transparent"
-            >
-              <span className="material-symbols-outlined text-xl">close</span>
-            </button>
+      {showPreviewModal && previewThesis && (() => {
+        const submissionsList = (previewThesis.submissions && previewThesis.submissions.length > 0)
+          ? previewThesis.submissions
+          : [{ id: 'main', fileName: 'Báo cáo chính.pdf', filePath: previewThesis.pdfUrl, fileSize: 0 }];
 
-            {/* Header */}
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <span className="px-2 py-0.5 bg-surface-container-high text-[8px] font-black uppercase tracking-widest rounded border border-outline-variant/30">
-                  #{previewThesis.id}
-                </span>
-                <span className="text-[9px] font-black text-primary uppercase tracking-widest bg-primary/5 px-2 py-0.5 rounded">
-                  {previewThesis.department}
-                </span>
-                <span className="text-[9px] font-black text-on-surface-variant/60 uppercase tracking-widest bg-surface-container-low px-2 py-0.5 rounded ml-auto">
-                  Niên khóa: {previewThesis.year}
-                </span>
-              </div>
-              <h3 className="text-xl sm:text-2xl font-black text-on-surface leading-snug">
-                {previewThesis.title}
-              </h3>
-            </div>
+        return (
+          <div className="fixed top-[72px] bottom-0 left-0 md:left-[280px] right-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="min-h-full flex items-center justify-center w-full p-4 sm:p-6 md:p-8 py-8 sm:py-12">
+              <div className="bg-white/95 backdrop-blur-xl rounded-3xl border border-outline-variant/60 shadow-[0_20px_50px_rgba(0,0,0,0.15)] max-w-xl w-full p-4 sm:p-5 relative flex flex-col gap-2.5 animate-in slide-in-from-bottom-8 duration-300">
+              
 
-            {/* Content Details Grid */}
-            <div className="grid sm:grid-cols-2 gap-4 py-4 border-t border-b border-outline-variant/10">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 bg-primary/5 text-primary rounded-xl flex items-center justify-center border border-primary/10">
-                  <span className="material-symbols-outlined text-base">person</span>
+              {/* Close Button */}
+              <button
+                onClick={() => setShowPreviewModal(false)}
+                className="absolute right-4 top-4 w-7 h-7 rounded-full hover:bg-surface-container flex items-center justify-center transition-all cursor-pointer text-on-surface-variant border-none bg-transparent"
+              >
+                <span className="material-symbols-outlined text-lg">close</span>
+              </button>
+
+              {/* Header */}
+              <div className="pt-0.5 pr-8">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span className="px-2 py-0.5 bg-surface-container-high text-[8px] font-black uppercase tracking-widest rounded border border-outline-variant/30">
+                    #{previewThesis.id}
+                  </span>
+                  <span className="text-[9px] font-black text-primary uppercase tracking-widest bg-primary/5 px-2 py-0.5 rounded">
+                    {previewThesis.department}
+                  </span>
+                  <span className="text-[9px] font-black text-on-surface-variant/60 uppercase tracking-widest bg-surface-container-low px-2 py-0.5 rounded ml-auto">
+                    Niên khóa: {previewThesis.year}
+                  </span>
                 </div>
-                <div>
-                  <p className="text-[8px] font-black text-on-surface-variant/40 uppercase tracking-widest leading-none mb-0.5">Sinh viên</p>
-                  <p className="text-xs font-black text-on-surface">{previewThesis.studentName}</p>
-                </div>
+                <h3 className="text-base sm:text-lg font-black text-on-surface leading-tight">
+                  {previewThesis.title}
+                </h3>
               </div>
 
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 bg-secondary-container/10 text-primary rounded-xl flex items-center justify-center border border-outline-variant/30">
-                  <span className="material-symbols-outlined text-base">psychology</span>
+              {/* Content Details Grid */}
+              <div className="grid sm:grid-cols-2 gap-2 py-0">
+                <div className="flex items-center gap-2.5 p-2 bg-surface-container-lowest border border-outline-variant/35 rounded-lg hover:border-primary/25 hover:shadow-sm transition-all">
+                  <div className="w-7 h-7 bg-primary/10 text-primary rounded-lg flex items-center justify-center border border-primary/20 shrink-0">
+                    <span className="material-symbols-outlined text-base">person</span>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[8px] font-black text-on-surface-variant/40 uppercase tracking-widest leading-none mb-1">Sinh viên</p>
+                    <p className="text-xs font-black text-on-surface truncate">{previewThesis.studentName}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-[8px] font-black text-on-surface-variant/40 uppercase tracking-widest leading-none mb-0.5">Giảng viên HD</p>
-                  <p className="text-xs font-black text-on-surface">{previewThesis.advisorName}</p>
+
+                <div className="flex items-center gap-2.5 p-2 bg-surface-container-lowest border border-outline-variant/35 rounded-lg hover:border-primary/25 hover:shadow-sm transition-all">
+                  <div className="w-7 h-7 bg-secondary-container/20 text-secondary rounded-lg flex items-center justify-center border border-secondary/20 shrink-0">
+                    <span className="material-symbols-outlined text-base">psychology</span>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[8px] font-black text-on-surface-variant/40 uppercase tracking-widest leading-none mb-1">Giảng viên HD</p>
+                    <p className="text-xs font-black text-on-surface truncate">{previewThesis.advisorName}</p>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Abstract */}
-            <div className="space-y-2">
-              <h4 className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-sm">segment</span> Tóm tắt nội dung
-              </h4>
-              <p className="text-xs text-on-surface leading-relaxed font-bold italic border-l-2 border-primary/20 pl-3">
-                "{previewThesis.description}"
-              </p>
-            </div>
+              {/* Abstract */}
+              <div className="space-y-1 p-2.5 bg-gradient-to-br from-primary/5 to-secondary/5 rounded-lg border border-outline-variant/20">
+                <h4 className="text-[9px] font-black text-primary uppercase tracking-widest flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-xs">segment</span> Tóm tắt nội dung
+                </h4>
+                <p className="text-[10px] text-slate-700 leading-normal font-semibold italic pl-1">
+                  "{previewThesis.description}"
+                </p>
+              </div>
 
-            {/* Similarity Badge */}
-            <div className="flex items-center justify-between p-4 bg-surface-container-low rounded-2xl border border-outline-variant/25">
-              <div className="flex items-center gap-3">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                  parseFloat(previewThesis.similarity) > 20 ? 'bg-red-50 text-error' : 'bg-emerald-50 text-emerald-700'
+              {/* Similarity Badge */}
+              <div className="flex items-center justify-between p-2 bg-surface-container-low rounded-lg border border-outline-variant/25">
+                <div className="flex items-center gap-2.5">
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                    parseFloat(previewThesis.similarity) > 20 ? 'bg-red-50 text-error' : 'bg-emerald-50 text-emerald-700'
+                  }`}>
+                    <span className="material-symbols-outlined text-xs">speed</span>
+                  </div>
+                  <div>
+                    <p className="text-[7px] font-black text-on-surface-variant/40 uppercase tracking-widest leading-none mb-0.5">Chỉ số trùng lắp</p>
+                    <p className="text-xs font-black text-on-surface">Mức độ tương đồng: {previewThesis.similarity}</p>
+                  </div>
+                </div>
+                <span className={`px-2 py-0.5 text-[8px] font-black uppercase tracking-widest rounded ${
+                  parseFloat(previewThesis.similarity) > 20 ? 'bg-red-100 text-error' : 'bg-emerald-100 text-emerald-800'
                 }`}>
-                  <span className="material-symbols-outlined text-sm">speed</span>
-                </div>
-                <div>
-                  <p className="text-[8px] font-black text-on-surface-variant/40 uppercase tracking-widest leading-none mb-0.5">Chỉ số trùng lắp</p>
-                  <p className="text-xs font-black text-on-surface">Mức độ tương đồng: {previewThesis.similarity}</p>
-                </div>
-              </div>
-              <span className={`px-2.5 py-1 text-[8px] font-black uppercase tracking-widest rounded-md ${
-                parseFloat(previewThesis.similarity) > 20 ? 'bg-red-100 text-error' : 'bg-emerald-100 text-emerald-800'
-              }`}>
-                {parseFloat(previewThesis.similarity) > 20 ? 'Nguy cơ cao' : 'An toàn'}
-              </span>
-            </div>
-
-            {/* View Mode Preferences Switcher */}
-            <div className="space-y-2.5 p-4 bg-surface-container-low rounded-2xl border border-outline-variant/20">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest flex items-center gap-1.5 opacity-80">
-                  <span className="material-symbols-outlined text-sm">settings</span> Cấu hình chế độ xem tài liệu
+                  {parseFloat(previewThesis.similarity) > 20 ? 'Nguy cơ cao' : 'An toàn'}
                 </span>
               </div>
-              <div className="grid grid-cols-2 gap-3 mt-1">
+
+              {/* Attached files and documents list */}
+              <div className="space-y-1.5">
+                <h4 className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest flex items-center gap-1.5 opacity-80">
+                  <span className="material-symbols-outlined text-xs">folder_open</span> Danh sách tài liệu đính kèm ({submissionsList.length})
+                </h4>
+                
+                <div className="space-y-1.5">
+                  {submissionsList.map((sub, idx) => {
+                    const ext = sub.fileName.split('.').pop().toLowerCase();
+                    const fileIconInfo = getFileIcon(sub.fileName);
+                    const isDocument = ['pdf', 'doc', 'docx', 'xls', 'xlsx'].includes(ext);
+                    const isConverting = convertingFile === (sub.id || sub.fileName);
+
+                    return (
+                      <div 
+                        key={sub.id || idx}
+                        className="p-2 rounded-lg bg-surface-container-lowest border border-outline-variant/35 flex items-center justify-between gap-3 hover:border-primary/20 hover:shadow-sm transition-all flex-wrap sm:flex-nowrap"
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                          <div className="w-7 h-7 bg-surface-container rounded-lg flex items-center justify-center border border-outline-variant/10 shrink-0">
+                            <span className={`material-symbols-outlined text-base ${fileIconInfo.color}`}>
+                              {fileIconInfo.icon}
+                            </span>
+                          </div>
+                          <div className="min-w-0">
+                            <h5 className="text-[10px] font-black text-on-surface truncate max-w-[240px]" title={sub.fileName}>
+                              {sub.fileName}
+                            </h5>
+                            <p className="text-[8px] text-on-surface-variant opacity-60 font-semibold mt-0.5">
+                              {sub.fileSize > 0 ? `Dung lượng: ${formatSize(sub.fileSize)}` : 'Tài liệu chính'}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1 shrink-0 w-full sm:w-auto justify-end">
+                          {isDocument && (
+                            <button
+                              type="button"
+                              disabled={isConverting || convertingFile !== null}
+                              onClick={() => handleReadFile3D(sub)}
+                              className="px-2 py-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-[8px] font-black uppercase tracking-wider rounded-md transition-all flex items-center gap-1 shadow-sm border-none cursor-pointer"
+                            >
+                              {isConverting ? (
+                                <div className="w-2.5 h-2.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                              ) : (
+                                <span className="material-symbols-outlined text-[10px]">menu_book</span>
+                              )}
+                              {isConverting ? 'Đang chuyển...' : 'Đọc 3D'}
+                            </button>
+                          )}
+                          
+                          <button
+                            type="button"
+                            onClick={() => handleDownload(sub.filePath, sub.fileName)}
+                            className="px-2 py-1 bg-on-surface hover:bg-primary text-white text-[8px] font-black uppercase tracking-wider rounded-md transition-all flex items-center gap-1 shadow-sm border-none cursor-pointer"
+                          >
+                            <span className="material-symbols-outlined text-[10px]">download</span>
+                            Tải về
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Footer Buttons */}
+              <div className="flex gap-2 mt-0.5 justify-end border-t border-outline-variant/10 pt-2.5">
                 <button
-                  onClick={() => handleSetViewMode('3d')}
-                  className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border cursor-pointer ${
-                    documentViewMode === '3d'
-                      ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
-                      : 'bg-white text-blue-600 border-blue-100 hover:bg-blue-50/50'
-                  }`}
+                  onClick={() => {
+                    setShowPreviewModal(false);
+                    navigate(`/theses/${previewThesis.id}`, { state: previewThesis });
+                  }}
+                  className="flex-1 sm:flex-initial px-4 py-2 bg-primary hover:bg-primary/95 text-white rounded-lg font-bold uppercase tracking-widest text-[9px] shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer border-none"
                 >
-                  <span className="material-symbols-outlined text-[13px]">menu_book</span>
-                  Sách 3D Flipbook
+                  Chi tiết đầy đủ <span className="material-symbols-outlined text-xs">arrow_forward</span>
                 </button>
                 <button
-                  onClick={() => handleSetViewMode('pdf')}
-                  className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border cursor-pointer ${
-                    documentViewMode === 'pdf'
-                      ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
-                      : 'bg-white text-blue-600 border-blue-100 hover:bg-blue-50/50'
-                  }`}
+                  onClick={() => setShowPreviewModal(false)}
+                  className="px-3.5 py-2 bg-transparent border-2 border-outline-variant/50 hover:border-primary text-on-surface hover:text-primary rounded-lg font-bold uppercase tracking-widest text-[9px] transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  <span className="material-symbols-outlined text-[13px]">picture_as_pdf</span>
-                  PDF Preview
+                  Đóng
                 </button>
               </div>
-            </div>
 
-            {/* Footer Buttons */}
-            <div className="flex gap-3 mt-2 flex-col sm:flex-row">
-              <button
-                onClick={() => {
-                  setShowPreviewModal(false);
-                  window.open(`/theses/${previewThesis.id}/flipbook?mode=${documentViewMode}`, '_blank');
-                }}
-                className="flex-1 py-3.5 bg-primary hover:bg-primary/95 text-white rounded-xl font-bold uppercase tracking-widest text-[10px] shadow-md hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer border-none"
-              >
-                <span className="material-symbols-outlined text-base">
-                  {documentViewMode === '3d' ? 'menu_book' : 'picture_as_pdf'}
-                </span>
-                {documentViewMode === '3d' ? 'Đọc Sách 3D (Flipbook)' : 'Xem PDF Preview'}
-              </button>
-              <button
-                onClick={() => {
-                  setShowPreviewModal(false);
-                  navigate(`/theses/${previewThesis.id}`, { state: previewThesis });
-                }}
-                className="py-3.5 px-6 bg-on-surface hover:bg-on-surface-variant text-white rounded-xl font-bold uppercase tracking-widest text-[10px] shadow-md hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer border-none"
-              >
-                Chi tiết đầy đủ
-              </button>
             </div>
-
           </div>
+        </div>
+      );
+      })()}
+
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-[9999] p-4 rounded-2xl border flex items-center gap-3 shadow-xl bg-white border-outline-variant/60 text-on-surface animate-fade-in transition-all">
+          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${toast.type === 'success' ? 'bg-emerald-500/10' : 'bg-red-500/10'}`}>
+            <span className={`material-symbols-outlined text-lg ${toast.type === 'success' ? 'text-emerald-600' : 'text-red-500'}`}>
+              {toast.type === 'success' ? 'check_circle' : 'error'}
+            </span>
+          </div>
+          <span className="text-xs font-black text-on-surface tracking-wide">{toast.message}</span>
         </div>
       )}
     </div>

@@ -38,13 +38,13 @@ public class ThesisController : ControllerBase
     [HttpGet]
     [ApiResponse(typeof(ThesisListResponse), StatusCodes.Status200OK)]
     [ApiResponse(StatusCodes.Status401Unauthorized)]
-    public async Task<ActionResult<ThesisListResponse>> GetAll([FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? status = null, [FromQuery] string? search = null, [FromQuery] string? category = null)
+    public async Task<ActionResult<ThesisListResponse>> GetAll([FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? status = null, [FromQuery] string? search = null, [FromQuery] string? category = null, [FromQuery] int? batch = null)
     {
         var userId = GetCurrentUserId();
         var role = User.FindFirstValue(ClaimTypes.Role);
         int? studentId = role == "Student" ? userId : null;
         int? advisorId = role == "Advisor" ? userId : null;
-        var result = await _thesisService.GetAllAsync(page, pageSize, status, search, studentId, advisorId, category);
+        var result = await _thesisService.GetAllAsync(page, pageSize, status, search, studentId, advisorId, category, batch);
         return Ok(result);
     }
 

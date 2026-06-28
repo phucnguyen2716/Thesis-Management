@@ -24,6 +24,19 @@ const AdminUsersPage = ({ fixedRole }) => {
   const [users, setUsers] = useState([]);
   const [modal, setModal] = useState(null);
   const [form, setForm] = useState(emptyForm(tab));
+
+  // Custom alert/confirm/toast states
+  const [toast, setToast] = useState(null);
+  const [confirmModal, setConfirmModal] = useState(null);
+
+  const showToastMessage = (type, message) => {
+    setToast({ type, message });
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  const showConfirm = (message, onConfirm) => {
+    setConfirmModal({ message, onConfirm });
+  };
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [deptFilter, setDeptFilter] = useState('all');
@@ -85,19 +98,33 @@ const AdminUsersPage = ({ fixedRole }) => {
   const handleSave = async e => {
     e.preventDefault();
     if (!form.fullName?.trim() || !form.email?.trim()) return;
-    if (modal.mode === 'create') {
-      await createAdminUser({ ...form, role: tab });
-    } else {
-      await updateAdminUser(modal.id, form);
+    try {
+      if (modal.mode === 'create') {
+        await createAdminUser({ ...form, role: tab });
+        showToastMessage("success", "Đã thêm người dùng thành công!");
+      } else {
+        await updateAdminUser(modal.id, form);
+        showToastMessage("success", "Đã cập nhật người dùng thành công!");
+      }
+      setModal(null);
+      load();
+    } catch (err) {
+      console.error(err);
+      showToastMessage("error", "Đã xảy ra lỗi khi lưu thông tin.");
     }
-    setModal(null);
-    load();
   };
 
-  const handleDelete = async id => {
-    if (!window.confirm('Xóa người dùng này?')) return;
-    await deleteAdminUser(id);
-    load();
+  const handleDelete = id => {
+    showConfirm('Bạn có chắc muốn xóa người dùng này?', async () => {
+      try {
+        await deleteAdminUser(id);
+        load();
+        showToastMessage("success", "Đã xóa người dùng thành công!");
+      } catch (err) {
+        console.error(err);
+        showToastMessage("error", "Đã xảy ra lỗi khi xóa người dùng.");
+      }
+    });
   };
 
   const set = (k, v) => setForm(prev => ({ ...prev, [k]: v }));
@@ -305,6 +332,55 @@ const AdminUsersPage = ({ fixedRole }) => {
               </button>
             </div>
           </form>
+        </div>
+      )}
+      {/* Toast Notification */}
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-[9999] p-4 rounded-2xl border flex items-center gap-3 shadow-xl bg-slate-900 border-slate-800 text-white animate-fade-in transition-all">
+          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${toast.type === 'success' ? 'bg-emerald-500/10' : 'bg-red-500/10'}`}>
+            <span className={`material-symbols-outlined text-lg ${toast.type === 'success' ? 'text-emerald-500' : 'text-red-500'}`}>
+              {toast.type === 'success' ? 'check_circle' : 'error'}
+            </span>
+          </div>
+          <span className="text-xs font-black text-white tracking-wide">{toast.message}</span>
+        </div>
+      )}
+
+      {/* Confirm Modal */}
+      {confirmModal && (
+        <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-slate-900 border border-slate-850 rounded-[2rem] shadow-2xl max-w-sm w-full p-6 animate-in scale-in-95 duration-200 text-center">
+            <div className="w-14 h-14 rounded-2xl mx-auto flex items-center justify-center mb-4 shadow bg-amber-500/10 text-amber-500 border border-amber-500/20">
+              <span className="material-symbols-outlined text-2xl">
+                warning
+              </span>
+            </div>
+            <h3 className="text-sm font-black text-white uppercase tracking-wider mb-2">
+              Xác nhận hành động
+            </h3>
+            <p className="text-xs text-slate-400 leading-relaxed font-semibold mb-6">
+              {confirmModal.message}
+            </p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setConfirmModal(null)}
+                className="flex-1 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider text-slate-300 bg-slate-800 hover:bg-slate-700 transition-all border border-slate-700"
+              >
+                Hủy bỏ
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  confirmModal.onConfirm();
+                  setConfirmModal(null);
+                }}
+                className="flex-1 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider text-slate-950 bg-amber-500 hover:bg-amber-400 transition-all shadow"
+              >
+                Xác nhận
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

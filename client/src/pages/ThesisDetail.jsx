@@ -182,6 +182,43 @@ const ThesisDetail = () => {
   const [copiedCitation, setCopiedCitation] = useState(false);
   const [citationFormat, setCitationFormat] = useState('APA');
   const [isFavorite, setIsFavorite] = useState(false);
+  const [toast, setToast] = useState(null);
+
+  const showToastMessage = (type, message) => {
+    setToast({ type, message });
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  const handleDownload = async (filePath, fileName) => {
+    if (filePath.startsWith('http')) {
+      window.open(filePath, '_blank');
+      showToastMessage('success', `Đang mở liên kết: ${fileName}`);
+      return;
+    }
+
+    const fileUrl = filePath.startsWith('http') ? filePath : `http://localhost:5145${filePath}`;
+    showToastMessage('success', `Đang chuẩn bị tải xuống: ${fileName}...`);
+
+    try {
+      const response = await fetch(fileUrl);
+      if (!response.ok) throw new Error('Không thể tải tệp tin');
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      showToastMessage('success', `Đã tải xuống thành công: ${fileName}!`);
+    } catch (error) {
+      console.error('Lỗi khi tải file:', error);
+      // Fallback
+      window.open(fileUrl, '_blank');
+      showToastMessage('success', `Đã mở tải xuống cho: ${fileName}`);
+    }
+  };
 
   useEffect(() => {
     if (!thesis) {
@@ -513,11 +550,7 @@ const ThesisDetail = () => {
                                     major: thesis.major || thesis.department, 
                                     tags: thesis.tags 
                                   });
-                                  if (sub.filePath.startsWith('http')) {
-                                    window.open(sub.filePath, '_blank');
-                                  } else {
-                                    window.open(`http://localhost:5145${sub.filePath}`, '_blank');
-                                  }
+                                  handleDownload(sub.filePath, sub.fileName);
                                 }}
                                 className="px-5 py-2.5 bg-on-surface text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-primary transition-all flex items-center gap-2 shadow-sm border-none cursor-pointer"
                               >
@@ -754,6 +787,17 @@ const ThesisDetail = () => {
         </div>
 
       </div>
+
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-[9999] p-4 rounded-2xl border flex items-center gap-3 shadow-xl bg-white border-outline-variant/60 text-on-surface animate-fade-in transition-all">
+          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${toast.type === 'success' ? 'bg-emerald-500/10' : 'bg-red-500/10'}`}>
+            <span className={`material-symbols-outlined text-lg ${toast.type === 'success' ? 'text-emerald-600' : 'text-red-500'}`}>
+              {toast.type === 'success' ? 'check_circle' : 'error'}
+            </span>
+          </div>
+          <span className="text-xs font-black text-on-surface tracking-wide">{toast.message}</span>
+        </div>
+      )}
     </div>
   );
 };

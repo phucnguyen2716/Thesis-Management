@@ -30,6 +30,7 @@ public record ThesisDto(
     string? Subject = null,
     string? SubjectCode = null,
     string Category = "Project",
+    int Batch = 1,
     IEnumerable<ThesisSubmissionDto>? Submissions = null
 );
 
@@ -43,7 +44,8 @@ public record CreateThesisRequest(
     int? StudentId = null,
     int? AdvisorId = null,
     string? Status = null,
-    string? FilePath = null
+    string? FilePath = null,
+    int Batch = 1
 );
 
 public record UpdateThesisRequest(
@@ -56,7 +58,8 @@ public record UpdateThesisRequest(
     int? StudentId = null,
     int? AdvisorId = null,
     string? Status = null,
-    string? FilePath = null
+    string? FilePath = null,
+    int Batch = 1
 );
 
 public record AssignAdvisorRequest(int AdvisorId);

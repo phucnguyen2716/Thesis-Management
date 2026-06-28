@@ -6,6 +6,12 @@ const NewsPage = () => {
   const navigate = useNavigate();
   const [filter, setFilter] = useState('All');
   const [allNewsItems, setAllNewsItems] = useState([]);
+  const [toast, setToast] = useState(null);
+
+  const showToast = (message, type = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   const categories = ['All', 'Tin mới', 'Hướng dẫn', 'Tính năng', 'Báo chí', 'Sự kiện'];
 
@@ -158,7 +164,7 @@ const NewsPage = () => {
                         Xem bài chi tiết
                       </button>
                       <button 
-                        onClick={(e) => { e.stopPropagation(); alert('Đã sao chép liên kết chia sẻ!'); }}
+                        onClick={(e) => { e.stopPropagation(); showToast('Đã sao chép liên kết chia sẻ!', 'success'); }}
                         className="text-primary font-black text-[10px] uppercase tracking-widest flex items-center gap-2"
                       >
                         Chia sẻ <span className="material-symbols-outlined text-sm">share</span>
@@ -177,6 +183,16 @@ const NewsPage = () => {
               <p className="text-on-surface-variant font-medium">Không tìm thấy tin tức nào trong danh mục này.</p>
             </div>
           )}
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-[9999] p-4 rounded-2xl border flex items-center gap-3 shadow-xl bg-white border-outline-variant/60 text-on-surface animate-fade-in transition-all">
+          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${toast.type === 'success' ? 'bg-emerald-500/10' : 'bg-red-500/10'}`}>
+            <span className={`material-symbols-outlined text-lg ${toast.type === 'success' ? 'text-emerald-600' : 'text-red-500'}`}>
+              {toast.type === 'success' ? 'check_circle' : 'error'}
+            </span>
+          </div>
+          <span className="text-xs font-black text-on-surface tracking-wide">{toast.message}</span>
+        </div>
+      )}
     </div>
   );
 };

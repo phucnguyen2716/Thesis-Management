@@ -4,7 +4,7 @@ namespace PlatformAdmin.Interfaces;
 
 public interface IThesisService
 {
-    Task<ThesisListResponse> GetAllAsync(int page, int pageSize, string? status, string? search, int? studentId, int? advisorId, string? category = null);
+    Task<ThesisListResponse> GetAllAsync(int page, int pageSize, string? status, string? search, int? studentId, int? advisorId, string? category = null, int? batch = null);
     Task<ThesisDto?> GetByIdAsync(int id);
     Task<ThesisDto> CreateAsync(int studentId, CreateThesisRequest request);
     Task<ThesisDto> UpdateAsync(int id, UpdateThesisRequest request);

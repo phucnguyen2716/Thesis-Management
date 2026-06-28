@@ -134,6 +134,19 @@ const SEED_EVENTS = [
 const AdminEventsPage = () => {
   const [tab, setTab] = useState('events');
 
+  // Custom alert/confirm/toast states
+  const [toast, setToast] = useState(null);
+  const [confirmModal, setConfirmModal] = useState(null);
+
+  const showToastMessage = (type, message) => {
+    setToast({ type, message });
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  const showConfirm = (message, onConfirm) => {
+    setConfirmModal({ message, onConfirm });
+  };
+
   // Proposals states
   const [proposals, setProposals] = useState([]);
   const [propStatusFilter, setPropStatusFilter] = useState('all');
@@ -407,9 +420,10 @@ const AdminEventsPage = () => {
       setApprovingProposalId(null);
       setApproveNote('');
       load();
+      showToastMessage("success", "Đã lưu sự kiện thành công!");
     } catch (err) {
       console.error("Failed to save event", err);
-      alert("Đã xảy ra lỗi khi lưu sự kiện.");
+      showToastMessage("error", "Đã xảy ra lỗi khi lưu sự kiện.");
     }
   };
 
@@ -426,15 +440,17 @@ const AdminEventsPage = () => {
     reloadProposals();
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Bạn có chắc muốn xóa sự kiện này?')) return;
-    try {
-      await socialService.delete(id);
-      load();
-    } catch (err) {
-      console.error("Failed to delete event", err);
-      alert("Đã xảy ra lỗi khi xóa sự kiện.");
-    }
+  const handleDelete = (id) => {
+    showConfirm('Bạn có chắc muốn xóa sự kiện này?', async () => {
+      try {
+        await socialService.delete(id);
+        load();
+        showToastMessage("success", "Đã xóa sự kiện thành công!");
+      } catch (err) {
+        console.error("Failed to delete event", err);
+        showToastMessage("error", "Đã xảy ra lỗi khi xóa sự kiện.");
+      }
+    });
   };
 
   const handleTogglePublish = async (id) => {
@@ -509,9 +525,17 @@ const AdminEventsPage = () => {
       loadNews();
     } catch (err) { console.error('Failed to save news post', err); }
   };
-  const handleDeleteNews = async id => {
-    if (!window.confirm('Xóa bài đăng này?')) return;
-    try { await socialService.delete(id); loadNews(); } catch (err) { console.error(err); }
+  const handleDeleteNews = id => {
+    showConfirm('Bạn có chắc muốn xóa bài đăng này?', async () => {
+      try {
+        await socialService.delete(id);
+        loadNews();
+        showToastMessage("success", "Đã xóa bài đăng thành công!");
+      } catch (err) {
+        console.error(err);
+        showToastMessage("error", "Đã xảy ra lỗi khi xóa bài đăng.");
+      }
+    });
   };
 
   const TABS = [
@@ -1357,6 +1381,55 @@ const AdminEventsPage = () => {
               </button>
             </div>
           </form>
+        </div>
+      )}
+      {/* Toast Notification */}
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-[9999] p-4 rounded-2xl border flex items-center gap-3 shadow-xl bg-slate-900 border-slate-800 text-white animate-fade-in transition-all">
+          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${toast.type === 'success' ? 'bg-emerald-500/10' : 'bg-red-500/10'}`}>
+            <span className={`material-symbols-outlined text-lg ${toast.type === 'success' ? 'text-emerald-500' : 'text-red-500'}`}>
+              {toast.type === 'success' ? 'check_circle' : 'error'}
+            </span>
+          </div>
+          <span className="text-xs font-black text-white tracking-wide">{toast.message}</span>
+        </div>
+      )}
+
+      {/* Confirm Modal */}
+      {confirmModal && (
+        <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-slate-900 border border-slate-850 rounded-[2rem] shadow-2xl max-w-sm w-full p-6 animate-in scale-in-95 duration-200 text-center">
+            <div className="w-14 h-14 rounded-2xl mx-auto flex items-center justify-center mb-4 shadow bg-amber-500/10 text-amber-500 border border-amber-500/20">
+              <span className="material-symbols-outlined text-2xl">
+                warning
+              </span>
+            </div>
+            <h3 className="text-sm font-black text-white uppercase tracking-wider mb-2">
+              Xác nhận hành động
+            </h3>
+            <p className="text-xs text-slate-400 leading-relaxed font-semibold mb-6">
+              {confirmModal.message}
+            </p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setConfirmModal(null)}
+                className="flex-1 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider text-slate-300 bg-slate-800 hover:bg-slate-700 transition-all border border-slate-700"
+              >
+                Hủy bỏ
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  confirmModal.onConfirm();
+                  setConfirmModal(null);
+                }}
+                className="flex-1 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider text-slate-950 bg-amber-500 hover:bg-amber-400 transition-all shadow"
+              >
+                Xác nhận
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

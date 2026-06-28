@@ -22,14 +22,16 @@ public class DriveController : ControllerBase
     private readonly IAuthService _authService;
     private readonly DriveSyncJob _syncJob;
     private readonly IConfiguration _configuration;
+    private readonly ILibreOfficePdfConverter _pdfConverter;
 
-    public DriveController(AppDbContext db, IGoogleDriveStorageService driveService, IAuthService authService, DriveSyncJob syncJob, IConfiguration configuration)
+    public DriveController(AppDbContext db, IGoogleDriveStorageService driveService, IAuthService authService, DriveSyncJob syncJob, IConfiguration configuration, ILibreOfficePdfConverter pdfConverter)
     {
         _db = db;
         _driveService = driveService;
         _authService = authService;
         _syncJob = syncJob;
         _configuration = configuration;
+        _pdfConverter = pdfConverter;
     }
 
     [HttpGet("status")]
@@ -106,9 +108,41 @@ public class DriveController : ControllerBase
         }
 
         // If it is already a local PDF path, return it directly
-        if (filePath.StartsWith("/temporary_pdf") || filePath.StartsWith("/uploads"))
+        if (filePath.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase) && (filePath.StartsWith("/temporary_pdf") || filePath.StartsWith("/uploads")))
         {
             return Ok(new { success = true, localPath = filePath });
+        }
+
+        // Check if it is a local non-PDF file in /uploads or /temporary_pdf that needs conversion
+        if (filePath.StartsWith("/uploads/") || filePath.StartsWith("/temporary_pdf/"))
+        {
+            var relativePath = filePath.TrimStart('/');
+            var absolutePath = Path.Combine(Directory.GetCurrentDirectory(), relativePath);
+            if (System.IO.File.Exists(absolutePath))
+            {
+                var safeName = DrivePathParser.SanitizeFolderName(Path.GetFileNameWithoutExtension(absolutePath));
+                var workDir = Path.Combine(Directory.GetCurrentDirectory(), "temporary_pdf", $"local_{safeName}");
+                Directory.CreateDirectory(workDir);
+
+                var convertedPdfPath = await _pdfConverter.ConvertToPdfAsync(absolutePath, workDir);
+                if (convertedPdfPath != null && System.IO.File.Exists(convertedPdfPath))
+                {
+                    var relativePdfPath = $"/temporary_pdf/local_{safeName}/{Path.GetFileName(convertedPdfPath)}";
+
+                    // Upload to Drive Temporary_PDF folder as requested
+                    try
+                    {
+                        var pdfBytes = await System.IO.File.ReadAllBytesAsync(convertedPdfPath);
+                        await _driveService.UploadFileToFolderAsync("Temporary_PDF", Path.GetFileName(convertedPdfPath), pdfBytes, "application/pdf", AcademicCategory.Project);
+                    }
+                    catch (Exception ex)
+                    {
+                        // Ignore upload failures (e.g. if credentials are dummy or missing) and proceed
+                    }
+
+                    return Ok(new { success = true, localPath = relativePdfPath });
+                }
+            }
         }
 
         // Find in active records by WebViewLink, WebContentLink, or LocalPdfPath
@@ -131,7 +165,7 @@ public class DriveController : ControllerBase
             return NotFound(new { success = false, message = $"Drive file record not found for path: {filePath}" });
         }
 
-        if (!string.IsNullOrEmpty(record.LocalPdfPath))
+        if (!string.IsNullOrEmpty(record.LocalPdfPath) && record.LocalPdfPath.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
         {
             return Ok(new { success = true, localPath = record.LocalPdfPath });
         }

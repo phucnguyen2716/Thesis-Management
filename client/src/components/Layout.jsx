@@ -181,6 +181,12 @@ const Layout = () => {
     if (!chatMessage.trim()) return;
 
     const userPrompt = chatMessage;
+    if (userPrompt.trim().toLowerCase() === '/practice') {
+      setIsChatOpen(false);
+      setChatMessage('');
+      navigate('/practice');
+      return;
+    }
     const newMessage = {
       id: Date.now(),
       text: userPrompt,
@@ -856,40 +862,45 @@ const Layout = () => {
       {/* Floating Chat Button */}
       <button
         onClick={() => setIsChatOpen(!isChatOpen)}
-        className="fixed bottom-20 md:bottom-8 right-4 md:right-8 w-14 h-14 md:w-16 md:h-16 bg-primary text-on-primary rounded-full shadow-[0_10px_30px_rgba(140,0,14,0.3)] flex items-center justify-center z-[100] hover:scale-110 active:scale-95 transition-all group"
+        className="fixed bottom-20 md:bottom-8 right-4 md:right-8 w-11 h-11 md:w-13 md:h-13 bg-primary text-on-primary rounded-full shadow-[0_6px_20px_rgba(140,0,14,0.25)] flex items-center justify-center z-[100] hover:scale-105 active:scale-95 transition-all group"
       >
-        <span className="material-symbols-outlined text-2xl md:text-3xl group-hover:rotate-12 transition-transform">
+        <span className="material-symbols-outlined text-lg md:text-xl group-hover:rotate-12 transition-transform">
           {isChatOpen ? 'close' : 'chat'}
         </span>
         {!isChatOpen && (
-          <span className="absolute -top-0.5 -right-0.5 w-5 h-5 bg-yellow-400 text-primary text-[10px] font-black flex items-center justify-center rounded-full border-2 border-white animate-bounce">1</span>
+          <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-yellow-400 text-primary text-[9px] font-black flex items-center justify-center rounded-full border border-white animate-bounce">1</span>
         )}
       </button>
 
       {/* Chat Window */}
       {isChatOpen && (
-        <div className="fixed bottom-36 md:bottom-28 right-4 md:right-8 w-[calc(100vw-32px)] sm:w-[380px] h-[480px] md:h-[550px] bg-white rounded-[2rem] shadow-[0_20px_60px_rgba(0,0,0,0.2)] z-[99] flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-10 duration-300 border border-outline-variant">
+        <div className="fixed bottom-32 md:bottom-24 right-4 md:right-8 w-[calc(100vw-32px)] sm:w-[320px] h-[400px] md:h-[450px] bg-white rounded-2xl shadow-[0_15px_40px_rgba(0,0,0,0.15)] z-[99] flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-10 duration-300 border border-outline-variant">
           {/* Chat Header */}
-          <div className="bg-primary p-5 md:p-6 text-on-primary flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-8 h-8 md:w-10 md:h-10 bg-white/20 rounded-xl flex items-center justify-center">
-                <span className="material-symbols-outlined">support_agent</span>
+          <div className="bg-primary p-3 md:p-3.5 text-on-primary flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-7 h-7 md:w-8 md:h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                <span className="material-symbols-outlined text-base">support_agent</span>
               </div>
               <div className="flex flex-col">
-                <span className="text-xs md:text-sm font-bold leading-tight">{lang === 'vi' ? 'Hỗ trợ UEF' : 'UEF Support'}</span>
-                <span className="text-[9px] md:text-[10px] font-medium opacity-70 flex items-center gap-1">
+                <span className="text-[11px] md:text-xs font-bold leading-tight">{lang === 'vi' ? 'Hỗ trợ UEF' : 'UEF Support'}</span>
+                <span className="text-[8px] md:text-[9px] font-medium opacity-70 flex items-center gap-1">
                   <span className="w-1.5 h-1.5 bg-green-400 rounded-full"></span> {lang === 'vi' ? 'Trực tuyến' : 'Online'}
                 </span>
               </div>
             </div>
-            <button onClick={() => setIsChatOpen(false)} className="material-symbols-outlined opacity-60 hover:opacity-100 transition-opacity">close</button>
+            <button onClick={() => setIsChatOpen(false)} className="material-symbols-outlined opacity-60 hover:opacity-100 transition-opacity text-base">close</button>
           </div>
 
           {/* Messages Area */}
-          <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 bg-surface-container-lowest">
+          <div className="flex-1 overflow-y-auto p-3 md:p-4 space-y-3 bg-surface-container-lowest">
             {messages.map((msg) => (
-              <div key={msg.id} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[85%] sm:max-w-[80%] p-2.5 sm:p-3.5 md:p-4 rounded-2xl text-[12px] md:text-[13px] font-medium leading-relaxed shadow-sm ${msg.sender === 'user'
+              <div key={msg.id} className={`flex items-start gap-1.5 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+                {msg.sender !== 'user' && (
+                  <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center border border-primary/20 shrink-0 mt-0.5">
+                    <span className="material-symbols-outlined text-xs">support_agent</span>
+                  </div>
+                )}
+                <div className={`max-w-[85%] sm:max-w-[80%] p-2 py-1.5 sm:p-2.5 md:p-3 rounded-xl text-[10px] md:text-[11px] font-medium leading-normal shadow-sm ${msg.sender === 'user'
                   ? 'bg-primary text-on-primary rounded-tr-none'
                   : 'bg-surface-container-high text-on-surface rounded-tl-none'
                   }`}>
@@ -903,21 +914,21 @@ const Layout = () => {
           </div>
 
           {/* Chat Input */}
-          <form onSubmit={handleSendMessage} className="p-3 md:p-4 bg-white border-t border-outline-variant flex items-center gap-3">
-            <button type="button" className="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors">add_circle</button>
+          <form onSubmit={handleSendMessage} className="p-2 md:p-2.5 bg-white border-t border-outline-variant flex items-center gap-2">
+            <button type="button" className="material-symbols-outlined text-[18px] text-on-surface-variant hover:text-primary transition-colors">add_circle</button>
             <input
               type="text"
               placeholder={lang === 'vi' ? "Nhập tin nhắn..." : "Type a message..."}
-              className="flex-1 bg-surface-container-low px-3 py-2 md:px-4 md:py-3 rounded-xl text-xs md:text-sm font-medium outline-none border border-transparent focus:border-primary/20 focus:bg-white transition-all"
+              className="flex-1 bg-surface-container-low px-2.5 py-1.5 md:px-3 md:py-2.5 rounded-lg text-[11px] md:text-xs font-medium outline-none border border-transparent focus:border-primary/20 focus:bg-white transition-all"
               value={chatMessage}
               onChange={(e) => setChatMessage(e.target.value)}
             />
             <button
               type="submit"
-              className="w-8 h-8 md:w-10 md:h-10 bg-primary text-on-primary rounded-xl flex items-center justify-center hover:shadow-lg active:scale-95 transition-all disabled:opacity-50"
+              className="w-7 h-7 md:w-8 md:h-8 bg-primary text-on-primary rounded-lg flex items-center justify-center hover:shadow-md active:scale-95 transition-all disabled:opacity-50"
               disabled={!chatMessage.trim()}
             >
-              <span className="material-symbols-outlined text-sm md:text-base">send</span>
+              <span className="material-symbols-outlined text-xs md:text-sm">send</span>
             </button>
           </form>
         </div>

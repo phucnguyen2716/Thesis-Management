@@ -32,6 +32,19 @@ function NewsTab() {
   const [modal, setModal] = useState(null);
   const [form, setForm] = useState(emptyPost());
 
+  // Custom alert/confirm/toast states
+  const [toast, setToast] = useState(null);
+  const [confirmModal, setConfirmModal] = useState(null);
+
+  const showToastMessage = (type, message) => {
+    setToast({ type, message });
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  const showConfirm = (message, onConfirm) => {
+    setConfirmModal({ message, onConfirm });
+  };
+
   const load = useCallback(async () => {
     try {
       const { data } = await socialService.getAll(false);
@@ -77,13 +90,16 @@ function NewsTab() {
     try {
       if (modal.mode === 'create') {
         await socialService.create(form);
+        showToastMessage('success', 'Đã tạo bài viết thành công!');
       } else {
         await socialService.update(modal.id, form);
+        showToastMessage('success', 'Đã cập nhật bài viết thành công!');
       }
       setModal(null);
       load();
     } catch (err) {
       console.error("Failed to save post", err);
+      showToastMessage('error', 'Có lỗi xảy ra khi lưu bài viết.');
     }
   };
 
@@ -158,7 +174,7 @@ function NewsTab() {
               <p className="text-[10px] text-slate-500 mt-2">{p.date || new Date(p.createdAt).toLocaleDateString('vi-VN')} · {(p.channels || []).join(', ')}</p>
               <div className="flex gap-2 mt-3">
                 <button type="button" onClick={() => openEdit(p)} className="flex-1 py-1.5 rounded-lg bg-slate-700 text-xs font-bold text-white">Sửa</button>
-                <button type="button" onClick={async () => { if (window.confirm('Xóa bài đăng?')) { try { await socialService.delete(p.id); load(); } catch(e){} } }} className="px-3 py-1.5 rounded-lg bg-red-900/40 text-xs font-bold text-red-300">Xóa</button>
+                <button type="button" onClick={() => { showConfirm('Bạn có chắc muốn xóa bài đăng này?', async () => { try { await socialService.delete(p.id); load(); showToastMessage('success', 'Đã xóa bài đăng thành công!'); } catch(e){ showToastMessage('error', 'Có lỗi xảy ra khi xóa bài đăng.'); } }); }} className="px-3 py-1.5 rounded-lg bg-red-900/40 text-xs font-bold text-red-300">Xóa</button>
               </div>
             </div>
           </article>
@@ -215,6 +231,56 @@ function NewsTab() {
               <button type="button" onClick={() => setModal(null)} className="flex-1 py-2 rounded-lg border border-slate-600 text-slate-300 font-bold">Hủy</button>
             </div>
           </form>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-[9999] p-4 rounded-2xl border flex items-center gap-3 shadow-xl bg-slate-900 border-slate-800 text-white animate-fade-in transition-all">
+          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${toast.type === 'success' ? 'bg-emerald-500/10' : 'bg-red-500/10'}`}>
+            <span className={`material-symbols-outlined text-lg ${toast.type === 'success' ? 'text-emerald-500' : 'text-red-500'}`}>
+              {toast.type === 'success' ? 'check_circle' : 'error'}
+            </span>
+          </div>
+          <span className="text-xs font-black text-white tracking-wide">{toast.message}</span>
+        </div>
+      )}
+
+      {/* Confirm Modal */}
+      {confirmModal && (
+        <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-slate-900 border border-slate-850 rounded-[2rem] shadow-2xl max-w-sm w-full p-6 animate-in scale-in-95 duration-200 text-center">
+            <div className="w-14 h-14 rounded-2xl mx-auto flex items-center justify-center mb-4 shadow bg-amber-500/10 text-amber-500 border border-amber-500/20">
+              <span className="material-symbols-outlined text-2xl">
+                warning
+              </span>
+            </div>
+            <h3 className="text-sm font-black text-white uppercase tracking-wider mb-2">
+              Xác nhận hành động
+            </h3>
+            <p className="text-xs text-slate-400 leading-relaxed font-semibold mb-6">
+              {confirmModal.message}
+            </p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setConfirmModal(null)}
+                className="flex-1 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider text-slate-300 bg-slate-800 hover:bg-slate-700 transition-all border border-slate-700"
+              >
+                Hủy bỏ
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  confirmModal.onConfirm();
+                  setConfirmModal(null);
+                }}
+                className="flex-1 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider text-slate-950 bg-amber-500 hover:bg-amber-400 transition-all shadow"
+              >
+                Xác nhận
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </>
