@@ -548,23 +548,13 @@ erDiagram
         string FileName
         string MimeType
         long FileSize "Nullable"
-        string WebViewLink
-        string WebContentLink
-        string SourceFolder
         string Category
-        DateTime DriveCreatedAt "Nullable"
-        DateTime DriveModifiedAt "Nullable"
-        DateTime SyncedAt
-        DateTime LastCheckedAt
-        bool IsActive
-        string RelativePath
         string Major
-        string MajorKey
         string Subject
-        string SubjectCode
         string StudentUid
         string ProjectName
-        string LocalPdfPath
+        bool IsActive
+        DateTime SyncedAt
     }
 
     USERS ||--o{ THESES : "tạo đề tài (Student)"
