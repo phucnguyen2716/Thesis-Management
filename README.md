@@ -423,7 +423,7 @@ Hệ thống **eThesis** sử dụng cơ sở dữ liệu quan hệ (mặc đị
 
 Dưới đây là sơ đồ thực thể mối quan hệ (ERD) chi tiết mô tả cấu trúc lưu trữ và các ràng buộc dữ liệu toàn vẹn của hệ thống bao gồm dịch vụ lõi `PlatformAdmin` (quản lý học thuật) và dịch vụ bổ trợ `MediaProcessing` (xử lý tối ưu hóa đa phương tiện).
 
-### 📊 Sơ đồ ERD Tổng thể (Global ERD Diagram)
+### 📊 Sơ đồ ERD Phân vùng Học thuật Cốt lõi (Core Academic ERD Diagram)
 
 ```mermaid
 erDiagram
@@ -497,6 +497,33 @@ erDiagram
         int UserId FK
         string Role
     }
+    PLAGIARISM_REPORTS {
+        int Id PK
+        int ThesisId FK
+        double SimilarityPercentage
+        string ReportJson
+        DateTime CheckedAt
+    }
+
+    USERS ||--o{ THESES : "tạo đề tài (Student)"
+    USERS ||--o{ THESES : "hướng dẫn (Advisor)"
+    USERS ||--o{ COMMITTEE_MEMBERS : "tham gia hội đồng"
+    USERS ||--o{ THESIS_REVIEWS : "đánh giá"
+    USERS ||--o{ THESIS_COMMENTS : "bình luận"
+    
+    COMMITTEES ||--o{ COMMITTEE_MEMBERS : "gồm các thành viên"
+    COMMITTEES ||--o{ THESES : "chấm điểm đề tài"
+
+    THESES ||--o{ THESIS_SUBMISSIONS : "có các file tài liệu"
+    THESES ||--o{ THESIS_REVIEWS : "có các đánh giá"
+    THESES ||--o{ THESIS_COMMENTS : "có các bình luận trao đổi"
+    THESES ||--o{ PLAGIARISM_REPORTS : "có các báo cáo so khớp"
+```
+
+### 📊 Sơ đồ các Bảng Hệ thống & Dịch vụ Bổ trợ (Supplementary & System Tables)
+
+```mermaid
+erDiagram
     CHAT_HISTORY {
         string Id PK
         string Prompt
@@ -535,13 +562,6 @@ erDiagram
         string Status
         DateTime CreatedAt
     }
-    PLAGIARISM_REPORTS {
-        int Id PK
-        int ThesisId FK
-        double SimilarityPercentage
-        string ReportJson
-        DateTime CheckedAt
-    }
     DRIVE_FILE_RECORDS {
         int Id PK
         string DriveFileId
@@ -556,21 +576,6 @@ erDiagram
         bool IsActive
         DateTime SyncedAt
     }
-
-    USERS ||--o{ THESES : "tạo đề tài (Student)"
-    USERS ||--o{ THESES : "hướng dẫn (Advisor)"
-    USERS ||--o{ COMMITTEE_MEMBERS : "tham gia hội đồng"
-    USERS ||--o{ THESIS_REVIEWS : "đánh giá"
-    USERS ||--o{ THESIS_COMMENTS : "bình luận"
-    USERS ||--o{ CHAT_HISTORY : "hỏi đáp chatbot"
-    
-    COMMITTEES ||--o{ COMMITTEE_MEMBERS : "gồm các thành viên"
-    COMMITTEES ||--o{ THESES : "chấm điểm đề tài"
-
-    THESES ||--o{ THESIS_SUBMISSIONS : "có các file tài liệu"
-    THESES ||--o{ THESIS_REVIEWS : "có các đánh giá"
-    THESES ||--o{ THESIS_COMMENTS : "có các bình luận trao đổi"
-    THESES ||--o{ PLAGIARISM_REPORTS : "có các báo cáo so khớp"
 ```
 
 ### 🗂️ Chi tiết các Bảng & Thuộc tính (Database Tables Detail)
