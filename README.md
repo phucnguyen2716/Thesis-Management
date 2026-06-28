@@ -887,32 +887,32 @@ graph LR
     classDef broker fill:#ec4899,stroke:#db2777,stroke-width:2px,color:#fff;
 
     subgraph ClientLayer ["Client Application"]
-        FE[React 19 Frontend SPA<br/>Vite / Tailwind CSS]:::client
+        FE["React 19 Frontend SPA<br/>Vite / Tailwind CSS"]:::client
     end
 
     subgraph APILayer ["Backend Services (ASP.NET Core 8)"]
-        PA[PlatformAdmin Service<br/>Port 5145]:::service
-        MP[MediaProcessing Service<br/>Port 5010]:::service
-        NS[Notification Service<br/>Port 5020]:::service
-        SM[SocialMedia Service<br/>Port 5030]:::service
-        BC[BuildingBlocks / SharedContracts]:::service
+        PA["PlatformAdmin Service<br/>Port 5145"]:::service
+        MP["MediaProcessing Service<br/>Port 5010"]:::service
+        NS["Notification Service<br/>Port 5020"]:::service
+        SM["SocialMedia Service<br/>Port 5030"]:::service
+        BC["BuildingBlocks / SharedContracts"]:::service
     end
 
-    subgraph BrokerLayer ["Messaging & Jobs"]
-        RMQ[RabbitMQ Message Broker<br/>plagiarism-scan-queue & media-jobs]:::broker
-        HF[Hangfire Server<br/>Background Sync Jobs]:::broker
+    subgraph BrokerLayer ["Messaging and Jobs"]
+        RMQ["RabbitMQ Message Broker<br/>plagiarism-scan-queue and media-jobs"]:::broker
+        HF["Hangfire Server<br/>Background Sync Jobs"]:::broker
     end
 
-    subgraph DataStorage ["Data & Search Layer"]
-        DB[(PostgreSQL Database<br/>Port 5432)]:::store
-        ES[(Elasticsearch Cluster<br/>Port 9200)]:::store
+    subgraph DataStorage ["Data and Search Layer"]
+        DB[("PostgreSQL Database<br/>Port 5432")]:::store
+        ES[("Elasticsearch Cluster<br/>Port 9200")]:::store
     end
 
-    subgraph ExternalServices ["External Cloud Services & Tools"]
-        GD[Google Drive API<br/>Academic Storage]:::external
-        GEM[Google Gemini AI API<br/>Multimodal PDF Analysis]:::external
-        CLD[Cloudinary API<br/>Post Image CDN]:::external
-        LO[LibreOffice Converter<br/>Word to PDF]:::external
+    subgraph ExternalServices ["External Cloud Services and Tools"]
+        GD["Google Drive API<br/>Academic Storage"]:::external
+        GEM["Google Gemini AI API<br/>Multimodal PDF Analysis"]:::external
+        CLD["Cloudinary API<br/>Post Image CDN"]:::external
+        LO["LibreOffice Converter<br/>Word to PDF"]:::external
     end
 
     FE -->|HTTP / REST APIs| PA
@@ -1206,24 +1206,24 @@ sequenceDiagram
 
     User->>Client: Input search query (e.g. "AI thesis")
     Client->>Controller: POST /api/chatbot/chat (with JWT)
-    Controller->>Auth: Validate Token & Extract UserId
+    Controller->>Auth: Validate Token and Extract UserId
     Auth-->>Controller: Return UserId (if authorized)
     
     Note over Controller, Gemini: Layer 1: Pre-Filter (Sandwich Guardrail)
-    Controller->>Gemini: Analyze Prompt (Safety & Intent Check)
-    Gemini-->>Controller: Safety OK & Intent: SearchThesisCommand(query)
+    Controller->>Gemini: Analyze Prompt (Safety and Intent Check)
+    Gemini-->>Controller: Safety OK and Intent: SearchThesisCommand(query)
 
-    Note over Controller, BM25: Layer 2: Function Routing & BM25 Ranking
+    Note over Controller, BM25: Layer 2: Function Routing and BM25 Ranking
     Controller->>DB: Fetch candidate theses (DB + Seeded Mock)
     DB-->>Controller: Return candidate list
-    Controller->>BM25: Send query & candidate list
-    BM25->>BM25: Tokenize, calculate IDF & BM25 score
+    Controller->>BM25: Send query and candidate list
+    BM25->>BM25: Tokenize, calculate IDF and BM25 score
     BM25-->>Controller: Return Top 3 BM25 ranked theses
 
     Note over Controller, Gemini: Layer 3: Post-Filter (Sandwich Guardrail)
     Controller->>Gemini: Send original prompt + BM25 results
     Gemini-->>Controller: Return answer with Markdown Links
-    Controller->>Gemini: Scan output (Safety & Validity Check)
+    Controller->>Gemini: Scan output (Safety and Validity Check)
     Gemini-->>Controller: Verify clean output
 
     Controller->>DB: Save ChatHistory
