@@ -423,13 +423,181 @@ Hệ thống **eThesis** sử dụng cơ sở dữ liệu quan hệ (mặc đị
 
 Dưới đây là sơ đồ thực thể mối quan hệ (ERD) chi tiết mô tả cấu trúc lưu trữ và các ràng buộc dữ liệu toàn vẹn của hệ thống bao gồm dịch vụ lõi `PlatformAdmin` (quản lý học thuật) và dịch vụ bổ trợ `MediaProcessing` (xử lý tối ưu hóa đa phương tiện).
 
-### 📊 Sơ đồ ERD Phân vùng Học thuật Cốt lõi (Core Academic ERD Diagram)
+### 📊 Sơ đồ Quản lý Tài khoản & Hội đồng (User Accounts & Committees ERD)
 
-![Core Academic ERD Diagram](https://mermaid.ink/svg/ZXJEaWFncmFtDQogICAgVVNFUlMgew0KICAgICAgICBpbnQgSWQgUEsNCiAgICAgICAgc3RyaW5nIEZ1bGxOYW1lDQogICAgICAgIHN0cmluZyBFbWFpbA0KICAgICAgICBzdHJpbmcgUGFzc3dvcmRIYXNoDQogICAgICAgIHN0cmluZyBSb2xlDQogICAgICAgIHN0cmluZyBTdHVkZW50SWQgIk51bGxhYmxlIg0KICAgICAgICBzdHJpbmcgRGVwYXJ0bWVudCAiTnVsbGFibGUiDQogICAgICAgIGJvb2wgSXNBY3RpdmUNCiAgICAgICAgc3RyaW5nIFBob25lICJOdWxsYWJsZSINCiAgICAgICAgRGF0ZVRpbWUgQ3JlYXRlZEF0DQogICAgfQ0KICAgIFRIRVNFUyB7DQogICAgICAgIGludCBJZCBQSw0KICAgICAgICBzdHJpbmcgVGl0bGUNCiAgICAgICAgc3RyaW5nIERlc2NyaXB0aW9uICJOdWxsYWJsZSINCiAgICAgICAgc3RyaW5nIFN0YXR1cw0KICAgICAgICBzdHJpbmcgRmlsZVBhdGggIk51bGxhYmxlIg0KICAgICAgICBzdHJpbmcgUmVqZWN0UmVhc29uICJOdWxsYWJsZSINCiAgICAgICAgRGF0ZVRpbWUgQ3JlYXRlZEF0DQogICAgICAgIERhdGVUaW1lIFVwZGF0ZWRBdCAiTnVsbGFibGUiDQogICAgICAgIERhdGVUaW1lIFN1Ym1pdHRlZEF0ICJOdWxsYWJsZSINCiAgICAgICAgRGF0ZVRpbWUgQXBwcm92ZWRBdCAiTnVsbGFibGUiDQogICAgICAgIGludCBTdHVkZW50SWQgRksNCiAgICAgICAgaW50IEFkdmlzb3JJZCBGSyAiTnVsbGFibGUiDQogICAgICAgIGludCBDb21taXR0ZWVJZCBGSyAiTnVsbGFibGUiDQogICAgICAgIHN0cmluZyBNYWpvciAiTnVsbGFibGUiDQogICAgICAgIHN0cmluZyBTdWJqZWN0ICJOdWxsYWJsZSINCiAgICAgICAgc3RyaW5nIFN1YmplY3RDb2RlICJOdWxsYWJsZSINCiAgICAgICAgc3RyaW5nIENhdGVnb3J5DQogICAgICAgIGludCBCYXRjaA0KICAgIH0NCiAgICBUSEVTSVNfU1VCTUlTU0lPTlMgew0KICAgICAgICBpbnQgSWQgUEsNCiAgICAgICAgaW50IFRoZXNpc0lkIEZLDQogICAgICAgIHN0cmluZyBGaWxlUGF0aA0KICAgICAgICBzdHJpbmcgRmlsZU5hbWUNCiAgICAgICAgbG9uZyBGaWxlU2l6ZQ0KICAgICAgICBpbnQgVmVyc2lvbg0KICAgICAgICBzdHJpbmcgTm90ZXMgIk51bGxhYmxlIg0KICAgICAgICBEYXRlVGltZSBTdWJtaXR0ZWRBdA0KICAgIH0NCiAgICBUSEVTSVNfUkVWSUVXUyB7DQogICAgICAgIGludCBJZCBQSw0KICAgICAgICBpbnQgVGhlc2lzSWQgRksNCiAgICAgICAgaW50IFJldmlld2VySWQgRksNCiAgICAgICAgc3RyaW5nIENvbW1lbnRzICJOdWxsYWJsZSINCiAgICAgICAgZGVjaW1hbCBTY29yZSAiTnVsbGFibGUiDQogICAgICAgIHN0cmluZyBEZWNpc2lvbg0KICAgICAgICBEYXRlVGltZSBSZXZpZXdlZEF0DQogICAgfQ0KICAgIFRIRVNJU19DT01NRU5UUyB7DQogICAgICAgIGludCBJZCBQSw0KICAgICAgICBpbnQgVGhlc2lzSWQgRksNCiAgICAgICAgaW50IEF1dGhvcklkIEZLDQogICAgICAgIHN0cmluZyBDb250ZW50DQogICAgICAgIERhdGVUaW1lIENyZWF0ZWRBdA0KICAgIH0NCiAgICBDT01NSVRURUVTIHsNCiAgICAgICAgaW50IElkIFBLDQogICAgICAgIHN0cmluZyBOYW1lDQogICAgICAgIHN0cmluZyBEZXNjcmlwdGlvbiAiTnVsbGFibGUiDQogICAgICAgIERhdGVUaW1lIENyZWF0ZWRBdA0KICAgIH0NCiAgICBDT01NSVRURUVfTUVNQkVSUyB7DQogICAgICAgIGludCBJZCBQSw0KICAgICAgICBzdHJpbmcgUm9sZQ0KICAgIH0NCiAgICBQTEFHSUFSSVNNX1JFUE9SVFMgew0KICAgICAgICBpbnQgSWQgUEsNCiAgICAgICAgaW50IFRoZXNpc0lkIEZLDQogICAgICAgIGRvdWJsZSBTaW1pbGFyaXR5UGVyY2VudGFnZQ0KICAgICAgICBzdHJpbmcgUmVwb3J0SnNvbg0KICAgICAgICBEYXRlVGltZSBDaGVja2VkQXQNCiAgICB9DQoNCiAgICBVU0VSUyB8fC0tb3sgVEhFU0VTIDogImNyZWF0ZXMgKFN0dWRlbnQpIg0KICAgIFVTRVJTIHx8LS1veyBUSEVTRVMgOiAiYWR2aXNlcyAoQWR2aXNvcikiDQogICAgVVNFUlMgfHwtLW97IENPTU1JVFRFRV9NRU1CRVJTIDogIm1lbWJlciBvZiINCiAgICBVU0VSUyB8fC0tb3sgVEhFU0lTX1JFVklFV1MgOiAicmV2aWV3cyINCiAgICBVU0VSUyB8fC0tb3sgVEhFU0lTX0NPTU1FTlRTIDogImNvbW1lbnRzIg0KICAgIA0KICAgIENPTU1JVFRFRVMgfHwtLW97IENPTU1JVFRFRV9NRU1CRVJTIDogImhhcyBtZW1iZXJzIg0KICAgIENPTU1JVFRFRVMgfHwtLW97IFRIRVNFUyA6ICJncmFkZXMiDQoNCiAgICBUSEVTRVMgfHwtLW97IFRIRVNJU19TVUJNSVNTSU9OUyA6ICJoYXMgZG9jdW1lbnRzIg0KICAgIFRIRVNFUyB8fC0tb3sgVEhFU0lTX1JFVklFV1MgOiAiaGFzIHJldmlld3MiDQogICAgVEhFU0VTIHx8LS1veyBUSEVTSVNfQ09NTUVOVFMgOiAiaGFzIGNvbW1lbnRzIg0KICAgIFRIRVNFUyB8fC0tb3sgUExBR0lBUklTTV9SRVBPUlRTIDogImhhcyBwbGFnaWFyaXNtIHJlcG9ydHMiKQ
+```mermaid
+erDiagram
+    USERS {
+        int Id PK
+        string FullName
+        string Email
+        string PasswordHash
+        string Role
+        string StudentId "Nullable"
+        string Department "Nullable"
+        bool IsActive
+        string Phone "Nullable"
+        DateTime CreatedAt
+    }
+    COMMITTEES {
+        int Id PK
+        string Name
+        string Description "Nullable"
+        DateTime CreatedAt
+    }
+    COMMITTEE_MEMBERS {
+        int Id PK
+        int CommitteeId FK
+        int UserId FK
+        string Role
+    }
+
+    USERS ||--}o COMMITTEE_MEMBERS : "member of"
+    COMMITTEES ||--}o COMMITTEE_MEMBERS : "has members"
+```
+
+### 📊 Sơ đồ Quản lý Khóa luận & Đánh giá (Theses & Reviews ERD)
+
+```mermaid
+erDiagram
+    USERS {
+        int Id PK
+        string FullName
+        string Role
+    }
+    THESES {
+        int Id PK
+        string Title
+        string Description "Nullable"
+        string Status
+        string FilePath "Nullable"
+        string RejectReason "Nullable"
+        DateTime CreatedAt
+        DateTime UpdatedAt "Nullable"
+        DateTime SubmittedAt "Nullable"
+        DateTime ApprovedAt "Nullable"
+        int StudentId FK
+        int AdvisorId FK "Nullable"
+        int CommitteeId FK "Nullable"
+        string Major "Nullable"
+        string Subject "Nullable"
+        string SubjectCode "Nullable"
+        string Category
+        int Batch
+    }
+    THESIS_SUBMISSIONS {
+        int Id PK
+        int ThesisId FK
+        string FilePath
+        string FileName
+        long FileSize
+        int Version
+        string Notes "Nullable"
+        DateTime SubmittedAt
+    }
+    THESIS_REVIEWS {
+        int Id PK
+        int ThesisId FK
+        int ReviewerId FK
+        string Comments "Nullable"
+        decimal Score "Nullable"
+        string Decision
+        DateTime ReviewedAt
+    }
+    THESIS_COMMENTS {
+        int Id PK
+        int ThesisId FK
+        int AuthorId FK
+        string Content
+        DateTime CreatedAt
+    }
+    PLAGIARISM_REPORTS {
+        int Id PK
+        int ThesisId FK
+        double SimilarityPercentage
+        string ReportJson
+        DateTime CheckedAt
+    }
+
+    USERS ||--}o THESES : "creates (Student)"
+    USERS ||--}o THESES : "advises (Advisor)"
+    USERS ||--}o THESIS_REVIEWS : "reviews"
+    USERS ||--}o THESIS_COMMENTS : "comments"
+
+    THESES ||--}o THESIS_SUBMISSIONS : "has documents"
+    THESES ||--}o THESIS_REVIEWS : "has reviews"
+    THESES ||--}o THESIS_COMMENTS : "has comments"
+    THESES ||--}o PLAGIARISM_REPORTS : "has plagiarism reports"
+```
 
 ### 📊 Sơ đồ các Bảng Hệ thống & Dịch vụ Bổ trợ (Supplementary & System Tables)
 
-![Supplementary & System Tables](https://mermaid.ink/svg/ZXJEaWFncmFtDQogICAgVVNFUlMgew0KICAgICAgICBpbnQgSWQgUEsNCiAgICAgICAgc3RyaW5nIEVtYWlsDQogICAgICAgIHN0cmluZyBSb2xlDQogICAgfQ0KICAgIENIQVRfSElTVE9SWSB7DQogICAgICAgIHN0cmluZyBJZCBQSw0KICAgICAgICBzdHJpbmcgUHJvbXB0DQogICAgICAgIHN0cmluZyBNZXNzYWdlDQogICAgICAgIGJvb2wgU3VjY2Vzcw0KICAgICAgICBpbnQgVXNlcklkIEZLDQogICAgICAgIERhdGVUaW1lIENyZWF0ZWRBdA0KICAgIH0NCiAgICBBVURJVF9MT0dTIHsNCiAgICAgICAgaW50IElkIFBLDQogICAgICAgIHN0cmluZyBFbWFpbA0KICAgICAgICBzdHJpbmcgUm9sZQ0KICAgICAgICBib29sIFN1Y2Nlc3MNCiAgICAgICAgc3RyaW5nIE1lc3NhZ2UNCiAgICAgICAgc3RyaW5nIFVzZXJBZ2VudA0KICAgICAgICBEYXRlVGltZSBDcmVhdGVkQXQNCiAgICB9DQogICAgU09DSUFMX1BPU1RTIHsNCiAgICAgICAgaW50IElkIFBLDQogICAgICAgIHN0cmluZyBUaXRsZQ0KICAgICAgICBzdHJpbmcgQ2F0ZWdvcnkNCiAgICAgICAgc3RyaW5nIEJhZGdlQ2xhc3MNCiAgICAgICAgc3RyaW5nIEltYWdlDQogICAgICAgIHN0cmluZyBEZXNjDQogICAgICAgIHN0cmluZyBDb250ZW50DQogICAgICAgIGJvb2wgUHVibGlzaGVkDQogICAgICAgIHN0cmluZyBDbG91ZGluYXJ5U3RhdHVzDQogICAgICAgIERhdGVUaW1lIENyZWF0ZWRBdA0KICAgIH0NCiAgICBNRURJQV9KT0JTIHsNCiAgICAgICAgc3RyaW5nIElkIFBLDQogICAgICAgIHN0cmluZyBSZXNvdXJjZU5hbWUNCiAgICAgICAgc3RyaW5nIEpvYlR5cGUNCiAgICAgICAgZG91YmxlIE9yaWdpbmFsU2l6ZUtiDQogICAgICAgIGRvdWJsZSBPcHRpbWl6ZWRTaXplS2INCiAgICAgICAgc3RyaW5nIFN0YXR1cw0KICAgICAgICBEYXRlVGltZSBDcmVhdGVkQXQNCiAgICB9DQogICAgRFJJVkVfRklMRV9SRUNPUkRTIHsNCiAgICAgICAgaW50IElkIFBLDQogICAgICAgIHN0cmluZyBEcml2ZUZpbGVJZA0KICAgICAgICBzdHJpbmcgRmlsZU5hbWUNCiAgICAgICAgc3RyaW5nIE1pbWVUeXBlDQogICAgICAgIGludCBGaWxlU2l6ZQ0KICAgICAgICBzdHJpbmcgQ2F0ZWdvcnkNCiAgICAgICAgc3RyaW5nIE1ham9yDQogICAgICAgIHN0cmluZyBTdWJqZWN0DQogICAgICAgIHN0cmluZyBTdHVkZW50VWlkDQogICAgICAgIHN0cmluZyBQcm9qZWN0TmFtZQ0KICAgICAgICBib29sIElzQWN0aXZlDQogICAgICAgIERhdGVUaW1lIFN5bmNlZEF0DQogICAgfQ0KDQogICAgVVNFUlMgfHwtLX1vIENIQVRfSElTVE9SWSA6ICJjaGF0cyINCiAgICBVU0VSUyB8fC0tfW8gQVVESVRfTE9HUyA6ICJsb2dzIg0KICAgIFVTRVJTIHx8LS19byBTT0NJQUxfUE9TVFMgOiAicG9zdHMiDQogICAgU09DSUFMX1BPU1RTIHx8LS19byBNRURJQV9KT0JTIDogIm9wdGltaXplcyINCiAgICBVU0VSUyB8fC0tfW8gRFJJVkVfRklMRV9SRUNPUkRTIDogInN5bmNzIg==)
+```mermaid
+erDiagram
+    USERS {
+        int Id PK
+        string Email
+        string Role
+    }
+    CHAT_HISTORY {
+        string Id PK
+        string Prompt
+        string Message
+        bool Success
+        int UserId FK
+        DateTime CreatedAt
+    }
+    AUDIT_LOGS {
+        int Id PK
+        string Email
+        string Role
+        bool Success
+        string Message
+        string UserAgent
+        DateTime CreatedAt
+    }
+    SOCIAL_POSTS {
+        int Id PK
+        string Title
+        string Category
+        string BadgeClass
+        string Image
+        string Desc
+        string Content
+        bool Published
+        string CloudinaryStatus
+        DateTime CreatedAt
+    }
+    MEDIA_JOBS {
+        string Id PK
+        string ResourceName
+        string JobType
+        double OriginalSizeKb
+        double OptimizedSizeKb
+        string Status
+        DateTime CreatedAt
+    }
+    DRIVE_FILE_RECORDS {
+        int Id PK
+        string DriveFileId
+        string FileName
+        string MimeType
+        int FileSize
+        string Category
+        string Major
+        string Subject
+        string StudentUid
+        string ProjectName
+        bool IsActive
+        DateTime SyncedAt
+    }
+
+    USERS ||--}o CHAT_HISTORY : "chats"
+    USERS ||--}o AUDIT_LOGS : "logs"
+    USERS ||--}o SOCIAL_POSTS : "posts"
+    SOCIAL_POSTS ||--}o MEDIA_JOBS : "optimizes"
+    USERS ||--}o DRIVE_FILE_RECORDS : "syncs"
+```
 
 ### 🗂️ Chi tiết các Bảng & Thuộc tính (Database Tables Detail)
 
@@ -710,7 +878,73 @@ Hệ thống eThesis được xây dựng theo mô hình **Kiến trúc hướng
 
 Dưới đây là sơ đồ chi tiết mô tả các tầng kiến trúc, sự tương tác giữa Frontend, các dịch vụ Backend và các thành phần bên thứ ba:
 
-![Overall Architecture Diagram](https://mermaid.ink/svg/Z3JhcGggVEQNCiAgICBjbGFzc0RlZiBjbGllbnQgZmlsbDojMzhiZGY4LHN0cm9rZTojMDI4NGM3LHN0cm9rZS13aWR0aDoycHgsY29sb3I6I2ZmZjsNCiAgICBjbGFzc0RlZiBzZXJ2aWNlIGZpbGw6IzBkOTQ4OCxzdHJva2U6IzBmNzY2ZSxzdHJva2Utd2lkdGg6MnB4LGNvbG9yOiNmZmY7DQogICAgY2xhc3NEZWYgZXh0ZXJuYWwgZmlsbDojZjU5ZTBiLHN0cm9rZTojZDk3NzA2LHN0cm9rZS13aWR0aDoycHgsY29sb3I6I2ZmZjsNCiAgICBjbGFzc0RlZiBzdG9yZSBmaWxsOiM2MzY2ZjEsc3Ryb2tlOiM0ZjQ2ZTUsc3Ryb2tlLXdpZHRoOjJweCxjb2xvcjojZmZmOw0KICAgIGNsYXNzRGVmIGJyb2tlciBmaWxsOiNlYzQ4OTksc3Ryb2tlOiNkYjI3Nzcsc3Ryb2tlLXdpZHRoOjJweCxjb2xvcjojZmZmOw0KDQogICAgc3ViZ3JhcGggQ2xpZW50TGF5ZXIgWyJDbGllbnQgQXBwbGljYXRpb24iXQ0KICAgICAgICBGRVtSZWFjdCAxOSBGcm9udGVuZCBTUEE8YnIvPlZpdGUgLyBUYWlsd2luZCBDU1NdOjo6Y2xpZW50DQogICAgZW5kDQoNCiAgICBzdWJncmFwaCBBUElMYXllciBbIkJhY2tlbmQgU2VydmljZXMgKEFTUC5ORVQgQ29yZSA4KSJdDQogICAgICAgIFBBW1BsYXRmb3JtQWRtaW4gU2VydmljZTxici8-UG9ydCA1MTQ1XTo6OnNlcnZpY2UNCiAgICAgICAgTVBbTWVkaWFQcm9jZXNzaW5nIFNlcnZpY2U8YnIvPlBvcnQgNTAxMF06OjpzZXJ2aWNlDQogICAgICAgIE5TW05vdGlmaWNhdGlvbiBTZXJ2aWNlPGJyLz5Qb3J0IDUwMjBdOjo6c2VydmljZQ0KICAgICAgICBTTVtTb2NpYWxNZWRpYSBTZXJ2aWNlPGJyLz5Qb3J0IDUwMzBdOjo6c2VydmljZQ0KICAgICAgICBCQ1tCdWlsZGluZ0Jsb2NrcyAvIFNoYXJlZENvbnRyYWN0c106OjpzZXJ2aWNlDQogICAgZW5kDQoNCiAgICBzdWJncmFwaCBCcm9rZXJMYXllciBbIk1lc3NhZ2luZyAmIEpvYnMiXQ0KICAgICAgICBSTVFbUmFiYml0TVEgTWVzc2FnZSBCcm9rZXI8YnIvPnBsYWdpYXJpc20tc2Nhbi1xdWV1ZSAmIG1lZGlhLWpvYnNdOjo6YnJva2VyDQogICAgICAgIEhGW0hhbmdmaXJlIFNlcnZlcjxici8-QmFja2dyb3VuZCBTeW5jIEpvYnNdOjo6YnJva2VyDQogICAgZW5kDQoNCiAgICBzdWJncmFwaCBEYXRhU3RvcmFnZSBbIkRhdGEgJiBTZWFyY2ggTGF5ZXIiXQ0KICAgICAgICBEQlsoUG9zdGdyZVNRTCBEYXRhYmFzZTxici8-UG9ydCA1NDMyKV06OjpzdG9yZQ0KICAgICAgICBFU1soRWxhc3RpY3NlYXJjaCBDbHVzdGVyPGJyLz5Qb3J0IDkyMDApXTo6OnN0b3JlDQogICAgZW5kDQoNCiAgICBzdWJncmFwaCBFeHRlcm5hbFNlcnZpY2VzIFsiRXh0ZXJuYWwgQ2xvdWQgU2VydmljZXMgJiBUb29scyJdDQogICAgICAgIEdEW0dvb2dsZSBEcml2ZSBBUEk8YnIvPkFjYWRlbWljIFN0b3JhZ2VdOjo6ZXh0ZXJuYWwNCiAgICAgICAgR0VNW0dvb2dsZSBHZW1pbmkgQUkgQVBJPGJyLz5NdWx0aW1vZGFsIFBERiBBbmFseXNpc106OjpleHRlcm5hbA0KICAgICAgICBDTERbQ2xvdWRpbmFyeSBBUEk8YnIvPlBvc3QgSW1hZ2UgQ0ROXTo6OmV4dGVybmFsDQogICAgICAgIExPW0xpYnJlT2ZmaWNlIENvbnZlcnRlcjxici8-V29yZCB0byBQREZdOjo6ZXh0ZXJuYWwNCiAgICBlbmQNCg0KICAgIEZFIC0tPnxIVFRQIC8gUkVTVCBBUElzfCBQQQ0KICAgIEZFIC0tPnxIVFRQIC8gUkVTVCBBUElzfCBNUA0KICAgIEZFIC0tPnxIVFRQIC8gUkVTVCBBUElzfCBTTQ0KICAgIEZFIC0tPnxXZWJTb2NrZXRzIC8gU2lnbmFsUnwgTlMNCg0KICAgIFBBIC0uLT58UmVmZXJlbmNlc3wgQkMNCiAgICBNUCAtLi0-fFJlZmVyZW5jZXN8IEJDDQogICAgU00gLS4tPnxSZWZlcmVuY2VzfCBCQw0KICAgIE5TIC0uLT58UmVmZXJlbmNlc3wgQkMNCg0KICAgIFBBIC0tPnxSZWFkL1dyaXRlfCBEQg0KICAgIE1QIC0tPnxSZWFkL1dyaXRlfCBEQg0KICAgIFNNIC0tPnxSZWFkL1dyaXRlfCBEQg0KDQogICAgUEEgLS0-fFNlYXJjaCAvIEluZGV4IEJNMjV8IEVTDQoNCiAgICBQQSAtLT58U2NoZWR1bGUgSm9ic3wgSEYNCiAgICBIRiAtLT58VHJpZ2dlciBTeW5jfCBHRA0KDQogICAgUEEgLS0-fFB1Ymxpc2ggU2NhbiBNZXNzYWdlfCBSTVENCiAgICBSTVEgLS0-fENvbnN1bWUgSm9ifCBQQQ0KICAgIA0KICAgIFBBIC0tPnxNdWx0aW1vZGFsIFBERiBEYXRhfCBHRU0NCiAgICANCiAgICBTTSAtLT58VXBsb2FkIFBvc3QgSW1hZ2VzfCBDTEQNCiAgICANCiAgICBNUCAtLT58SW52b2tlIENvbnZlcnR8IExPDQogICAgDQogICAgUEEgLS4tPnxTaWduYWwgU3RhdHVzfCBOUw==)
+```mermaid
+graph LR
+    classDef client fill:#38bdf8,stroke:#0284c7,stroke-width:2px,color:#fff;
+    classDef service fill:#0d9488,stroke:#0f766e,stroke-width:2px,color:#fff;
+    classDef external fill:#f59e0b,stroke:#d97706,stroke-width:2px,color:#fff;
+    classDef store fill:#6366f1,stroke:#4f46e5,stroke-width:2px,color:#fff;
+    classDef broker fill:#ec4899,stroke:#db2777,stroke-width:2px,color:#fff;
+
+    subgraph ClientLayer ["Client Application"]
+        FE[React 19 Frontend SPA<br/>Vite / Tailwind CSS]:::client
+    end
+
+    subgraph APILayer ["Backend Services (ASP.NET Core 8)"]
+        PA[PlatformAdmin Service<br/>Port 5145]:::service
+        MP[MediaProcessing Service<br/>Port 5010]:::service
+        NS[Notification Service<br/>Port 5020]:::service
+        SM[SocialMedia Service<br/>Port 5030]:::service
+        BC[BuildingBlocks / SharedContracts]:::service
+    end
+
+    subgraph BrokerLayer ["Messaging & Jobs"]
+        RMQ[RabbitMQ Message Broker<br/>plagiarism-scan-queue & media-jobs]:::broker
+        HF[Hangfire Server<br/>Background Sync Jobs]:::broker
+    end
+
+    subgraph DataStorage ["Data & Search Layer"]
+        DB[(PostgreSQL Database<br/>Port 5432)]:::store
+        ES[(Elasticsearch Cluster<br/>Port 9200)]:::store
+    end
+
+    subgraph ExternalServices ["External Cloud Services & Tools"]
+        GD[Google Drive API<br/>Academic Storage]:::external
+        GEM[Google Gemini AI API<br/>Multimodal PDF Analysis]:::external
+        CLD[Cloudinary API<br/>Post Image CDN]:::external
+        LO[LibreOffice Converter<br/>Word to PDF]:::external
+    end
+
+    FE -->|HTTP / REST APIs| PA
+    FE -->|HTTP / REST APIs| MP
+    FE -->|HTTP / REST APIs| SM
+    FE -->|WebSockets / SignalR| NS
+
+    PA -.->|References| BC
+    MP -.->|References| BC
+    SM -.->|References| BC
+    NS -.->|References| BC
+
+    PA -->|Read/Write| DB
+    MP -->|Read/Write| DB
+    SM -->|Read/Write| DB
+
+    PA -->|Search / Index BM25| ES
+
+    PA -->|Schedule Jobs| HF
+    HF -->|Trigger Sync| GD
+
+    PA -->|Publish Scan Message| RMQ
+    RMQ -->|Consume Job| PA
+    
+    PA -->|Multimodal PDF Data| GEM
+    
+    SM -->|Upload Post Images| CLD
+    
+    MP -->|Invoke Convert| LO
+    
+    PA -.->|Signal Status| NS
+```
 
 ### 🧩 Mô tả Chi tiết Kiến trúc từng Service
 
@@ -959,7 +1193,43 @@ Phân hệ **AI Chatbot** đóng vai trò là một trợ lý nghiên cứu họ
 
 Luồng hoạt động chính của Chatbot đi qua 3 lớp bảo vệ và xử lý thuật toán như sau:
 
-![Chatbot Process Flow](https://mermaid.ink/svg/c2VxdWVuY2VEaWFncmFtDQogICAgYXV0b251bWJlcg0KICAgIGFjdG9yIFVzZXIgYXMgVXNlciAoU3R1ZGVudC9MZWN0dXJlcikNCiAgICBwYXJ0aWNpcGFudCBDbGllbnQgYXMgRnJvbnRlbmQgKFZpdGUpDQogICAgcGFydGljaXBhbnQgQXV0aCBhcyBKV1QgQXV0aCBIYW5kbGVyDQogICAgcGFydGljaXBhbnQgQ29udHJvbGxlciBhcyBDaGF0Ym90Q29udHJvbGxlciAoQVBJKQ0KICAgIHBhcnRpY2lwYW50IEdlbWluaSBhcyBHZW1pbmkgQUkgU2VydmljZQ0KICAgIHBhcnRpY2lwYW50IERCIGFzIFBvc3RncmVTUUwgRGF0YWJhc2UNCiAgICBwYXJ0aWNpcGFudCBCTTI1IGFzIEJNMjUgUmFua2VyIEVuZ2luZQ0KDQogICAgVXNlci0-PkNsaWVudDogSW5wdXQgc2VhcmNoIHF1ZXJ5IChlLmcuICJBSSB0aGVzaXMiKQ0KICAgIENsaWVudC0-PkNvbnRyb2xsZXI6IFBPU1QgL2FwaS9jaGF0Ym90L2NoYXQgKHdpdGggSldUKQ0KICAgIENvbnRyb2xsZXItPj5BdXRoOiBWYWxpZGF0ZSBUb2tlbiAmIEV4dHJhY3QgVXNlcklkDQogICAgQXV0aC0tPj5Db250cm9sbGVyOiBSZXR1cm4gVXNlcklkIChpZiBhdXRob3JpemVkKQ0KICAgIA0KICAgIE5vdGUgb3ZlciBDb250cm9sbGVyLCBHZW1pbmk6IExheWVyIDE6IFByZS1GaWx0ZXIgKFNhbmR3aWNoIEd1YXJkcmFpbCkNCiAgICBDb250cm9sbGVyLT4-R2VtaW5pOiBBbmFseXplIFByb21wdCAoU2FmZXR5ICYgSW50ZW50IENoZWNrKQ0KICAgIEdlbWluaS0tPj5Db250cm9sbGVyOiBTYWZldHkgT0sgJiBJbnRlbnQ6IFNlYXJjaFRoZXNpc0NvbW1hbmQocXVlcnkpDQoNCiAgICBOb3RlIG92ZXIgQ29udHJvbGxlciwgQk0yNTogTGF5ZXIgMjogRnVuY3Rpb24gUm91dGluZyAmIEJNMjUgUmFua2luZw0KICAgIENvbnRyb2xsZXItPj5EQjogRmV0Y2ggY2FuZGlkYXRlIHRoZXNlcyAoREIgKyBTZWVkZWQgTW9jaykNCiAgICBEQi0tPj5Db250cm9sbGVyOiBSZXR1cm4gY2FuZGlkYXRlIGxpc3QNCiAgICBDb250cm9sbGVyLT4-Qk0yNTogU2VuZCBxdWVyeSAmIGNhbmRpZGF0ZSBsaXN0DQogICAgQk0yNS0-PkJNMjU6IFRva2VuaXplLCBjYWxjdWxhdGUgSURGICYgQk0yNSBzY29yZQ0KICAgIEJNMjUtLT4-Q29udHJvbGxlcjogUmV0dXJuIFRvcCAzIEJNMjUgcmFua2VkIHRoZXNlcw0KDQogICAgTm90ZSBvdmVyIENvbnRyb2xsZXIsIEdlbWluaTogTGF5ZXIgMjogUG9zdC1GaWx0ZXIgKFNhbmR3aWNoIEd1YXJkcmFpbCkNCiAgICBDb250cm9sbGVyLT4-R2VtaW5pOiBTZW5kIG9yaWdpbmFsIHByb21wdCArIEJNMjUgcmVzdWx0cw0KICAgIEdlbWluaS0tPj5Db250cm9sbGVyOiBSZXR1cm4gYW5zd2VyIHdpdGggTWFya2Rvd24gTGlua3MNCiAgICBDb250cm9sbGVyLT4-R2VtaW5pOiBTY2FuIG91dHB1dCAoU2FmZXR5ICYgVmFsaWRpdHkgQ2hlY2spDQogICAgR2VtaW5pLS0-PkNvbnRyb2xsZXI6IFZlcmlmeSBjbGVhbiBvdXRwdXQNCg0KICAgIENvbnRyb2xsZXItPj5EQjogU2F2ZSBDaGF0SGlzdG9yeQ0KICAgIENvbnRyb2xsZXItLT4-Q2xpZW50OiBSZXR1cm4gSlNPTiByZXNwb25zZQ0KICAgIENsaWVudC0-PlVzZXI6IERpc3BsYXkgcmVzdWx0cyB3aXRoIEZsaXBib29rIGxpbmtz)
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as User (Student/Lecturer)
+    participant Client as Frontend (Vite)
+    participant Auth as JWT Auth Handler
+    participant Controller as ChatbotController (API)
+    participant Gemini as Gemini AI Service
+    participant DB as PostgreSQL Database
+    participant BM25 as BM25 Ranker Engine
+
+    User->>Client: Input search query (e.g. "AI thesis")
+    Client->>Controller: POST /api/chatbot/chat (with JWT)
+    Controller->>Auth: Validate Token & Extract UserId
+    Auth-->>Controller: Return UserId (if authorized)
+    
+    Note over Controller, Gemini: Layer 1: Pre-Filter (Sandwich Guardrail)
+    Controller->>Gemini: Analyze Prompt (Safety & Intent Check)
+    Gemini-->>Controller: Safety OK & Intent: SearchThesisCommand(query)
+
+    Note over Controller, BM25: Layer 2: Function Routing & BM25 Ranking
+    Controller->>DB: Fetch candidate theses (DB + Seeded Mock)
+    DB-->>Controller: Return candidate list
+    Controller->>BM25: Send query & candidate list
+    BM25->>BM25: Tokenize, calculate IDF & BM25 score
+    BM25-->>Controller: Return Top 3 BM25 ranked theses
+
+    Note over Controller, Gemini: Layer 3: Post-Filter (Sandwich Guardrail)
+    Controller->>Gemini: Send original prompt + BM25 results
+    Gemini-->>Controller: Return answer with Markdown Links
+    Controller->>Gemini: Scan output (Safety & Validity Check)
+    Gemini-->>Controller: Verify clean output
+
+    Controller->>DB: Save ChatHistory
+    Controller-->>Client: Return JSON response
+    Client->>User: Display results with Flipbook links
+```
 
 #### 🛡️ Chi tiết các đặc tính cốt lõi của Chatbot:
 
