@@ -505,19 +505,19 @@ erDiagram
         DateTime CheckedAt
     }
 
-    USERS ||--o{ THESES : "tạo đề tài (Student)"
-    USERS ||--o{ THESES : "hướng dẫn (Advisor)"
-    USERS ||--o{ COMMITTEE_MEMBERS : "tham gia hội đồng"
-    USERS ||--o{ THESIS_REVIEWS : "đánh giá"
-    USERS ||--o{ THESIS_COMMENTS : "bình luận"
+    USERS ||--o{ THESES : "creates (Student)"
+    USERS ||--o{ THESES : "advises (Advisor)"
+    USERS ||--o{ COMMITTEE_MEMBERS : "member of"
+    USERS ||--o{ THESIS_REVIEWS : "reviews"
+    USERS ||--o{ THESIS_COMMENTS : "comments"
     
-    COMMITTEES ||--o{ COMMITTEE_MEMBERS : "gồm các thành viên"
-    COMMITTEES ||--o{ THESES : "chấm điểm đề tài"
+    COMMITTEES ||--o{ COMMITTEE_MEMBERS : "has members"
+    COMMITTEES ||--o{ THESES : "grades"
 
-    THESES ||--o{ THESIS_SUBMISSIONS : "có các file tài liệu"
-    THESES ||--o{ THESIS_REVIEWS : "có các đánh giá"
-    THESES ||--o{ THESIS_COMMENTS : "có các bình luận trao đổi"
-    THESES ||--o{ PLAGIARISM_REPORTS : "có các báo cáo so khớp"
+    THESES ||--o{ THESIS_SUBMISSIONS : "has documents"
+    THESES ||--o{ THESIS_REVIEWS : "has reviews"
+    THESES ||--o{ THESIS_COMMENTS : "has comments"
+    THESES ||--o{ PLAGIARISM_REPORTS : "has plagiarism reports"
 ```
 
 ### 📊 Sơ đồ các Bảng Hệ thống & Dịch vụ Bổ trợ (Supplementary & System Tables)
