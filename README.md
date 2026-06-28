@@ -534,7 +534,7 @@ erDiagram
         string Prompt
         string Message
         bool Success
-        int UserId FK "Nullable"
+        int UserId FK
         DateTime CreatedAt
     }
     AUDIT_LOGS {
@@ -572,7 +572,7 @@ erDiagram
         string DriveFileId
         string FileName
         string MimeType
-        long FileSize "Nullable"
+        int FileSize
         string Category
         string Major
         string Subject
@@ -582,11 +582,11 @@ erDiagram
         DateTime SyncedAt
     }
 
-    USERS ||--o{ CHAT_HISTORY : "chats"
-    USERS ||--o{ AUDIT_LOGS : "logs"
-    USERS ||--o{ SOCIAL_POSTS : "posts"
-    SOCIAL_POSTS ||--o{ MEDIA_JOBS : "optimizes"
-    USERS ||--o{ DRIVE_FILE_RECORDS : "syncs"
+    USERS ||--}o CHAT_HISTORY : "chats"
+    USERS ||--}o AUDIT_LOGS : "logs"
+    USERS ||--}o SOCIAL_POSTS : "posts"
+    SOCIAL_POSTS ||--}o MEDIA_JOBS : "optimizes"
+    USERS ||--}o DRIVE_FILE_RECORDS : "syncs"
 ```
 
 ### 🗂️ Chi tiết các Bảng & Thuộc tính (Database Tables Detail)
