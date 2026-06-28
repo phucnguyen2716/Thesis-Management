@@ -452,8 +452,8 @@ erDiagram
         string Role
     }
 
-    USERS ||--}o COMMITTEE_MEMBERS : "member of"
-    COMMITTEES ||--}o COMMITTEE_MEMBERS : "has members"
+    USERS ||--o{ COMMITTEE_MEMBERS : "member of"
+    COMMITTEES ||--o{ COMMITTEE_MEMBERS : "has members"
 ```
 
 ### 📊 Sơ đồ Quản lý Khóa luận & Đánh giá (Theses & Reviews ERD)
@@ -519,15 +519,15 @@ erDiagram
         DateTime CheckedAt
     }
 
-    USERS ||--}o THESES : "creates (Student)"
-    USERS ||--}o THESES : "advises (Advisor)"
-    USERS ||--}o THESIS_REVIEWS : "reviews"
-    USERS ||--}o THESIS_COMMENTS : "comments"
+    USERS ||--o{ THESES : "creates (Student)"
+    USERS ||--o{ THESES : "advises (Advisor)"
+    USERS ||--o{ THESIS_REVIEWS : "reviews"
+    USERS ||--o{ THESIS_COMMENTS : "comments"
 
-    THESES ||--}o THESIS_SUBMISSIONS : "has documents"
-    THESES ||--}o THESIS_REVIEWS : "has reviews"
-    THESES ||--}o THESIS_COMMENTS : "has comments"
-    THESES ||--}o PLAGIARISM_REPORTS : "has plagiarism reports"
+    THESES ||--o{ THESIS_SUBMISSIONS : "has documents"
+    THESES ||--o{ THESIS_REVIEWS : "has reviews"
+    THESES ||--o{ THESIS_COMMENTS : "has comments"
+    THESES ||--o{ PLAGIARISM_REPORTS : "has plagiarism reports"
 ```
 
 ### 📊 Sơ đồ các Bảng Hệ thống & Dịch vụ Bổ trợ (Supplementary & System Tables)
@@ -592,11 +592,11 @@ erDiagram
         DateTime SyncedAt
     }
 
-    USERS ||--}o CHAT_HISTORY : "chats"
-    USERS ||--}o AUDIT_LOGS : "logs"
-    USERS ||--}o SOCIAL_POSTS : "posts"
-    SOCIAL_POSTS ||--}o MEDIA_JOBS : "optimizes"
-    USERS ||--}o DRIVE_FILE_RECORDS : "syncs"
+    USERS ||--o{ CHAT_HISTORY : "chats"
+    USERS ||--o{ AUDIT_LOGS : "logs"
+    USERS ||--o{ SOCIAL_POSTS : "posts"
+    SOCIAL_POSTS ||--o{ MEDIA_JOBS : "optimizes"
+    USERS ||--o{ DRIVE_FILE_RECORDS : "syncs"
 ```
 
 ### 🗂️ Chi tiết các Bảng & Thuộc tính (Database Tables Detail)
