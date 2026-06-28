@@ -1196,7 +1196,7 @@ Luồng hoạt động chính của Chatbot đi qua 3 lớp bảo vệ và xử 
 ```mermaid
 sequenceDiagram
     autonumber
-    actor User as User (Student/Lecturer)
+    participant User as User (Student/Lecturer)
     participant Client as Frontend (Vite)
     participant Auth as JWT Auth Handler
     participant Controller as ChatbotController (API)
