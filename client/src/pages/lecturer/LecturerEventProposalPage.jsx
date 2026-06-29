@@ -24,8 +24,47 @@ const LecturerEventProposalPage = () => {
 
   const loadProposals = () => {
     try {
-      const raw = localStorage.getItem('lecturerEventProposals');
-      const list = raw ? JSON.parse(raw) : [];
+      let raw = localStorage.getItem('lecturerEventProposals');
+      if (!raw) {
+        const defaultProposals = [
+          {
+            id: 'prop-seed-1',
+            title: 'Hội thảo Học tập và Nghiên cứu khoa học Quốc tế UEF 2026',
+            link: 'https://www.uef.edu.vn/tin-tuc/hoi-thao-quoc-te-uef-2026',
+            imageUrl: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&auto=format&fit=crop&q=60',
+            note: 'Hội thảo thường niên chia sẻ kinh nghiệm nghiên cứu khoa học cho giảng viên và sinh viên.',
+            lecturerName: lecturerName,
+            status: 'approved',
+            adminNote: 'Đã duyệt đăng bài lên Portal SV chính thức.',
+            createdAt: Date.now() - 1000 * 60 * 60 * 2, // 2 hours ago
+          },
+          {
+            id: 'prop-seed-2',
+            title: 'Cuộc thi Sáng tạo Công nghệ Sinh viên UEF Tech-Innovation',
+            link: 'https://www.uef.edu.vn/cuoc-thi-tech-innovation-2026',
+            imageUrl: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=600&auto=format&fit=crop&q=60',
+            note: 'Sân chơi sáng tạo công nghệ cho sinh viên công nghệ thông tin và kỹ thuật.',
+            lecturerName: lecturerName,
+            status: 'pending',
+            adminNote: '',
+            createdAt: Date.now() - 1000 * 60 * 60 * 24, // 1 day ago
+          },
+          {
+            id: 'prop-seed-3',
+            title: 'Diễn đàn Doanh nghiệp và Nhân lực Chất lượng cao UEF Career Expo',
+            link: 'https://www.uef.edu.vn/career-expo-2026',
+            imageUrl: 'https://images.unsplash.com/photo-1515187029135-18ee286d815b?w=600&auto=format&fit=crop&q=60',
+            note: 'Kết nối doanh nghiệp tuyển dụng và sinh viên năm cuối của các khoa.',
+            lecturerName: lecturerName,
+            status: 'rejected',
+            adminNote: 'Sự kiện trùng lịch với kỳ thi tập trung của trường.',
+            createdAt: Date.now() - 1000 * 60 * 60 * 24 * 3, // 3 days ago
+          }
+        ];
+        localStorage.setItem('lecturerEventProposals', JSON.stringify(defaultProposals));
+        raw = JSON.stringify(defaultProposals);
+      }
+      const list = JSON.parse(raw);
       setProposals(
         list
           .filter(p => p.lecturerName === lecturerName)
