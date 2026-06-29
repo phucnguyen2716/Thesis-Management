@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { chatbotService } from '../services/api';
 import useLanguage from '../hooks/useLanguage';
+import { HubConnectionBuilder } from '@microsoft/signalr';
 
 const DEFAULT_AVATAR = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80';
 
@@ -15,6 +16,53 @@ const Layout = () => {
     } catch { return { role: 'Student', fullName: 'Người dùng Demo' }; }
   };
   const [user, setUser] = useState(loadUser);
+  const [notifications, setNotifications] = useState([
+    { title: 'Đề tài mới', desc: 'Nguyễn Văn A vừa nộp đề tài AI Chatbot', time: '10 phút trước', icon: 'description', color: 'text-blue-600', bg: 'bg-blue-50' },
+    { title: 'Lịch bảo trì', desc: 'Bảo trì máy chủ UEF Portal lúc 00:00.', time: '2 giờ trước', icon: 'settings', color: 'text-orange-600', bg: 'bg-orange-50' },
+    { title: 'Đánh giá hoàn tất', desc: 'Đồ án của bạn đã được Giảng viên chấm điểm.', time: '1 ngày trước', icon: 'fact_check', color: 'text-emerald-600', bg: 'bg-emerald-50' },
+  ]);
+  const [unreadCount, setUnreadCount] = useState(3);
+  const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+
+  useEffect(() => {
+    if (isNotifOpen) {
+      setUnreadCount(0);
+    }
+  }, [isNotifOpen]);
+
+  useEffect(() => {
+    if (!user || !user.email) return;
+
+    console.log('[Layout] Connecting to SignalR NotificationHub at http://localhost:5020...');
+    const connection = new HubConnectionBuilder()
+      .withUrl('http://localhost:5020/notificationHub')
+      .withAutomaticReconnect()
+      .build();
+
+    connection.start()
+      .then(() => {
+        console.log('[Layout] SignalR Connected. Joining user group:', user.email);
+        connection.invoke('JoinUserGroup', user.email);
+      })
+      .catch(err => {
+        console.warn('[Layout] SignalR connection failed (Server might be offline):', err.message);
+      });
+
+    connection.on('ReceiveNotification', (newNotif) => {
+      console.log('[Layout] SignalR Received Notification:', newNotif);
+      setNotifications(prev => [newNotif, ...prev]);
+      setUnreadCount(prev => prev + 1);
+    });
+
+    return () => {
+      if (connection) {
+        connection.invoke('LeaveUserGroup', user.email).catch(() => {});
+        connection.stop();
+      }
+    };
+  }, [user?.email]);
+
 
   const { lang, toggleLanguage } = useLanguage();
 
@@ -25,8 +73,6 @@ const Layout = () => {
       return true;
     }
   });
-  const [isChatOpen, setIsChatOpen] = useState(false);
-  const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [expandedThesisType, setExpandedThesisType] = useState(null);
   const [chatMessage, setChatMessage] = useState('');
   const [messages, setMessages] = useState([
@@ -451,21 +497,19 @@ const Layout = () => {
                 className={`material-symbols-outlined text-on-primary p-2.5 rounded-full transition-all relative ${isNotifOpen ? 'bg-white/20' : 'hover:bg-white/10'}`}
               >
                 notifications
-                <span className="absolute top-2 right-2 w-2 h-2 bg-yellow-400 rounded-full border border-primary animate-pulse"></span>
+                {unreadCount > 0 && (
+                  <span className="absolute top-2 right-2 w-2 h-2 bg-yellow-400 rounded-full border border-primary animate-pulse"></span>
+                )}
               </button>
 
               {isNotifOpen && (
                 <div className="absolute top-full right-0 mt-3 w-80 bg-white/90 backdrop-blur-2xl border border-white/20 shadow-[0_20px_60px_rgba(0,0,0,0.15)] rounded-2xl overflow-hidden z-[100] animate-in slide-in-from-top-2 fade-in duration-300">
                   <div className="p-4 bg-gradient-to-r from-primary to-[#8C000E] text-on-primary flex justify-between items-center shadow-md">
                     <h3 className="font-black text-[11px] uppercase tracking-[0.15em]">Thông báo mới</h3>
-                    <span className="text-[10px] font-black bg-white/20 px-2 py-0.5 rounded-full backdrop-blur-md">3 chưa đọc</span>
+                    <span className="text-[10px] font-black bg-white/20 px-2 py-0.5 rounded-full backdrop-blur-md">{unreadCount} chưa đọc</span>
                   </div>
                   <div className="max-h-[320px] overflow-y-auto">
-                    {[
-                      { title: 'Đề tài mới', desc: 'Nguyễn Văn A vừa nộp đề tài AI Chatbot', time: '10 phút trước', icon: 'description', color: 'text-blue-600', bg: 'bg-blue-50' },
-                      { title: 'Lịch bảo trì', desc: 'Bảo trì máy chủ UEF Portal lúc 00:00.', time: '2 giờ trước', icon: 'settings', color: 'text-orange-600', bg: 'bg-orange-50' },
-                      { title: 'Đánh giá hoàn tất', desc: 'Đồ án của bạn đã được Giảng viên chấm điểm.', time: '1 ngày trước', icon: 'fact_check', color: 'text-emerald-600', bg: 'bg-emerald-50' },
-                    ].map((n, i) => (
+                    {notifications.map((n, i) => (
                       <div key={i} className="flex items-start gap-4 p-4 border-b border-black/5 hover:bg-black/[0.02] transition-colors cursor-pointer group">
                         <div className={`w-11 h-11 rounded-full ${n.bg} flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300 shadow-sm border border-black/5`}>
                           <span className={`material-symbols-outlined text-xl ${n.color}`}>{n.icon}</span>
@@ -527,21 +571,19 @@ const Layout = () => {
               className="material-symbols-outlined text-on-primary p-2 hover:bg-white/10 rounded-full transition-colors relative"
             >
               notifications
-              <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-yellow-400 rounded-full border border-primary animate-pulse"></span>
+              {unreadCount > 0 && (
+                <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-yellow-400 rounded-full border border-primary animate-pulse"></span>
+              )}
             </button>
             
             {isNotifOpen && (
               <div className="absolute top-full right-0 mt-3 w-72 bg-white border border-gray-100 shadow-xl rounded-xl overflow-hidden z-[100] animate-in slide-in-from-top-2 duration-300">
                 <div className="p-3 bg-primary text-on-primary flex justify-between items-center text-xs font-bold">
                   <span>THÔNG BÁO</span>
-                  <span className="bg-white/20 px-2 py-0.5 rounded-full">3 mới</span>
+                  <span className="bg-white/20 px-2 py-0.5 rounded-full">{unreadCount} mới</span>
                 </div>
                 <div className="max-h-[240px] overflow-y-auto">
-                  {[
-                    { title: 'Đề tài mới', time: '10 phút trước' },
-                    { title: 'Lịch bảo trì hệ thống', time: '2 giờ trước' },
-                    { title: 'Đánh giá hoàn tất', time: '1 ngày trước' }
-                  ].map((n, i) => (
+                  {notifications.map((n, i) => (
                     <div key={i} className="p-3 border-b border-black/5 hover:bg-black/[0.02] cursor-pointer">
                       <p className="text-xs font-bold text-gray-800 leading-tight">{n.title}</p>
                       <p className="text-[10px] text-gray-400 mt-1 font-semibold">{n.time}</p>

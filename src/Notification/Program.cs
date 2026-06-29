@@ -1,9 +1,24 @@
+using Microsoft.AspNetCore.SignalR;
+using System.Text.Json.Serialization;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddSignalR();
+
+// Enable CORS for React Frontend (port 5173)
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowClient", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173")
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+});
 
 var app = builder.Build();
 
@@ -14,31 +29,78 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+app.UseCors("AllowClient");
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+// SignalR Hub mapping
+app.MapHub<NotificationHub>("/notificationHub");
 
-app.MapGet("/weatherforecast", () =>
+// REST Endpoint to publish notifications (to be called by other microservices)
+app.MapPost("/api/notifications", async (NotificationRequest request, IHubContext<NotificationHub> hubContext) =>
 {
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast")
-.WithOpenApi();
+    if (string.IsNullOrEmpty(request.RecipientEmail))
+    {
+        return Results.BadRequest(new { message = "RecipientEmail is required." });
+    }
+
+    // Push the notification object to the specific user's group
+    await hubContext.Clients.Group(request.RecipientEmail).SendAsync("ReceiveNotification", new
+    {
+        title = request.Title,
+        desc = request.Desc,
+        time = "Vừa xong",
+        icon = request.Icon ?? "info",
+        color = request.Color ?? "text-blue-600",
+        bg = request.Bg ?? "bg-blue-50"
+    });
+
+    return Results.Ok(new { message = "Notification sent successfully." });
+});
 
 app.Run();
 
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
+// SignalR Hub definition
+public class NotificationHub : Hub
 {
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
+    public async Task JoinUserGroup(string email)
+    {
+        if (!string.IsNullOrEmpty(email))
+        {
+            await Groups.AddToGroupAsync(Context.ConnectionId, email);
+            Console.WriteLine($"[NotificationHub] User with connection {Context.ConnectionId} joined group: {email}");
+        }
+    }
+
+    public async Task LeaveUserGroup(string email)
+    {
+        if (!string.IsNullOrEmpty(email))
+        {
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, email);
+            Console.WriteLine($"[NotificationHub] User with connection {Context.ConnectionId} left group: {email}");
+        }
+    }
+}
+
+// Request DTO definition
+public class NotificationRequest
+{
+    [JsonPropertyName("recipientEmail")]
+    public string RecipientEmail { get; set; } = string.Empty;
+
+    [JsonPropertyName("title")]
+    public string Title { get; set; } = string.Empty;
+
+    [JsonPropertyName("desc")]
+    public string Desc { get; set; } = string.Empty;
+
+    [JsonPropertyName("type")]
+    public string Type { get; set; } = string.Empty;
+
+    [JsonPropertyName("icon")]
+    public string Icon { get; set; } = "info";
+
+    [JsonPropertyName("color")]
+    public string Color { get; set; } = "text-blue-600";
+
+    [JsonPropertyName("bg")]
+    public string Bg { get; set; } = "bg-blue-50";
 }
