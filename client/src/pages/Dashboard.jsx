@@ -130,7 +130,7 @@ const Dashboard = () => {
 
       {/* Bento Quick Action Cards - Compact & Balanced */}
       <section className="py-12 px-4 md:px-8 xl:px-10 max-w-[1400px] mx-auto w-full animate-fade-in">
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16">
           {/* Action: Tra cứu - Red Theme */}
           <div 
             onClick={() => navigate('/lookup')}
@@ -165,24 +165,6 @@ const Dashboard = () => {
             </div>
             <div className="text-purple-600 font-black text-[9px] uppercase tracking-widest flex items-center gap-2 group-hover:gap-3 transition-all">
               {t.cardAiAction} <span className="material-symbols-outlined text-xs">arrow_forward</span>
-            </div>
-          </div>
-
-          {/* Action: Admin - Dark Theme */}
-          <div 
-            onClick={() => navigate('/settings')}
-            className="bg-surface-container-lowest p-5 rounded-[1.75rem] border border-outline-variant hover:border-on-surface/30 hover:shadow-[0_15px_40px_rgba(0,0,0,0.04)] transition-all group cursor-pointer relative overflow-hidden flex flex-col justify-between min-h-[235px]"
-          >
-            <div className="absolute -right-6 -top-6 w-24 h-24 bg-surface-container-high rounded-full group-hover:scale-150 transition-transform duration-700"></div>
-            <div>
-              <div className="w-12 h-12 bg-surface-container-high flex items-center justify-center rounded-xl mb-4 text-on-surface group-hover:bg-on-surface group-hover:text-white transition-all shadow-sm">
-                <span className="material-symbols-outlined text-xl">admin_panel_settings</span>
-              </div>
-              <h3 className="text-lg font-black mb-1.5 text-on-surface">{t.cardAdminTitle}</h3>
-              <p className="text-xs text-on-surface-variant font-medium leading-relaxed line-clamp-3 opacity-80">{t.cardAdminDesc}</p>
-            </div>
-            <div className="text-on-surface font-black text-[9px] uppercase tracking-widest flex items-center gap-2 group-hover:gap-3 transition-all">
-              {t.cardAdminAction} <span className="material-symbols-outlined text-xs">arrow_forward</span>
             </div>
           </div>
         </div>

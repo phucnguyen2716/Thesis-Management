@@ -97,6 +97,7 @@
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
   @apply bg-surface-container-low;
@@ -104,3 +105,42 @@
 ::-webkit-scrollbar-thumb {
   @apply bg-outline-variant rounded-full hover:bg-outline transition-colors;
 }
+
+/* Dark mode scrollbar overrides for admin dashboard */
+.bg-slate-950 ::-webkit-scrollbar-track,
+.bg-slate-900 ::-webkit-scrollbar-track,
+.bg-slate-950::-webkit-scrollbar-track,
+.bg-slate-900::-webkit-scrollbar-track {
+  background: #0f172a !important;
+}
+.bg-slate-950 ::-webkit-scrollbar-thumb,
+.bg-slate-900 ::-webkit-scrollbar-thumb,
+.bg-slate-950::-webkit-scrollbar-thumb,
+.bg-slate-900::-webkit-scrollbar-thumb {
+  background: #334155 !important;
+  border-radius: 9999px;
+}
+.bg-slate-950 ::-webkit-scrollbar-thumb:hover,
+.bg-slate-900 ::-webkit-scrollbar-thumb:hover,
+.bg-slate-950::-webkit-scrollbar-thumb:hover,
+.bg-slate-900::-webkit-scrollbar-thumb:hover {
+  background: #475569 !important;
+}
+
+/* Prevent wrapping in table headers for all dashboard tables */
+thead.bg-slate-900 th,
+thead.bg-slate-900 th *,
+.bg-slate-900.tracking-wider th {
+  white-space: nowrap !important;
+}
+
+/* Progress bar and custom animations for AI Evaluation */
+@keyframes progress-shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.animate-progress-shimmer {
+  animation: progress-shimmer 2s ease-in-out infinite;
+}
+

@@ -56,7 +56,7 @@ public class ThesisService : IThesisService
         }
         else if (studentId.HasValue)
         {
-            q = q.Where(t => t.StudentId == studentId || t.Status == "Approved");
+            q = q.Where(t => t.StudentId == studentId || t.Status == "Approved" || t.Status == "Submitted" || t.Status == "UnderReview");
         }
         else if (advisorId.HasValue)
         {

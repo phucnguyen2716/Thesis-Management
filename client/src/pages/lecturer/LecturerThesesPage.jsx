@@ -1,16 +1,71 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { SUBMISSIONS, STATUS_CONFIG, MAJORS } from '../../data/lecturerMockData';
 import { LECTURER_ICONS } from '../../constants/lecturerIcons';
 import { getRankedSubmissions } from '../../utils/lecturerRanking';
+import { thesisService, plagiarismService } from '../../services/api';
 
 const LecturerThesesPage = () => {
   const [majorFilter, setMajorFilter] = useState('all');
+  const [submissions, setSubmissions] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const { data } = await thesisService.getAll({ page: 1, pageSize: 100 });
+        if (data && data.items) {
+          const dbItems = data.items.map((t, idx) => {
+            const mockMatch = SUBMISSIONS.find(s => s.title.toLowerCase().trim() === t.title.toLowerCase().trim()) 
+              || SUBMISSIONS.find(s => parseInt(s.id.replace('sub-', ''), 10) === t.id)
+              || SUBMISSIONS[idx] || SUBMISSIONS[0];
+
+            return {
+              ...mockMatch,
+              id: `sub-${String(t.id).padStart(3, '0')}`,
+              title: t.title,
+              student: t.studentName || 'Sinh viên',
+              studentId: t.studentCode || 'SV-000',
+              faculty: t.department || 'Khoa học Công nghệ',
+              status: t.status === 'Approved' ? 'acceptable' : t.status === 'Rejected' || t.status === 'Revision' ? 'flagged' : 'review',
+              grade: t.latestScore,
+              exemplaryScore: t.latestScore ? Math.round(t.latestScore * 10) : mockMatch.exemplaryScore
+            };
+          });
+
+          // Fetch plagiarism reports in parallel
+          const itemsWithPlag = await Promise.all(dbItems.map(async item => {
+            const numericId = parseInt(item.id.replace('sub-', ''), 10);
+            try {
+              const res = await plagiarismService.getStatus(numericId);
+              if (res.data && res.data.status === 'Completed' && res.data.report) {
+                return {
+                  ...item,
+                  similarity: Math.round(res.data.report.similarityPercentage)
+                };
+              }
+            } catch (err) {
+              console.error(`Lỗi khi lấy đạo văn cho ID ${numericId}:`, err);
+            }
+            return item;
+          }));
+
+          setSubmissions(itemsWithPlag);
+        }
+      } catch (error) {
+        console.error("Lỗi khi tải danh sách đồ án từ DB:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const list = useMemo(() => {
-    const ranked = getRankedSubmissions(SUBMISSIONS, majorFilter);
+    const ranked = getRankedSubmissions(submissions, majorFilter);
     return ranked.map((s, i) => ({ ...s, rank: i + 1 }));
-  }, [majorFilter]);
+  }, [submissions, majorFilter]);
 
   return (
     <div className="w-full max-w-full min-w-0 animate-in fade-in duration-300">

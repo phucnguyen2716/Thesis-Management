@@ -1323,16 +1323,34 @@ const WordPlayground = () => {
 
       {/* AI Grading Loader Overlay */}
       {isGrading && (
-        <div className="absolute inset-0 bg-slate-900/70 backdrop-blur-md z-50 flex flex-col items-center justify-center text-white animate-fade-in">
-          <div className="w-20 h-20 rounded-full bg-gradient-to-r from-yellow-400 to-amber-500 flex items-center justify-center shadow-[0_0_50px_rgba(245,158,11,0.5)] animate-pulse mb-6">
-            <span className="material-symbols-outlined text-4xl text-slate-900 animate-spin">auto_awesome</span>
-          </div>
-          <h3 className="text-xl font-bold tracking-wide uppercase mb-2 text-yellow-300">Gemini AI Chấm điểm</h3>
-          <p className="text-sm font-semibold tracking-wider opacity-90 h-6 animate-pulse text-center max-w-md px-6">
-            {gradingStep}
-          </p>
-          <div className="w-64 h-1.5 bg-white/20 rounded-full mt-4 overflow-hidden">
-            <div className="h-full bg-gradient-to-r from-yellow-400 to-amber-400 w-3/4 animate-[loading_2s_ease-in-out_infinite] rounded-full"></div>
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[9999] flex flex-col items-center justify-center text-white animate-fade-in p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl shadow-[0_0_60px_rgba(234,179,8,0.15)] p-8 w-full max-w-sm text-center space-y-6 animate-in zoom-in-95 duration-300">
+            {/* Spinning Circular Rings */}
+            <div className="relative w-24 h-24 mx-auto">
+              {/* Outer spinning ring */}
+              <div className="absolute inset-0 rounded-full border-4 border-t-yellow-400 border-r-transparent border-b-transparent border-l-transparent animate-spin" />
+              {/* Middle spinning ring (reverse) */}
+              <div className="absolute inset-2 rounded-full border-4 border-b-amber-500 border-t-transparent border-r-transparent border-l-transparent animate-[spin_1.2s_linear_infinite_reverse]" />
+              {/* Inner glowing core with AI icon */}
+              <div className="absolute inset-4 rounded-full bg-gradient-to-tr from-yellow-500/10 to-amber-500/20 flex items-center justify-center shadow-inner">
+                <span className="material-symbols-outlined text-3xl text-yellow-400 animate-pulse">auto_awesome</span>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <h3 className="text-lg font-black text-yellow-400 uppercase tracking-widest leading-none">AI Đang chấm điểm</h3>
+              <p className="text-xs text-slate-400 font-semibold leading-relaxed min-h-[32px] px-2">
+                {gradingStep}
+              </p>
+            </div>
+
+            {/* Glowing progress line */}
+            <div className="space-y-2">
+              <div className="w-full h-1.5 rounded-full bg-slate-800 overflow-hidden border border-slate-700/50 relative">
+                <div className="absolute inset-0 bg-gradient-to-r from-yellow-400 to-amber-500 rounded-full animate-progress-shimmer w-2/3" />
+              </div>
+              <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Hệ thống đang phân tích cấu trúc & nội dung</p>
+            </div>
           </div>
         </div>
       )}

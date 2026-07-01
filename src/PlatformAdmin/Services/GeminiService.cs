@@ -193,7 +193,7 @@ namespace PlatformAdmin.Services
             if (isEnglish)
             {
                 // Greeting
-                if (lower.Contains("hello") || lower.Contains("hi") || lower.Contains("hey"))
+                if (ContainsAnyWord(lower, "hello", "hi", "hey"))
                 {
                     return "Hello! I am your eThesis Academic Assistant. I'm here to help you navigate our Digital Library. How can I assist you today, my friend?";
                 }
@@ -277,7 +277,7 @@ namespace PlatformAdmin.Services
             else
             {
                 // Greeting
-                if (lower.Contains("chào") || lower.Contains("chao") || lower.Contains("hello") || lower.Contains("hi") || lower.Contains("hey"))
+                if (ContainsAnyWord(lower, "chào", "chao", "hello", "hi", "hey"))
                 {
                     return "Xin chào bạn! Tôi là trợ lý ảo eThesis. Tôi có thể hỗ trợ bạn tìm kiếm tài liệu, cẩm nang viết khóa luận và giải đáp thắc mắc. Hôm nay tôi có thể giúp gì cho bạn?";
                 }
@@ -814,6 +814,34 @@ namespace PlatformAdmin.Services
                 IsViolent = false,
                 FilteredResponse = response
             };
+        }
+
+        private bool ContainsWord(string text, string word)
+        {
+            if (string.IsNullOrEmpty(text) || string.IsNullOrEmpty(word)) return false;
+            var lowerText = text.ToLowerInvariant();
+            var lowerWord = word.ToLowerInvariant();
+            
+            int index = 0;
+            while ((index = lowerText.IndexOf(lowerWord, index)) != -1)
+            {
+                bool startOk = index == 0 || !char.IsLetterOrDigit(lowerText[index - 1]);
+                bool endOk = index + lowerWord.Length == lowerText.Length || !char.IsLetterOrDigit(lowerText[index + lowerWord.Length]);
+                
+                if (startOk && endOk) return true;
+                index += lowerWord.Length;
+            }
+            return false;
+        }
+
+        private bool ContainsAnyWord(string text, params string[] words)
+        {
+            if (string.IsNullOrEmpty(text)) return false;
+            foreach (var word in words)
+            {
+                if (ContainsWord(text, word)) return true;
+            }
+            return false;
         }
 
         #endregion
