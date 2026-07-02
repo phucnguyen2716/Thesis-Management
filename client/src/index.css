@@ -69,6 +69,20 @@
   animation: bounce-subtle 3s ease-in-out infinite;
 }
 
+@keyframes robot-wave {
+  0%, 100% { transform: rotate(0deg) scale(1) translateY(0); }
+  10% { transform: rotate(-8deg) scale(1.08) translateY(-4px); }
+  20% { transform: rotate(8deg) scale(1.08) translateY(-4px); }
+  30% { transform: rotate(-8deg) scale(1.08) translateY(-4px); }
+  40% { transform: rotate(8deg) scale(1.08) translateY(-4px); }
+  50% { transform: rotate(0deg) scale(1) translateY(0); }
+}
+
+.animate-robot-wave {
+  animation: robot-wave 3s ease-in-out infinite;
+  transform-origin: bottom center;
+}
+
 @keyframes fade-in {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }

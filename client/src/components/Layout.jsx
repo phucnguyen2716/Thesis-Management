@@ -445,30 +445,32 @@ const Layout = () => {
     <div className="flex flex-col min-h-screen bg-background font-sans text-on-background relative pb-16 md:pb-0">
       {/* TopAppBar - Not Sticky/Fixed (does not scroll with page) */}
       <header className="sticky top-0 flex justify-between items-center h-[72px] px-4 md:px-10 w-full bg-primary shadow-[0_4px_20px_rgba(140,0,14,0.15)] border-b border-white/10 relative z-50 md:z-[110]">
-        <div className="flex items-center gap-3 md:gap-6">
+        <div className="flex items-center gap-3 md:gap-4">
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="material-symbols-outlined text-on-primary p-2 hover:bg-white/10 rounded-lg transition-colors active:scale-90"
+            className="material-symbols-outlined text-on-primary p-2 hover:bg-white/10 rounded-xl transition-all duration-300 active:scale-90 hover:scale-105"
           >
             {isSidebarOpen ? 'menu_open' : 'menu'}
           </button>
-          <div className="flex items-center gap-1.5 md:gap-3">
-            <div className="hidden sm:flex w-8 h-8 md:w-10 md:h-10 bg-white rounded-xl items-center justify-center shadow-lg">
-              <span className="material-symbols-outlined text-primary text-xl md:text-2xl font-bold">school</span>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-sm sm:text-base md:text-xl font-extrabold text-on-primary tracking-tight leading-none uppercase">UEF Portal</span>
-              <span className="hidden md:block text-[8px] md:text-[9px] font-black text-on-primary/60 uppercase tracking-[0.2em] mt-1 md:mt-1.5">{lang === 'vi' ? 'Hệ thống Đề tài' : 'Thesis Portal'}</span>
-            </div>
+          <div 
+            onClick={() => navigate('/')} 
+            className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-xl shadow-md border border-white/10 h-10 md:h-12 shrink-0 cursor-pointer hover:scale-[1.03] active:scale-95 transition-all duration-300"
+            title="UEF Thesis Portal"
+          >
+            <img 
+              src="/uploads/logo-uef-qs-01.svg" 
+              alt="UEF QS Stars Logo" 
+              className="h-full w-auto object-contain select-none"
+            />
           </div>
         </div>
 
-        <div className="hidden lg:flex items-center gap-6">
+        <div className="hidden lg:flex items-center gap-5">
           <div
             onClick={() => navigate('/profile')}
-            className="flex items-center gap-4 py-1.5 pl-1.5 pr-4 bg-white/10 hover:bg-white/15 rounded-full border border-white/10 transition-all cursor-pointer group"
+            className="flex items-center gap-3 py-1 pl-1 pr-3.5 bg-white/10 hover:bg-white/20 active:bg-white/25 rounded-full border border-white/15 transition-all duration-300 cursor-pointer group shadow-sm select-none"
           >
-            <div className="w-9 h-9 rounded-full overflow-hidden border-2 border-on-primary/30 group-hover:border-on-primary transition-colors">
+            <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-on-primary/30 group-hover:border-on-primary group-hover:scale-105 transition-all duration-300">
               <img
                 alt="User profile avatar"
                 className="w-full h-full object-cover"
@@ -476,8 +478,8 @@ const Layout = () => {
               />
             </div>
             <div className="flex flex-col">
-              <span className="text-xs font-bold text-on-primary leading-none">{user.fullName}</span>
-              <span className="text-[9px] font-black text-on-primary/50 uppercase tracking-widest mt-1">{user.role}</span>
+              <span className="text-[11px] font-extrabold text-on-primary leading-none group-hover:text-yellow-300 transition-colors duration-300">{user.fullName}</span>
+              <span className="text-[8px] font-black text-on-primary/50 uppercase tracking-widest mt-0.5">{user.role}</span>
             </div>
           </div>
 
@@ -901,16 +903,25 @@ const Layout = () => {
         })}
       </nav>
 
-      {/* Floating Chat Button */}
       <button
         onClick={() => setIsChatOpen(!isChatOpen)}
-        className="fixed bottom-20 md:bottom-8 right-4 md:right-8 w-11 h-11 md:w-13 md:h-13 bg-primary text-on-primary rounded-full shadow-[0_6px_20px_rgba(140,0,14,0.25)] flex items-center justify-center z-[100] hover:scale-105 active:scale-95 transition-all group"
+        className="fixed bottom-20 md:bottom-8 right-4 md:right-8 w-11 h-11 md:w-13 md:h-13 bg-[#f5f5f5] text-slate-700 rounded-full shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-slate-200 flex items-center justify-center z-[100] hover:scale-105 active:scale-95 transition-all group overflow-hidden"
       >
-        <span className="material-symbols-outlined text-lg md:text-xl group-hover:rotate-12 transition-transform">
-          {isChatOpen ? 'close' : 'chat'}
-        </span>
-        {!isChatOpen && (
-          <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-yellow-400 text-primary text-[9px] font-black flex items-center justify-center rounded-full border border-white animate-bounce">1</span>
+        {isChatOpen ? (
+          <span className="material-symbols-outlined text-lg md:text-xl group-hover:rotate-90 transition-transform text-slate-700">
+            close
+          </span>
+        ) : (
+          <video 
+            src="/uploads/chatbot-video.mp4" 
+            autoPlay 
+            loop 
+            muted 
+            playsInline
+            disablePictureInPicture={true}
+            className="w-[90%] h-[90%] object-contain select-none" 
+            alt="Chat Icon"
+          />
         )}
       </button>
 
@@ -930,7 +941,19 @@ const Layout = () => {
                 </span>
               </div>
             </div>
-            <button onClick={() => setIsChatOpen(false)} className="material-symbols-outlined opacity-60 hover:opacity-100 transition-opacity text-base">close</button>
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={() => {
+                  setIsChatOpen(false);
+                  navigate('/chatbot');
+                }} 
+                className="material-symbols-outlined opacity-60 hover:opacity-100 transition-opacity text-base"
+                title={lang === 'vi' ? 'Mở rộng' : 'Expand'}
+              >
+                open_in_full
+              </button>
+              <button onClick={() => setIsChatOpen(false)} className="material-symbols-outlined opacity-60 hover:opacity-100 transition-opacity text-base">close</button>
+            </div>
           </div>
 
           {/* Messages Area */}
@@ -938,8 +961,12 @@ const Layout = () => {
             {messages.map((msg) => (
               <div key={msg.id} className={`flex items-start gap-1.5 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
                 {msg.sender !== 'user' && (
-                  <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center border border-primary/20 shrink-0 mt-0.5">
-                    <span className="material-symbols-outlined text-xs">support_agent</span>
+                  <div className="w-6 h-6 rounded-full overflow-hidden border border-slate-100 shrink-0 mt-0.5 shadow-sm">
+                    <img 
+                      src="/uploads/boticon.png" 
+                      alt="Bot Avatar" 
+                      className="w-full h-full object-cover" 
+                    />
                   </div>
                 )}
                 <div className={`max-w-[85%] sm:max-w-[80%] p-2 py-1.5 sm:p-2.5 md:p-3 rounded-xl text-[10px] md:text-[11px] font-medium leading-normal shadow-sm ${msg.sender === 'user'

@@ -134,37 +134,45 @@ const Dashboard = () => {
           {/* Action: Tra cứu - Red Theme */}
           <div 
             onClick={() => navigate('/lookup')}
-            className="bg-surface-container-lowest p-5 rounded-[1.75rem] border border-outline-variant hover:border-red-400/50 hover:shadow-[0_15px_40px_rgba(239,68,68,0.08)] transition-all group cursor-pointer relative overflow-hidden flex flex-col justify-between min-h-[235px]"
+            className="bg-surface-container-lowest p-6 rounded-[1.75rem] border border-outline-variant hover:border-red-400/50 hover:shadow-[0_15px_40px_rgba(239,68,68,0.08)] transition-all group cursor-pointer relative overflow-hidden flex flex-col sm:flex-row gap-5 items-start min-h-[180px]"
           >
             <div className="absolute -right-6 -top-6 w-24 h-24 bg-red-500/5 rounded-full group-hover:scale-150 transition-transform duration-700"></div>
-            <div>
-              <div className="w-12 h-12 bg-red-50 flex items-center justify-center rounded-xl mb-4 text-red-600 group-hover:bg-red-600 group-hover:text-white transition-all shadow-sm">
-                <span className="material-symbols-outlined text-xl">manage_search</span>
-              </div>
-              <h3 className="text-lg font-black mb-1.5 text-on-surface">{t.cardSearchTitle}</h3>
-              <p className="text-xs text-on-surface-variant font-medium leading-relaxed line-clamp-3 opacity-80">{t.cardSearchDesc}</p>
+            
+            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-red-50 flex items-center justify-center rounded-2xl text-red-600 group-hover:bg-red-600 group-hover:text-white transition-all shadow-sm shrink-0">
+              <span className="material-symbols-outlined text-xl sm:text-2xl">manage_search</span>
             </div>
-            <div className="text-red-600 font-black text-[9px] uppercase tracking-widest flex items-center gap-2 group-hover:gap-3 transition-all">
-              {t.cardSearchAction} <span className="material-symbols-outlined text-xs">arrow_forward</span>
+            
+            <div className="flex-1 flex flex-col justify-between h-full min-h-[120px]">
+              <div>
+                <h3 className="text-lg font-black mb-1 text-on-surface">{t.cardSearchTitle}</h3>
+                <p className="text-xs text-on-surface-variant font-medium leading-relaxed max-w-xl opacity-80">{t.cardSearchDesc}</p>
+              </div>
+              <div className="text-red-600 font-black text-[9px] uppercase tracking-widest flex items-center gap-2 group-hover:gap-3 transition-all mt-4">
+                {t.cardSearchAction} <span className="material-symbols-outlined text-xs">arrow_forward</span>
+              </div>
             </div>
           </div>
 
 
           {/* Action: Gemini - Purple Theme */}
           <div 
-            onClick={() => navigate('/analysis')}
-            className="bg-surface-container-lowest p-5 rounded-[1.75rem] border border-outline-variant hover:border-purple-400/50 hover:shadow-[0_15px_40px_rgba(168,85,247,0.08)] transition-all group cursor-pointer relative overflow-hidden flex flex-col justify-between min-h-[235px]"
+            onClick={() => navigate('/chatbot')}
+            className="bg-surface-container-lowest p-6 rounded-[1.75rem] border border-outline-variant hover:border-purple-400/50 hover:shadow-[0_15px_40px_rgba(168,85,247,0.08)] transition-all group cursor-pointer relative overflow-hidden flex flex-col sm:flex-row gap-5 items-start min-h-[180px]"
           >
             <div className="absolute -right-6 -top-6 w-24 h-24 bg-purple-500/5 rounded-full group-hover:scale-150 transition-transform duration-700"></div>
-            <div>
-              <div className="w-12 h-12 bg-purple-50 flex items-center justify-center rounded-xl mb-4 text-purple-600 group-hover:bg-purple-600 group-hover:text-white transition-all shadow-sm">
-                <span className="material-symbols-outlined text-xl">auto_awesome</span>
-              </div>
-              <h3 className="text-lg font-black mb-1.5 text-on-surface">{t.cardAiTitle}</h3>
-              <p className="text-xs text-on-surface-variant font-medium leading-relaxed line-clamp-3 opacity-80">{t.cardAiDesc}</p>
+            
+            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-purple-50 flex items-center justify-center rounded-2xl text-purple-600 group-hover:bg-purple-600 group-hover:text-white transition-all shadow-sm shrink-0">
+              <span className="material-symbols-outlined text-xl sm:text-2xl">auto_awesome</span>
             </div>
-            <div className="text-purple-600 font-black text-[9px] uppercase tracking-widest flex items-center gap-2 group-hover:gap-3 transition-all">
-              {t.cardAiAction} <span className="material-symbols-outlined text-xs">arrow_forward</span>
+            
+            <div className="flex-1 flex flex-col justify-between h-full min-h-[120px]">
+              <div>
+                <h3 className="text-lg font-black mb-1 text-on-surface">{t.cardAiTitle}</h3>
+                <p className="text-xs text-on-surface-variant font-medium leading-relaxed max-w-xl opacity-80">{t.cardAiDesc}</p>
+              </div>
+              <div className="text-purple-600 font-black text-[9px] uppercase tracking-widest flex items-center gap-2 group-hover:gap-3 transition-all mt-4">
+                {t.cardAiAction} <span className="material-symbols-outlined text-xs">arrow_forward</span>
+              </div>
             </div>
           </div>
         </div>

@@ -7,6 +7,7 @@ import ThesisDetail from './pages/ThesisDetail';
 import Profile from './pages/Profile';
 import StudentGames from './pages/StudentGames';
 import FlipbookPage from './pages/FlipbookPage';
+import ChatbotPage from './pages/ChatbotPage';
 
 const ProtectedRoute = ({ children, allowedRole }) => {
   const token = localStorage.getItem('token');
@@ -60,6 +61,11 @@ function App() {
         <Route path="/theses/:id/flipbook" element={
           <ProtectedRoute>
             <FlipbookPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/chatbot" element={
+          <ProtectedRoute>
+            <ChatbotPage />
           </ProtectedRoute>
         } />
         <Route path="/letcturer" element={<Navigate to="/lecturer" replace />} />
