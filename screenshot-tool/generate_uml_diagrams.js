@@ -52,9 +52,9 @@ function getERD() {
       <path d="M 500 360 H 550" class="conn"/>
 
       <!-- Semesters (1) -> Theses (N) -->
-      <path d="M 900 230 V 250 H 710 V 280" class="conn"/>
+      <path d="M 900 230 V 260 H 710 V 280" class="conn"/>
       <!-- Subjects (1) -> Theses (N) -->
-      <path d="M 1150 230 V 260 H 730 V 280" class="conn"/>
+      <path d="M 1150 230 V 270 H 730 V 280" class="conn"/>
 
       <!-- Theses (1) -> Submissions (N) -->
       <path d="M 750 330 H 800" class="conn"/>
@@ -62,7 +62,7 @@ function getERD() {
       <path d="M 650 490 V 510 H 750 V 530" class="conn"/>
 
       <!-- PlagiarismReports (1) -> PlagiarismSources (N) -->
-      <path d="M 850 530 V 210 H 650 V 200" class="conn"/>
+      <path d="M 770 530 V 240 H 600 V 200" class="conn"/>
       <!-- Theses (1) -> PlagiarismSources (N) -->
       <path d="M 600 280 V 200" class="conn"/>
 
