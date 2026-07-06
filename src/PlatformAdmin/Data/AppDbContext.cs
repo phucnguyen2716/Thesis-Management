@@ -12,8 +12,7 @@ public class AppDbContext : DbContext
     public DbSet<ThesisReview> ThesisReviews => Set<ThesisReview>();
     public DbSet<ThesisSubmission> ThesisSubmissions => Set<ThesisSubmission>();
     public DbSet<ThesisComment> ThesisComments => Set<ThesisComment>();
-    public DbSet<Committee> Committees => Set<Committee>();
-    public DbSet<CommitteeMember> CommitteeMembers => Set<CommitteeMember>();
+
     public DbSet<ChatHistoryModel> ChatHistory => Set<ChatHistoryModel>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<SocialPost> SocialPosts => Set<SocialPost>();
@@ -54,11 +53,7 @@ public class AppDbContext : DbContext
             .HasForeignKey(c => c.AuthorId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        modelBuilder.Entity<CommitteeMember>()
-            .HasOne(cm => cm.User)
-            .WithMany()
-            .HasForeignKey(cm => cm.UserId)
-            .OnDelete(DeleteBehavior.Restrict);
+
 
         // Seed roles
         modelBuilder.Entity<User>().HasData(

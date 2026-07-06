@@ -19,8 +19,7 @@ public class Thesis
     public int? AdvisorId { get; set; }
     public User? Advisor { get; set; }
 
-    public int? CommitteeId { get; set; }
-    public Committee? Committee { get; set; }
+
 
     public string? Major { get; set; }
     public string? Subject { get; set; }
