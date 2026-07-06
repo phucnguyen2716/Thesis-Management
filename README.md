@@ -428,7 +428,7 @@ Hệ thống **eThesis** sử dụng cơ sở dữ liệu quan hệ (mặc đị
 Dưới đây là sơ đồ thực thể mối quan hệ (ERD) chi tiết mô tả cấu trúc lưu trữ và các ràng buộc dữ liệu toàn vẹn của hệ thống bao gồm dịch vụ lõi `PlatformAdmin` (quản lý học thuật) và dịch vụ bổ trợ `MediaProcessing` (xử lý tối ưu hóa đa phương tiện).
 
 <p align="center">
-  <img src="./docs/images/erd.png" alt="Database ERD Schema" width="850" />
+  <img src="docs/images/erd.png" alt="Database ERD Schema" width="850" />
 </p>
 
 ### 🗂️ Chi tiết các Bảng & Thuộc tính (Database Tables Detail)
@@ -692,7 +692,7 @@ Hệ thống eThesis được xây dựng theo mô hình **Kiến trúc hướng
 Dưới đây là sơ đồ chi tiết mô tả các tầng kiến trúc, sự tương tác giữa Frontend, các dịch vụ Backend và các thành phần bên thứ ba:
 
 <p align="center">
-  <img src="./docs/images/overall_architecture.png" alt="Overall Architecture Diagram" width="850" />
+  <img src="docs/images/overall_architecture.png" alt="Overall Architecture Diagram" width="850" />
 </p>
 
 ### 🧩 Mô tả Chi tiết Kiến trúc từng Service
@@ -943,7 +943,7 @@ Phân hệ **AI Chatbot** đóng vai trò là một trợ lý nghiên cứu họ
 Luồng hoạt động chính của Chatbot đi qua 3 lớp bảo vệ và xử lý thuật toán như sau:
 
 <p align="center">
-  <img src="./docs/images/chatbot_sequence.png" alt="Chatbot Process Flow" width="850" />
+  <img src="docs/images/chatbot_sequence.png" alt="Chatbot Process Flow" width="850" />
 </p>
 
 #### 🛡️ Chi tiết các đặc tính cốt lõi của Chatbot:
