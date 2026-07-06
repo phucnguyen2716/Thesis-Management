@@ -85,7 +85,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IThesisService, ThesisService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
-builder.Services.AddScoped<ICommentService, CommentService>();
 builder.Services.AddScoped<ISocialService, SocialService>();
 builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
@@ -393,7 +392,7 @@ app.MapControllers();
 // Hangfire Dashboard (accessible at /hangfire)
 app.UseHangfireDashboard("/hangfire", new DashboardOptions
 {
-    Authorization = new[] { new Hangfire.Dashboard.LocalRequestsOnlyAuthorizationFilter() }
+    Authorization = new[] { new HangfireAdminAuthorizationFilter(app.Configuration) }
 });
 
 // Register recurring job: sync Drive files every 1 minute
@@ -590,3 +589,84 @@ Console.WriteLine("🔄 DriveSyncJob: every 10 seconds (Google Drive → DB → 
 Console.WriteLine("❤️  Health: http://localhost:5145/api/health/dependencies");
 
 app.Run();
+
+public class HangfireAdminAuthorizationFilter : Hangfire.Dashboard.IDashboardAuthorizationFilter
+{
+    private readonly IConfiguration _config;
+
+    public HangfireAdminAuthorizationFilter(IConfiguration config)
+    {
+        _config = config;
+    }
+
+    public bool Authorize(Hangfire.Dashboard.DashboardContext context)
+    {
+        var httpContextProperty = context.GetType().GetProperty("HttpContext");
+        if (httpContextProperty == null) return false;
+        
+        var httpContext = httpContextProperty.GetValue(context) as Microsoft.AspNetCore.Http.HttpContext;
+        if (httpContext == null) return false;
+
+        // 1. Read token from Query parameter
+        string? token = httpContext.Request.Query["token"];
+
+        // 2. Read token from Authorization Header
+        if (string.IsNullOrEmpty(token))
+        {
+            var authHeader = httpContext.Request.Headers["Authorization"].ToString();
+            if (authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+            {
+                token = authHeader.Substring("Bearer ".Length).Trim();
+            }
+        }
+
+        // 3. Read token from Cookie
+        if (string.IsNullOrEmpty(token))
+        {
+            token = httpContext.Request.Cookies["hangfireToken"];
+        }
+
+        if (string.IsNullOrEmpty(token))
+        {
+            return false;
+        }
+
+        try
+        {
+            var tokenHandler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+            var jwtKey = _config["Jwt:Key"];
+            if (string.IsNullOrEmpty(jwtKey)) return false;
+
+            var validationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(jwtKey)),
+                ValidateIssuer = true,
+                ValidIssuer = _config["Jwt:Issuer"],
+                ValidateAudience = true,
+                ValidAudience = _config["Jwt:Audience"],
+                ValidateLifetime = true,
+                ClockSkew = TimeSpan.Zero
+            };
+
+            var principal = tokenHandler.ValidateToken(token, validationParameters, out var validatedToken);
+            
+            // Store token in HttpOnly cookie for subsequent static assets/ajax requests of Hangfire
+            httpContext.Response.Cookies.Append("hangfireToken", token, new CookieOptions 
+            { 
+                Expires = DateTimeOffset.UtcNow.AddHours(8),
+                HttpOnly = true,
+                SameSite = SameSiteMode.Lax
+            });
+
+            var roleClaim = principal.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
+            return roleClaim == "Admin";
+        }
+        catch
+        {
+            return false;
+        }
+    }
+}
+
+public partial class Program { }

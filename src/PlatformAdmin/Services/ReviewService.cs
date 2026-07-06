@@ -1,4 +1,4 @@
-﻿using PlatformAdmin.DTOs.Thesis;
+using PlatformAdmin.DTOs.Thesis;
 using PlatformAdmin.Interfaces;
 using PlatformAdmin.Entities;
 using PlatformAdmin.Data;
@@ -47,34 +47,3 @@ public class ReviewService : IReviewService
     }
 }
 
-public class CommentService : ICommentService
-{
-    private readonly AppDbContext _db;
-    public CommentService(AppDbContext db) => _db = db;
-
-    public async Task<IEnumerable<ThesisCommentDto>> GetByThesisAsync(int thesisId)
-    {
-        return await _db.ThesisComments
-            .Include(c => c.Author)
-            .Where(c => c.ThesisId == thesisId)
-            .OrderBy(c => c.CreatedAt)
-            .Select(c => new ThesisCommentDto(c.Id, c.AuthorId, c.Author.FullName,
-                c.Author.Role, c.Content, c.CreatedAt))
-            .ToListAsync();
-    }
-
-    public async Task<ThesisCommentDto> CreateAsync(int thesisId, int authorId, CreateCommentRequest request)
-    {
-        var comment = new ThesisComment
-        {
-            ThesisId = thesisId,
-            AuthorId = authorId,
-            Content = request.Content,
-            CreatedAt = DateTime.UtcNow
-        };
-        _db.ThesisComments.Add(comment);
-        await _db.SaveChangesAsync();
-        var author = await _db.Users.FindAsync(authorId);
-        return new ThesisCommentDto(comment.Id, authorId, author!.FullName, author.Role, comment.Content, comment.CreatedAt);
-    }
-}

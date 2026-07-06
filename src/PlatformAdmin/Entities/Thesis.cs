@@ -29,5 +29,4 @@ public class Thesis
 
     public ICollection<ThesisReview> Reviews { get; set; } = new List<ThesisReview>();
     public ICollection<ThesisSubmission> Submissions { get; set; } = new List<ThesisSubmission>();
-    public ICollection<ThesisComment> Comments { get; set; } = new List<ThesisComment>();
 }

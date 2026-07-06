@@ -20,15 +20,13 @@ public class ThesisController : ControllerBase
 {
     private readonly IThesisService _thesisService;
     private readonly IReviewService _reviewService;
-    private readonly ICommentService _commentService;
     private readonly IGoogleDriveStorageService _driveService;
     private readonly AppDbContext _db;
 
-    public ThesisController(IThesisService thesisService, IReviewService reviewService, ICommentService commentService, IGoogleDriveStorageService driveService, AppDbContext db)
+    public ThesisController(IThesisService thesisService, IReviewService reviewService, IGoogleDriveStorageService driveService, AppDbContext db)
     {
         _thesisService = thesisService;
         _reviewService = reviewService;
-        _commentService = commentService;
         _driveService = driveService;
         _db = db;
     }
@@ -90,8 +88,15 @@ public class ThesisController : ControllerBase
     [ApiResponse(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ThesisDto>> Update(int id, UpdateThesisRequest request)
     {
-        var result = await _thesisService.UpdateAsync(id, request);
-        return Ok(result);
+        try
+        {
+            var result = await _thesisService.UpdateAsync(id, request);
+            return Ok(result);
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
     }
 
     [HttpDelete("{id:int}")]
@@ -100,8 +105,15 @@ public class ThesisController : ControllerBase
     [ApiResponse(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(int id)
     {
-        await _thesisService.DeleteAsync(id);
-        return NoContent();
+        try
+        {
+            await _thesisService.DeleteAsync(id);
+            return NoContent();
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
     }
 
     [HttpPost("{id:int}/submit")]
@@ -211,25 +223,7 @@ public class ThesisController : ControllerBase
         return Ok(result);
     }
 
-    [HttpGet("{id:int}/comments")]
-    [ApiResponse(typeof(IEnumerable<ThesisCommentDto>), StatusCodes.Status200OK)]
-    [ApiResponse(StatusCodes.Status401Unauthorized)]
-    [ApiResponse(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<IEnumerable<ThesisCommentDto>>> GetComments(int id)
-    {
-        return Ok(await _commentService.GetByThesisAsync(id));
-    }
 
-    [HttpPost("{id:int}/comments")]
-    [ApiResponse(typeof(ThesisCommentDto), StatusCodes.Status200OK)]
-    [ApiResponse(StatusCodes.Status400BadRequest)]
-    [ApiResponse(StatusCodes.Status401Unauthorized)]
-    [ApiResponse(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ThesisCommentDto>> AddComment(int id, CreateCommentRequest request)
-    {
-        var result = await _commentService.CreateAsync(id, GetCurrentUserId(), request);
-        return Ok(result);
-    }
 
     [HttpPost("practice/evaluate")]
     [ApiResponse(typeof(ThesisPracticeEvaluationResult), StatusCodes.Status200OK)]
