@@ -53,6 +53,12 @@ public class AppDbContext : DbContext
             .HasForeignKey(n => n.UserId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        modelBuilder.Entity<SocialPost>()
+            .HasOne(p => p.Author)
+            .WithMany()
+            .HasForeignKey(p => p.AuthorId)
+            .OnDelete(DeleteBehavior.Restrict);
+
 
 
 

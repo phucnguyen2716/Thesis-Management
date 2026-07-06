@@ -14,4 +14,10 @@ public class SocialPost
     public bool Published { get; set; } = true;
     public string CloudinaryStatus { get; set; } = "None"; // None, Pending, Uploaded, Failed
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    public int AuthorId { get; set; } = 1;
+    public User Author { get; set; } = null!;
+    public int ViewCount { get; set; } = 0;
+    public int LikesCount { get; set; } = 0;
+    public DateTime? UpdatedAt { get; set; }
 }

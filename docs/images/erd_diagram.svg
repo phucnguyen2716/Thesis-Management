@@ -51,6 +51,9 @@
 
       <!-- SocialPosts (1) -> MediaJobs (N) -->
       <path d="M 1150 700 V 740" class="conn"/>
+
+      <!-- Users (1) -> SocialPosts (N) [Creator] -->
+      <path d="M 400 490 V 515 H 1020 V 550 H 1050" class="conn" stroke-dasharray="3 3"/>
       
       <!-- Tables -->
       <!-- Table 1: Faculties -->
@@ -202,17 +205,20 @@
 
       <!-- Table 12: SocialPosts -->
       <g transform="translate(1050, 530)">
-        <rect width="200" height="170" rx="8" ry="8" fill="#1e293b" stroke="#475569" stroke-width="1.5"/>
+        <rect width="200" height="250" rx="8" ry="8" fill="#1e293b" stroke="#475569" stroke-width="1.5"/>
         <rect width="200" height="30" rx="8" ry="8" fill="#ec4899" opacity="0.2"/>
         <line x1="0" y1="30" x2="200" y2="30" stroke="#ec4899" stroke-width="1.5"/>
         <text x="15" y="20" class="table-title">SOCIAL_POSTS (Tin tức)</text>
         <text x="15" y="50" class="field pk">PK  Id : int</text>
-        <text x="15" y="70" class="field">    Title : varchar</text>
-        <text x="15" y="90" class="field">    Category : varchar</text>
-        <text x="15" y="110" class="field">    Image : varchar (Admin post)</text>
-        <text x="15" y="130" class="field">    Content : text</text>
-        <text x="15" y="150" class="field">    Published : boolean</text>
-        <text x="15" y="170" class="field">    CloudinaryStatus : varchar</text>
+        <text x="15" y="70" class="field fk">FK  AuthorId : int (Admin)</text>
+        <text x="15" y="90" class="field">    Title : varchar</text>
+        <text x="15" y="110" class="field">    Category : varchar</text>
+        <text x="15" y="130" class="field">    Image : varchar</text>
+        <text x="15" y="150" class="field">    Content : text</text>
+        <text x="15" y="170" class="field">    Published : boolean</text>
+        <text x="15" y="190" class="field">    CloudinaryStatus : varchar</text>
+        <text x="15" y="210" class="field">    ViewCount : int</text>
+        <text x="15" y="230" class="field">    LikesCount : int</text>
       </g>
 
       <!-- Table 13: DriveFileRecords -->
