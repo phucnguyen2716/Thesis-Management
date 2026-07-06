@@ -16,7 +16,7 @@ function escapeXML(str) {
 // 1. ERD Diagram SVG
 function getERD() {
   return `
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 800" width="1100" height="800">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1300 1000" width="1300" height="1000">
       <style>
         .title { font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 800; fill: #ffffff; letter-spacing: 0.5px; }
         .table-title { font-family: 'Inter', sans-serif; font-size: 11px; font-weight: bold; fill: #ffffff; }
@@ -33,57 +33,97 @@ function getERD() {
       <!-- Header -->
       <rect width="100%" height="60" fill="#1e293b" rx="16"/>
       <text x="30" y="36" class="title">ENTITY RELATIONSHIP DIAGRAM (ERD) - SYSTEM DATABASE SCHEMA</text>
-      <rect x="930" y="18" width="140" height="24" rx="12" fill="#3b82f6" opacity="0.2"/>
-      <text x="1000" y="33" fill="#38bdf8" font-family="Inter, sans-serif" font-size="9" font-weight="900" text-anchor="middle">POSTGRESQL DB</text>
+      <rect x="1130" y="18" width="140" height="24" rx="12" fill="#3b82f6" opacity="0.2"/>
+      <text x="1200" y="33" fill="#38bdf8" font-family="Inter, sans-serif" font-size="9" font-weight="900" text-anchor="middle">POSTGRESQL DB</text>
 
       <!-- Connection Lines (Relationships) -->
-      <!-- Users (1) -> Theses (N) (Student) -->
-      <path d="M 250 150 H 340" class="conn" stroke-dasharray="3 3"/>
-      <text x="260" y="143" class="conn-label">1</text>
-      <text x="325" y="143" class="conn-label">0..*</text>
+      <!-- Faculties (1) -> Majors (N) -->
+      <path d="M 250 150 H 300" class="conn"/>
+      <!-- Majors (1) -> Users (N) -->
+      <path d="M 400 230 V 280" class="conn"/>
+      <!-- Subjects (1) -> Theses (N) -->
+      <path d="M 650 230 V 280" class="conn"/>
+      <!-- Semesters (1) -> Theses (N) -->
+      <path d="M 900 230 V 280" class="conn"/>
 
+      <!-- Users (1) -> Theses (N) (Student) -->
+      <path d="M 250 330 H 400" class="conn" stroke-dasharray="3 3"/>
       <!-- Users (1) -> Theses (N) (Advisor) -->
-      <path d="M 250 180 H 340" class="conn"/>
-      <text x="260" y="173" class="conn-label">1</text>
-      <text x="325" y="173" class="conn-label">0..*</text>
+      <path d="M 250 360 H 400" class="conn"/>
 
       <!-- Theses (1) -> Submissions (N) -->
-      <path d="M 520 150 H 600" class="conn"/>
-      <text x="525" y="143" class="conn-label">1</text>
-      <text x="585" y="143" class="conn-label">0..*</text>
-
+      <path d="M 600 330 H 750" class="conn"/>
       <!-- Theses (1) -> PlagiarismReports (1) -->
-      <path d="M 430 280 V 370" class="conn"/>
-      <text x="435" y="295" class="conn-label">1</text>
-      <text x="435" y="355" class="conn-label">0..1</text>
+      <path d="M 500 490 V 530" class="conn"/>
+      <!-- PlagiarismReports (1) -> PlagiarismSources (N) -->
+      <path d="M 500 680 V 740" class="conn"/>
 
       <!-- Theses (1) -> ThesisReviews (N) -->
-      <path d="M 520 200 H 550 V 340 H 600" class="conn"/>
-      <text x="525" y="193" class="conn-label">1</text>
-      <text x="585" y="333" class="conn-label">0..*</text>
-
+      <path d="M 600 400 H 680 V 550 H 750" class="conn"/>
       <!-- Users (1) -> ThesisReviews (N) (Reviewer Advisor) -->
-      <path d="M 250 250 H 570 V 380 H 600" class="conn"/>
-      <text x="260" y="243" class="conn-label">1</text>
-      <text x="585" y="373" class="conn-label">0..*</text>
+      <path d="M 250 430 H 720 V 600 H 750" class="conn"/>
 
       <!-- Users (1) -> AuditLogs (N) -->
-      <path d="M 110 310 V 370" class="conn"/>
-      <text x="115" y="325" class="conn-label">1</text>
-      <text x="115" y="355" class="conn-label">0..*</text>
-
+      <path d="M 150 490 V 530" class="conn"/>
       <!-- Users (1) -> ChatHistory (N) -->
-      <path d="M 250 280 L 860 460" class="conn" stroke-dasharray="3 3"/>
-      
+      <path d="M 250 460 L 1050 610" class="conn" stroke-dasharray="3 3"/>
       <!-- Users (1) -> DriveFileRecords (N) -->
-      <path d="M 250 220 L 860 180" class="conn" stroke-dasharray="3 3"/>
+      <path d="M 250 390 L 1050 310" class="conn" stroke-dasharray="3 3"/>
 
       <!-- SocialPosts (1) -> MediaJobs (N) -->
-      <path d="M 780 650 H 860" class="conn"/>
+      <path d="M 950 820 H 1050" class="conn"/>
       
       <!-- Tables -->
-      <!-- Table 1: Users -->
+      <!-- Table 1: Faculties -->
       <g transform="translate(50, 100)">
+        <rect width="200" height="130" rx="8" ry="8" fill="#1e293b" stroke="#475569" stroke-width="1.5"/>
+        <rect width="200" height="30" rx="8" ry="8" fill="#f59e0b" opacity="0.2"/>
+        <line x1="0" y1="30" x2="200" y2="30" stroke="#f59e0b" stroke-width="1.5"/>
+        <text x="15" y="20" class="table-title">FACULTIES (Khoa)</text>
+        <text x="15" y="50" class="field pk">PK  Id : int</text>
+        <text x="15" y="70" class="field">    Name : varchar</text>
+        <text x="15" y="90" class="field">    Code : varchar (Unique)</text>
+        <text x="15" y="110" class="field">    Description : varchar</text>
+      </g>
+
+      <!-- Table 2: Majors -->
+      <g transform="translate(300, 100)">
+        <rect width="200" height="130" rx="8" ry="8" fill="#1e293b" stroke="#475569" stroke-width="1.5"/>
+        <rect width="200" height="30" rx="8" ry="8" fill="#f59e0b" opacity="0.2"/>
+        <line x1="0" y1="30" x2="200" y2="30" stroke="#f59e0b" stroke-width="1.5"/>
+        <text x="15" y="20" class="table-title">MAJORS (Chuyên ngành)</text>
+        <text x="15" y="50" class="field pk">PK  Id : int</text>
+        <text x="15" y="70" class="field fk">FK  FacultyId : int</text>
+        <text x="15" y="90" class="field">    Name : varchar</text>
+        <text x="15" y="110" class="field">    Code : varchar (Unique)</text>
+      </g>
+
+      <!-- Table 3: Subjects -->
+      <g transform="translate(550, 100)">
+        <rect width="200" height="130" rx="8" ry="8" fill="#1e293b" stroke="#475569" stroke-width="1.5"/>
+        <rect width="200" height="30" rx="8" ry="8" fill="#10b981" opacity="0.2"/>
+        <line x1="0" y1="30" x2="200" y2="30" stroke="#10b981" stroke-width="1.5"/>
+        <text x="15" y="20" class="table-title">SUBJECTS (Học phần)</text>
+        <text x="15" y="50" class="field pk">PK  Id : int</text>
+        <text x="15" y="70" class="field">    Name : varchar</text>
+        <text x="15" y="90" class="field">    Code : varchar (Unique)</text>
+        <text x="15" y="110" class="field">    Credits : int</text>
+      </g>
+
+      <!-- Table 4: Semesters -->
+      <g transform="translate(800, 100)">
+        <rect width="200" height="130" rx="8" ry="8" fill="#1e293b" stroke="#475569" stroke-width="1.5"/>
+        <rect width="200" height="30" rx="8" ry="8" fill="#10b981" opacity="0.2"/>
+        <line x1="0" y1="30" x2="200" y2="30" stroke="#10b981" stroke-width="1.5"/>
+        <text x="15" y="20" class="table-title">SEMESTERS (Đợt/Học kỳ)</text>
+        <text x="15" y="50" class="field pk">PK  Id : int</text>
+        <text x="15" y="70" class="field">    SemesterName : varchar</text>
+        <text x="15" y="90" class="field">    SemesterCode : varchar</text>
+        <text x="15" y="110" class="field">    AcademicYear : varchar</text>
+      </g>
+
+      <!-- Table 5: Users -->
+      <g transform="translate(50, 280)">
         <rect width="200" height="210" rx="8" ry="8" fill="#1e293b" stroke="#475569" stroke-width="1.5"/>
         <rect width="200" height="30" rx="8" ry="8" fill="#a78bfa" opacity="0.2"/>
         <line x1="0" y1="30" x2="200" y2="30" stroke="#a78bfa" stroke-width="1.5"/>
@@ -93,31 +133,32 @@ function getERD() {
         <text x="15" y="90" class="field">    Email : varchar (Unique)</text>
         <text x="15" y="110" class="field">    Role : Student/Advisor/Admin</text>
         <text x="15" y="130" class="field">    PasswordHash : varchar</text>
-        <text x="15" y="150" class="field">    StudentId : varchar (Nullable)</text>
-        <text x="15" y="170" class="field">    Department : varchar (Nullable)</text>
+        <text x="15" y="150" class="field fk">FK  MajorId : int (Nullable)</text>
+        <text x="15" y="170" class="field">    StudentId : varchar (Nullable)</text>
         <text x="15" y="190" class="field">    IsActive : boolean</text>
       </g>
 
-      <!-- Table 2: Theses -->
-      <g transform="translate(340, 100)">
-        <rect width="180" height="180" rx="8" ry="8" fill="#1e293b" stroke="#475569" stroke-width="1.5"/>
-        <rect width="180" height="30" rx="8" ry="8" fill="#10b981" opacity="0.2"/>
-        <line x1="0" y1="30" x2="180" y2="30" stroke="#10b981" stroke-width="1.5"/>
+      <!-- Table 6: Theses -->
+      <g transform="translate(400, 280)">
+        <rect width="200" height="210" rx="8" ry="8" fill="#1e293b" stroke="#475569" stroke-width="1.5"/>
+        <rect width="200" height="30" rx="8" ry="8" fill="#10b981" opacity="0.2"/>
+        <line x1="0" y1="30" x2="200" y2="30" stroke="#10b981" stroke-width="1.5"/>
         <text x="15" y="20" class="table-title">THESES (Khóa luận/Đề tài)</text>
         <text x="15" y="50" class="field pk">PK  Id : int</text>
         <text x="15" y="70" class="field">    Title : varchar</text>
-        <text x="15" y="90" class="field">    Category : varchar</text>
-        <text x="15" y="110" class="field fk">FK  StudentId : int</text>
-        <text x="15" y="130" class="field fk">FK  AdvisorId : int (Nullable)</text>
-        <text x="15" y="150" class="field">    Major : varchar</text>
+        <text x="15" y="90" class="field fk">FK  StudentId : int (Tác giả)</text>
+        <text x="15" y="110" class="field fk">FK  AdvisorId : int (Cố vấn)</text>
+        <text x="15" y="130" class="field fk">FK  SubjectId : int</text>
+        <text x="15" y="150" class="field fk">FK  SemesterId : int</text>
         <text x="15" y="170" class="field">    Status : varchar</text>
+        <text x="15" y="190" class="field">    Category : varchar</text>
       </g>
 
-      <!-- Table 3: ThesisSubmissions -->
-      <g transform="translate(600, 100)">
-        <rect width="180" height="140" rx="8" ry="8" fill="#1e293b" stroke="#475569" stroke-width="1.5"/>
-        <rect width="180" height="30" rx="8" ry="8" fill="#3b82f6" opacity="0.2"/>
-        <line x1="0" y1="30" x2="180" y2="30" stroke="#3b82f6" stroke-width="1.5"/>
+      <!-- Table 7: ThesisSubmissions -->
+      <g transform="translate(750, 280)">
+        <rect width="200" height="150" rx="8" ry="8" fill="#1e293b" stroke="#475569" stroke-width="1.5"/>
+        <rect width="200" height="30" rx="8" ry="8" fill="#3b82f6" opacity="0.2"/>
+        <line x1="0" y1="30" x2="200" y2="30" stroke="#3b82f6" stroke-width="1.5"/>
         <text x="15" y="20" class="table-title">SUBMISSIONS (Bản nộp file)</text>
         <text x="15" y="50" class="field pk">PK  Id : int</text>
         <text x="15" y="70" class="field fk">FK  ThesisId : int</text>
@@ -126,11 +167,11 @@ function getERD() {
         <text x="15" y="130" class="field">    SubmittedAt : datetime</text>
       </g>
 
-      <!-- Table 4: PlagiarismReports -->
-      <g transform="translate(340, 370)">
-        <rect width="180" height="140" rx="8" ry="8" fill="#1e293b" stroke="#475569" stroke-width="1.5"/>
-        <rect width="180" height="30" rx="8" ry="8" fill="#ef4444" opacity="0.2"/>
-        <line x1="0" y1="30" x2="180" y2="30" stroke="#ef4444" stroke-width="1.5"/>
+      <!-- Table 8: PlagiarismReports -->
+      <g transform="translate(400, 530)">
+        <rect width="200" height="150" rx="8" ry="8" fill="#1e293b" stroke="#475569" stroke-width="1.5"/>
+        <rect width="200" height="30" rx="8" ry="8" fill="#ef4444" opacity="0.2"/>
+        <line x1="0" y1="30" x2="200" y2="30" stroke="#ef4444" stroke-width="1.5"/>
         <text x="15" y="20" class="table-title">PLAGIARISM_REPORTS</text>
         <text x="15" y="50" class="field pk">PK  Id : int</text>
         <text x="15" y="70" class="field fk">FK  ThesisId : int</text>
@@ -139,8 +180,21 @@ function getERD() {
         <text x="15" y="130" class="field">    CheckedAt : datetime</text>
       </g>
 
-      <!-- Table 5: AuditLogs -->
-      <g transform="translate(50, 370)">
+      <!-- Table 9: PlagiarismSources -->
+      <g transform="translate(400, 740)">
+        <rect width="200" height="150" rx="8" ry="8" fill="#1e293b" stroke="#475569" stroke-width="1.5"/>
+        <rect width="200" height="30" rx="8" ry="8" fill="#ef4444" opacity="0.2"/>
+        <line x1="0" y1="30" x2="200" y2="30" stroke="#ef4444" stroke-width="1.5"/>
+        <text x="15" y="20" class="table-title">PLAGIARISM_SOURCES</text>
+        <text x="15" y="50" class="field pk">PK  Id : int</text>
+        <text x="15" y="70" class="field fk">FK  ReportId : int</text>
+        <text x="15" y="90" class="field">    SourceUrl : varchar</text>
+        <text x="15" y="110" class="field">    SourceTitle : varchar</text>
+        <text x="15" y="130" class="field">    MatchPercentage : double</text>
+      </g>
+
+      <!-- Table 10: AuditLogs -->
+      <g transform="translate(50, 530)">
         <rect width="200" height="160" rx="8" ry="8" fill="#1e293b" stroke="#475569" stroke-width="1.5"/>
         <rect width="200" height="30" rx="8" ry="8" fill="#f59e0b" opacity="0.2"/>
         <line x1="0" y1="30" x2="200" y2="30" stroke="#f59e0b" stroke-width="1.5"/>
@@ -153,11 +207,11 @@ function getERD() {
         <text x="15" y="150" class="field">    CreatedAt : datetime</text>
       </g>
 
-      <!-- Table 6: ThesisReviews -->
-      <g transform="translate(600, 320)">
-        <rect width="180" height="180" rx="8" ry="8" fill="#1e293b" stroke="#475569" stroke-width="1.5"/>
-        <rect width="180" height="30" rx="8" ry="8" fill="#10b981" opacity="0.2"/>
-        <line x1="0" y1="30" x2="180" y2="30" stroke="#10b981" stroke-width="1.5"/>
+      <!-- Table 11: ThesisReviews -->
+      <g transform="translate(750, 530)">
+        <rect width="200" height="170" rx="8" ry="8" fill="#1e293b" stroke="#475569" stroke-width="1.5"/>
+        <rect width="200" height="30" rx="8" ry="8" fill="#10b981" opacity="0.2"/>
+        <line x1="0" y1="30" x2="200" y2="30" stroke="#10b981" stroke-width="1.5"/>
         <text x="15" y="20" class="table-title">THESIS_REVIEWS (Đánh giá)</text>
         <text x="15" y="50" class="field pk">PK  Id : int</text>
         <text x="15" y="70" class="field fk">FK  ThesisId : int</text>
@@ -165,11 +219,10 @@ function getERD() {
         <text x="15" y="110" class="field">    Comments : text</text>
         <text x="15" y="130" class="field">    Score : decimal</text>
         <text x="15" y="150" class="field">    Decision : varchar</text>
-        <text x="15" y="170" class="field">    ReviewedAt : datetime</text>
       </g>
 
-      <!-- Table 7: DriveFileRecords -->
-      <g transform="translate(860, 100)">
+      <!-- Table 12: DriveFileRecords -->
+      <g transform="translate(1050, 240)">
         <rect width="200" height="210" rx="8" ry="8" fill="#1e293b" stroke="#475569" stroke-width="1.5"/>
         <rect width="200" height="30" rx="8" ry="8" fill="#6366f1" opacity="0.2"/>
         <line x1="0" y1="30" x2="200" y2="30" stroke="#6366f1" stroke-width="1.5"/>
@@ -184,8 +237,8 @@ function getERD() {
         <text x="15" y="190" class="field">    StudentUid : varchar</text>
       </g>
 
-      <!-- Table 8: ChatHistory -->
-      <g transform="translate(860, 370)">
+      <!-- Table 13: ChatHistory -->
+      <g transform="translate(1050, 530)">
         <rect width="200" height="160" rx="8" ry="8" fill="#1e293b" stroke="#475569" stroke-width="1.5"/>
         <rect width="200" height="30" rx="8" ry="8" fill="#3b82f6" opacity="0.2"/>
         <line x1="0" y1="30" x2="200" y2="30" stroke="#3b82f6" stroke-width="1.5"/>
@@ -198,24 +251,24 @@ function getERD() {
         <text x="15" y="150" class="field">    CreatedAt : datetime</text>
       </g>
 
-      <!-- Table 9: SocialPosts -->
-      <g transform="translate(600, 560)">
-        <rect width="180" height="180" rx="8" ry="8" fill="#1e293b" stroke="#475569" stroke-width="1.5"/>
-        <rect width="180" height="30" rx="8" ry="8" fill="#ec4899" opacity="0.2"/>
-        <line x1="0" y1="30" x2="180" y2="30" stroke="#ec4899" stroke-width="1.5"/>
+      <!-- Table 14: SocialPosts -->
+      <g transform="translate(750, 740)">
+        <rect width="200" height="170" rx="8" ry="8" fill="#1e293b" stroke="#475569" stroke-width="1.5"/>
+        <rect width="200" height="30" rx="8" ry="8" fill="#ec4899" opacity="0.2"/>
+        <line x1="0" y1="30" x2="200" y2="30" stroke="#ec4899" stroke-width="1.5"/>
         <text x="15" y="20" class="table-title">SOCIAL_POSTS (Tin tức)</text>
         <text x="15" y="50" class="field pk">PK  Id : int</text>
         <text x="15" y="70" class="field">    Title : varchar</text>
         <text x="15" y="90" class="field">    Category : varchar</text>
-        <text x="15" y="110" class="field">    Image : varchar (Admins post)</text>
+        <text x="15" y="110" class="field">    Image : varchar (Admin post)</text>
         <text x="15" y="130" class="field">    Content : text</text>
         <text x="15" y="150" class="field">    Published : boolean</text>
         <text x="15" y="170" class="field">    CloudinaryStatus : varchar</text>
       </g>
 
-      <!-- Table 10: MediaJobs -->
-      <g transform="translate(860, 570)">
-        <rect width="200" height="165" rx="8" ry="8" fill="#1e293b" stroke="#475569" stroke-width="1.5"/>
+      <!-- Table 15: MediaJobs -->
+      <g transform="translate(1050, 740)">
+        <rect width="200" height="160" rx="8" ry="8" fill="#1e293b" stroke="#475569" stroke-width="1.5"/>
         <rect width="200" height="30" rx="8" ry="8" fill="#ec4899" opacity="0.1"/>
         <line x1="0" y1="30" x2="200" y2="30" stroke="#ec4899" stroke-width="1.5"/>
         <text x="15" y="20" class="table-title">MEDIA_JOBS (Xử lý file)</text>
