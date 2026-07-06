@@ -11,7 +11,7 @@ public class AppDbContext : DbContext
     public DbSet<Thesis> Theses => Set<Thesis>();
     public DbSet<ThesisReview> ThesisReviews => Set<ThesisReview>();
     public DbSet<ThesisSubmission> ThesisSubmissions => Set<ThesisSubmission>();
-
+    public DbSet<Notification> Notifications => Set<Notification>();
 
     public DbSet<ChatHistoryModel> ChatHistory => Set<ChatHistoryModel>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
@@ -46,6 +46,12 @@ public class AppDbContext : DbContext
             .WithMany()
             .HasForeignKey(r => r.ReviewerId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Notification>()
+            .HasOne(n => n.User)
+            .WithMany()
+            .HasForeignKey(n => n.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
 
 
 
