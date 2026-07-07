@@ -1,132 +1,77 @@
 
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 630" width="600" height="630">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 550" width="600" height="550">
       <defs>
-        <!-- Marker for control flow arrowheads -->
         <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
           <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#64748b"/>
         </marker>
       </defs>
-      
       <style>
         .title { font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 800; fill: #ffffff; letter-spacing: 0.5px; }
       </style>
-      
-      <!-- Premium Canvas Background -->
       <rect width="100%" height="100%" fill="#0f172a" rx="16"/>
-      
-      <!-- Top Swimlane/Process Title Block -->
       <rect width="100%" height="50" fill="#1e293b" rx="16"/>
       <text x="25" y="30" class="title">LUỒNG 1: ĐĂNG NHẬP VÀ XÁC THỰC</text>
       
       <!-- Flow Category Tag -->
-      <rect x="445" y="13" width="130" height="24" rx="12" fill="#38bdf8" opacity="0.15"/>
-      <text x="510" y="28" fill="#38bdf8" font-size="8.5" font-family="Inter, sans-serif" font-weight="900" text-anchor="middle" letter-spacing="1">ACTIVITY FLOW</text>
+      <rect x="445" y="13" width="130" height="24" rx="12" fill="#f59e0b" opacity="0.15"/>
+      <text x="510" y="28" fill="#f59e0b" font-size="8.5" font-family="Inter, sans-serif" font-weight="900" text-anchor="middle" letter-spacing="1">COMPLEX DECISION</text>
+
+      <!-- Start -->
+      <circle cx="300" cy="80" r="12" fill="#38bdf8"/>
+      <text x="300" y="60" fill="#38bdf8" font-size="8" font-family="Inter, sans-serif" font-weight="900" text-anchor="middle">START</text>
       
-      
-    <line x1="300" y1="92" x2="300" y2="120" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
-  
-        <line x1="300" y1="170" x2="300" y2="210" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
-      
-        <line x1="300" y1="260" x2="300" y2="300" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
-      
-        <line x1="300" y1="350" x2="300" y2="390" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
-      
-        <line x1="300" y1="440" x2="300" y2="480" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
-      
-        <line x1="300" y1="530" x2="300" y2="561" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
-      
-      
-    <!-- Start Node -->
-    <circle cx="300" cy="80" r="12" fill="#38bdf8"/>
-    <text x="300" y="60" fill="#38bdf8" font-size="8" font-family="Inter, sans-serif" font-weight="900" text-anchor="middle" letter-spacing="1">START</text>
-  
-      <g transform="translate(140, 120)">
-        <!-- Action Glow Shadow -->
-        <rect width="320" height="50" rx="12" ry="12" fill="#1e293b" stroke="#e2e8f0" stroke-width="2" style="filter: drop-shadow(0px 4px 6px rgba(0,0,0,0.4));"/>
-        
-        <!-- Step Number badge -->
-        <circle cx="18" cy="25" r="9" fill="#e2e8f0" opacity="0.2"/>
-        <circle cx="18" cy="25" r="7" fill="#e2e8f0"/>
-        <text x="18" y="28" fill="#0f172a" font-size="8" font-family="Inter, sans-serif" font-weight="900" text-anchor="middle">1</text>
-        
-        <!-- Actor name indicator -->
-        <text x="38" y="16" fill="#e2e8f0" font-size="7.5" font-family="Inter, sans-serif" font-weight="900" style="text-transform: uppercase; letter-spacing: 0.5px;">Người dùng</text>
-        
-        <!-- Action Text -->
-        <text x="38" y="34" fill="#ffffff" font-size="10.5" font-family="Inter, sans-serif" font-weight="700">Nhập Email/Mật khẩu</text>
+      <line x1="300" y1="92" x2="300" y2="120" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+
+      <!-- Step 1: Input details -->
+      <g transform="translate(150, 120)">
+        <rect width="300" height="50" rx="12" ry="12" fill="#1e293b" stroke="#e2e8f0" stroke-width="2"/>
+        <text x="20" y="18" fill="#e2e8f0" font-size="7.5" font-family="Inter, sans-serif" font-weight="900">NGƯỜI DÙNG</text>
+        <text x="20" y="34" fill="#ffffff" font-size="10.5" font-family="Inter, sans-serif" font-weight="700">1. Nhập Email/Mật khẩu đăng nhập</text>
       </g>
-    
-      <g transform="translate(140, 210)">
-        <!-- Action Glow Shadow -->
-        <rect width="320" height="50" rx="12" ry="12" fill="#1e293b" stroke="#38bdf8" stroke-width="2" style="filter: drop-shadow(0px 4px 6px rgba(0,0,0,0.4));"/>
-        
-        <!-- Step Number badge -->
-        <circle cx="18" cy="25" r="9" fill="#38bdf8" opacity="0.2"/>
-        <circle cx="18" cy="25" r="7" fill="#38bdf8"/>
-        <text x="18" y="28" fill="#0f172a" font-size="8" font-family="Inter, sans-serif" font-weight="900" text-anchor="middle">2</text>
-        
-        <!-- Actor name indicator -->
-        <text x="38" y="16" fill="#38bdf8" font-size="7.5" font-family="Inter, sans-serif" font-weight="900" style="text-transform: uppercase; letter-spacing: 0.5px;">Frontend</text>
-        
-        <!-- Action Text -->
-        <text x="38" y="34" fill="#ffffff" font-size="10.5" font-family="Inter, sans-serif" font-weight="700">Gửi POST /api/auth/login</text>
+
+      <line x1="300" y1="170" x2="300" y2="200" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+
+      <!-- Step 2: Call Login API -->
+      <g transform="translate(150, 200)">
+        <rect width="300" height="50" rx="12" ry="12" fill="#1e293b" stroke="#10b981" stroke-width="2"/>
+        <text x="20" y="18" fill="#10b981" font-size="7.5" font-family="Inter, sans-serif" font-weight="900">BACKEND API</text>
+        <text x="20" y="34" fill="#ffffff" font-size="10.5" font-family="Inter, sans-serif" font-weight="700">2. Gửi POST /api/auth/login &amp; Check BCrypt</text>
       </g>
-    
-      <g transform="translate(140, 300)">
-        <!-- Action Glow Shadow -->
-        <rect width="320" height="50" rx="12" ry="12" fill="#1e293b" stroke="#34d399" stroke-width="2" style="filter: drop-shadow(0px 4px 6px rgba(0,0,0,0.4));"/>
-        
-        <!-- Step Number badge -->
-        <circle cx="18" cy="25" r="9" fill="#34d399" opacity="0.2"/>
-        <circle cx="18" cy="25" r="7" fill="#34d399"/>
-        <text x="18" y="28" fill="#0f172a" font-size="8" font-family="Inter, sans-serif" font-weight="900" text-anchor="middle">3</text>
-        
-        <!-- Actor name indicator -->
-        <text x="38" y="16" fill="#34d399" font-size="7.5" font-family="Inter, sans-serif" font-weight="900" style="text-transform: uppercase; letter-spacing: 0.5px;">PostgreSQL DB</text>
-        
-        <!-- Action Text -->
-        <text x="38" y="34" fill="#ffffff" font-size="10.5" font-family="Inter, sans-serif" font-weight="700">Xác thực Hash BCrypt</text>
+
+      <line x1="300" y1="250" x2="300" y2="280" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+
+      <!-- Decision Diamond -->
+      <g transform="translate(280, 280)">
+        <polygon points="20,0 40,20 20,40 0,20" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
       </g>
-    
-      <g transform="translate(140, 390)">
-        <!-- Action Glow Shadow -->
-        <rect width="320" height="50" rx="12" ry="12" fill="#1e293b" stroke="#10b981" stroke-width="2" style="filter: drop-shadow(0px 4px 6px rgba(0,0,0,0.4));"/>
-        
-        <!-- Step Number badge -->
-        <circle cx="18" cy="25" r="9" fill="#10b981" opacity="0.2"/>
-        <circle cx="18" cy="25" r="7" fill="#10b981"/>
-        <text x="18" y="28" fill="#0f172a" font-size="8" font-family="Inter, sans-serif" font-weight="900" text-anchor="middle">4</text>
-        
-        <!-- Actor name indicator -->
-        <text x="38" y="16" fill="#10b981" font-size="7.5" font-family="Inter, sans-serif" font-weight="900" style="text-transform: uppercase; letter-spacing: 0.5px;">Backend API</text>
-        
-        <!-- Action Text -->
-        <text x="38" y="34" fill="#ffffff" font-size="10.5" font-family="Inter, sans-serif" font-weight="700">Sinh &amp; trả về JWT Token</text>
-      </g>
-    
-      <g transform="translate(140, 480)">
-        <!-- Action Glow Shadow -->
-        <rect width="320" height="50" rx="12" ry="12" fill="#1e293b" stroke="#38bdf8" stroke-width="2" style="filter: drop-shadow(0px 4px 6px rgba(0,0,0,0.4));"/>
-        
-        <!-- Step Number badge -->
-        <circle cx="18" cy="25" r="9" fill="#38bdf8" opacity="0.2"/>
-        <circle cx="18" cy="25" r="7" fill="#38bdf8"/>
-        <text x="18" y="28" fill="#0f172a" font-size="8" font-family="Inter, sans-serif" font-weight="900" text-anchor="middle">5</text>
-        
-        <!-- Actor name indicator -->
-        <text x="38" y="16" fill="#38bdf8" font-size="7.5" font-family="Inter, sans-serif" font-weight="900" style="text-transform: uppercase; letter-spacing: 0.5px;">Frontend</text>
-        
-        <!-- Action Text -->
-        <text x="38" y="34" fill="#ffffff" font-size="10.5" font-family="Inter, sans-serif" font-weight="700">Lưu token, chuyển hướng</text>
-      </g>
-    
-        <!-- End Node -->
-        <circle cx="300" cy="575" r="14" fill="none" stroke="#f43f5e" stroke-width="2"/>
-        <circle cx="300" cy="575" r="8" fill="#f43f5e"/>
-        <text x="300" y="603" fill="#f43f5e" font-size="8" font-family="Inter, sans-serif" font-weight="900" text-anchor="middle" letter-spacing="1">END</text>
       
+      <!-- Loopback path (invalid credentials) -->
+      <path d="M 280 300 H 90 V 145 H 150" fill="none" stroke="#f43f5e" stroke-width="2" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+      <text x="80" y="220" fill="#f43f5e" font-size="8.5" font-family="Inter, sans-serif" font-weight="900" transform="rotate(-90 80 220)" text-anchor="middle">[SAI THÔNG TIN / KHÔNG HỢP LỆ]</text>
+
+      <!-- Valid Credentials path -->
+      <line x1="300" y1="320" x2="300" y2="360" stroke="#10b981" stroke-width="2" marker-end="url(#arrow)"/>
+      <text x="310" y="345" fill="#10b981" font-size="9" font-family="Inter, sans-serif" font-weight="900">[HỢP LỆ]</text>
+
+      <!-- Step 3: Success -->
+      <g transform="translate(150, 360)">
+        <rect width="300" height="50" rx="12" ry="12" fill="#1e293b" stroke="#10b981" stroke-width="2"/>
+        <text x="20" y="18" fill="#10b981" font-size="7.5" font-family="Inter, sans-serif" font-weight="900">BACKEND API</text>
+        <text x="20" y="34" fill="#ffffff" font-size="10.5" font-family="Inter, sans-serif" font-weight="700">3. Sinh JWT Token &amp; Lưu LocalStorage</text>
+      </g>
+
+      <line x1="300" y1="410" x2="300" y2="440" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+
+      <!-- Step 4: Redirect -->
+      <g transform="translate(150, 440)">
+        <rect width="300" height="50" rx="12" ry="12" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+        <text x="20" y="18" fill="#38bdf8" font-size="7.5" font-family="Inter, sans-serif" font-weight="900">FRONTEND</text>
+        <text x="20" y="34" fill="#ffffff" font-size="10.5" font-family="Inter, sans-serif" font-weight="700">4. Đăng nhập thành công, chuyển hướng</text>
+      </g>
+
+      <line x1="300" y1="490" x2="300" y2="515" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
       
-      <!-- Footer Copyright Label -->
-      <text x="300" y="615" fill="#475569" font-size="8" font-family="Inter, sans-serif" font-weight="bold" text-anchor="middle" letter-spacing="1.5">UEF ETHESIS PORTAL DIAGRAM GENERATOR</text>
+      <circle cx="300" cy="525" r="12" fill="none" stroke="#f43f5e" stroke-width="2"/>
+      <circle cx="300" cy="525" r="7" fill="#f43f5e"/>
     </svg>
   
