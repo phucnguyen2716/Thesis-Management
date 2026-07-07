@@ -564,3 +564,5 @@ async function generateAll() {
 }
 
 generateAll();
+
+module.exports = { flows };
