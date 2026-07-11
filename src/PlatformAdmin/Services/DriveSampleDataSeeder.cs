@@ -267,7 +267,7 @@ public class DriveSampleDataSeeder : IDriveSampleDataSeeder
                 var mockDriveRoot = Path.Combine(Directory.GetCurrentDirectory(), "mock_google_drive");
                 if (Directory.Exists(mockDriveRoot))
                 {
-                    sourceDocxPath = Directory.GetFiles(mockDriveRoot, "SV2026304_Bao_cao_Chuyen_de.docx", SearchOption.AllDirectories).FirstOrDefault() ?? "";
+                    sourceDocxPath = Directory.GetFiles(mockDriveRoot, "225050646_NguyenHoangPhuc.docx", SearchOption.AllDirectories).FirstOrDefault() ?? "";
                 }
             }
             catch (Exception ex)
