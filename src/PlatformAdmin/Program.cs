@@ -422,6 +422,19 @@ using (var scope = app.Services.CreateScope())
 
 app.MapControllers();
 
+// Custom middleware to intercept /hangfire (without trailing slash) and preserve token query parameters on redirect to /hangfire/
+app.Use((context, next) =>
+{
+    var path = context.Request.Path.Value ?? "";
+    if (path.Equals("/hangfire", StringComparison.OrdinalIgnoreCase))
+    {
+        var queryString = context.Request.QueryString.Value ?? "";
+        context.Response.Redirect("/hangfire/" + queryString);
+        return Task.CompletedTask;
+    }
+    return next();
+});
+
 // Hangfire Dashboard (accessible at /hangfire)
 app.UseHangfireDashboard("/hangfire", new DashboardOptions
 {
@@ -580,6 +593,20 @@ public class HangfireAdminAuthorizationFilter : Hangfire.Dashboard.IDashboardAut
         // 1. Read token from Query parameter
         string? token = httpContext.Request.Query["token"];
 
+        // Extract from Referer header if missing (common in cross-origin iframes where cookies are blocked)
+        if (string.IsNullOrEmpty(token))
+        {
+            var referer = httpContext.Request.Headers["Referer"].ToString();
+            if (!string.IsNullOrEmpty(referer) && referer.Contains("token="))
+            {
+                var match = System.Text.RegularExpressions.Regex.Match(referer, @"[?&]token=([^&]+)");
+                if (match.Success)
+                {
+                    token = Uri.UnescapeDataString(match.Groups[1].Value);
+                }
+            }
+        }
+
         // 2. Read token from Authorization Header
         if (string.IsNullOrEmpty(token))
         {
@@ -624,12 +651,13 @@ public class HangfireAdminAuthorizationFilter : Hangfire.Dashboard.IDashboardAut
 
             var principal = tokenHandler.ValidateToken(token, validationParameters, out var validatedToken);
             
-            // Store token in HttpOnly cookie for subsequent static assets/ajax requests of Hangfire
+            // Store token in HttpOnly cookie for subsequent static assets/ajax requests of Hangfire (requires SameSite=None and Secure=true in cross-origin iframes)
             httpContext.Response.Cookies.Append("hangfireToken", token, new CookieOptions 
             { 
                 Expires = DateTimeOffset.UtcNow.AddHours(8),
                 HttpOnly = true,
-                SameSite = SameSiteMode.Lax
+                Secure = true,
+                SameSite = SameSiteMode.None
             });
 
             var roleClaim = principal.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
