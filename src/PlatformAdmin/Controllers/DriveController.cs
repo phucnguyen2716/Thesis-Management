@@ -279,7 +279,7 @@ public class DriveController : ControllerBase
         {
             return BadRequest(new { success = false, message = "Google OAuth Client ID is not configured." });
         }
-        var redirectUri = "http://localhost:5145/api/drive/oauth-callback";
+        var redirectUri = $"{Request.Scheme}://{Request.Host}/api/drive/oauth-callback";
         
         var scopes = "openid email profile https://www.googleapis.com/auth/drive";
         var state = from ?? "link_drive";
@@ -326,7 +326,7 @@ public class DriveController : ControllerBase
             {
                 return Redirect(errorRedirectBase + System.Uri.EscapeDataString("OAuth configuration is missing."));
             }
-            var redirectUri = "http://localhost:5145/api/drive/oauth-callback";
+            var redirectUri = $"{Request.Scheme}://{Request.Host}/api/drive/oauth-callback";
 
             using var client = new System.Net.Http.HttpClient();
             var values = new Dictionary<string, string>

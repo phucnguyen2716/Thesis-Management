@@ -19,6 +19,28 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Configuration.AddJsonFile("appsettings.local.json", optional: true, reloadOnChange: true);
 builder.Configuration.AddJsonFile("appsettings.Secrets.json", optional: true, reloadOnChange: true);
 
+// Create google-credentials.json dynamically from environment variables on Render
+var googleCredsJson = builder.Configuration["GoogleDrive:CredentialsJson"];
+if (!string.IsNullOrEmpty(googleCredsJson))
+{
+    try
+    {
+        var targetFile = Path.Combine(Directory.GetCurrentDirectory(), "google-credentials.json");
+        File.WriteAllText(targetFile, googleCredsJson);
+        Console.WriteLine("🔑 Dynamically created 'google-credentials.json' from environment variable.");
+        
+        var baseDirFile = Path.Combine(AppContext.BaseDirectory, "google-credentials.json");
+        if (baseDirFile != targetFile)
+        {
+            File.WriteAllText(baseDirFile, googleCredsJson);
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"⚠️ Failed to write dynamic Google credentials file: {ex.Message}");
+    }
+}
+
 // Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();

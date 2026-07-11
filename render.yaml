@@ -20,6 +20,8 @@ services:
         sync: false
       - key: ElasticSearch__Uri
         sync: false
+      - key: GoogleDrive__CredentialsJson
+        sync: false
 
   # 2. Frontend React static site
   - type: web
