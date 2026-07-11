@@ -5,6 +5,17 @@ if (window.location.hostname === 'ethesis-frontend-portal.onrender.com') {
   resolvedApiUrl = 'https://ethesis-backend-api.onrender.com';
 }
 export const API_URL = resolvedApiUrl;
+export const resolveFileUrl = (url) => {
+  if (!url) return '';
+  let cleanedUrl = url;
+  if (cleanedUrl.startsWith('http://localhost:5145') || cleanedUrl.startsWith('https://localhost:5145')) {
+    cleanedUrl = cleanedUrl.replace(/^https?:\/\/localhost:5145/, '');
+  }
+  if (cleanedUrl.startsWith('/')) {
+    return `${API_URL}${cleanedUrl}`;
+  }
+  return cleanedUrl;
+};
 const PLAGIARISM_API_URL = import.meta.env.VITE_PLAGIARISM_API_URL || 'http://localhost:5000';
 
 const api = axios.create({
