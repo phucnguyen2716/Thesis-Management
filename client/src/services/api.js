@@ -1,6 +1,10 @@
 import axios from 'axios';
 
-export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5145';
+let resolvedApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5145';
+if (window.location.hostname === 'ethesis-frontend-portal.onrender.com') {
+  resolvedApiUrl = 'https://ethesis-backend-api.onrender.com';
+}
+export const API_URL = resolvedApiUrl;
 const PLAGIARISM_API_URL = import.meta.env.VITE_PLAGIARISM_API_URL || 'http://localhost:5000';
 
 const api = axios.create({
