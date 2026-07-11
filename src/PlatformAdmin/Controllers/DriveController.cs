@@ -100,7 +100,7 @@ public class DriveController : ControllerBase
 
     [HttpGet("diagnose-seed")]
     [AllowAnonymous]
-    public IActionResult DiagnoseSeed()
+    public async Task<IActionResult> DiagnoseSeed()
     {
         var currentDir = Directory.GetCurrentDirectory();
         var mockDriveRoot = Path.Combine(currentDir, "mock_google_drive");
@@ -145,6 +145,27 @@ public class DriveController : ControllerBase
         
         var targetExistsAfter = System.IO.File.Exists(targetDocxPath);
         
+        // Test PDF conversion!
+        var testPdfPath = "";
+        var testConvertError = "";
+        var testPdfExists = false;
+        if (targetExistsAfter)
+        {
+            try
+            {
+                var workDir = Path.Combine(currentDir, "temporary_pdf", "test_diagnose");
+                testPdfPath = await _pdfConverter.ConvertToPdfAsync(targetDocxPath, workDir);
+                if (testPdfPath != null)
+                {
+                    testPdfExists = System.IO.File.Exists(testPdfPath);
+                }
+            }
+            catch (Exception ex)
+            {
+                testConvertError = ex.Message + "\n" + ex.StackTrace;
+            }
+        }
+        
         return Ok(new
         {
             CurrentDirectory = currentDir,
@@ -155,7 +176,11 @@ public class DriveController : ControllerBase
             TargetExistsBefore = targetExistsBefore,
             CopySuccess = copySuccess,
             CopyError = copyError,
-            TargetExistsAfter = targetExistsAfter
+            TargetExistsAfter = targetExistsAfter,
+            
+            TestPdfPath = testPdfPath,
+            TestConvertError = testConvertError,
+            TestPdfExists = testPdfExists
         });
     }
 
