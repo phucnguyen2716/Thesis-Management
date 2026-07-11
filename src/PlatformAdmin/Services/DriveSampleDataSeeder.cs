@@ -253,13 +253,14 @@ public class DriveSampleDataSeeder : IDriveSampleDataSeeder
                 userCache[customUid] = customStudent;
             }
 
-            var customThesisExists = await db.Theses.AnyAsync(t => t.StudentId == customStudent.Id && t.Category == "Thesis");
+            var customThesisExists = await db.Theses.AnyAsync(t => t.StudentId == customStudent.Id && t.Title == "Xây dựng hệ thống quản lý và kiểm tra đạo văn khóa luận tốt nghiệp eThesis");
             
-            // Ensure the docx file exists in the uploads directory so it can be dynamically converted
+            // Ensure the docx files exist in the uploads directory so they can be dynamically converted
             var uploadsDir = Path.Combine(Directory.GetCurrentDirectory(), "uploads");
             if (!Directory.Exists(uploadsDir)) Directory.CreateDirectory(uploadsDir);
+            
+            // First file
             var targetDocxPath = Path.Combine(uploadsDir, "225050646_NguyenHoangPhuc.docx");
-
             var sourceDocxPath = "";
             try
             {
@@ -286,6 +287,35 @@ public class DriveSampleDataSeeder : IDriveSampleDataSeeder
                 }
             }
 
+            // Second file (new sample data)
+            var targetDocxPathNew = Path.Combine(uploadsDir, "225050646_NguyenHoangPhuc_New.docx");
+            var sourceDocxPathNew = "";
+            try
+            {
+                var mockDriveRoot = Path.Combine(Directory.GetCurrentDirectory(), "mock_google_drive");
+                if (Directory.Exists(mockDriveRoot))
+                {
+                    sourceDocxPathNew = Directory.GetFiles(mockDriveRoot, "225050646_NguyenHoangPhuc (2).docx", SearchOption.AllDirectories).FirstOrDefault() ?? "";
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to search for custom docx template new.");
+            }
+
+            if (!string.IsNullOrEmpty(sourceDocxPathNew) && File.Exists(sourceDocxPathNew))
+            {
+                try
+                {
+                    File.Copy(sourceDocxPathNew, targetDocxPathNew, true);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to copy custom docx template new to uploads folder.");
+                }
+            }
+
+            // Seed Thesis 1
             if (!customThesisExists)
             {
                 var thesis = new Thesis
@@ -309,10 +339,43 @@ public class DriveSampleDataSeeder : IDriveSampleDataSeeder
             else
             {
                 // Force update existing record's FilePath to point to the docx
-                var existingThesis = await db.Theses.FirstOrDefaultAsync(t => t.StudentId == customStudent.Id && t.Category == "Thesis");
+                var existingThesis = await db.Theses.FirstOrDefaultAsync(t => t.StudentId == customStudent.Id && t.Title == "Xây dựng hệ thống quản lý và kiểm tra đạo văn khóa luận tốt nghiệp eThesis");
                 if (existingThesis != null)
                 {
                     existingThesis.FilePath = "/uploads/225050646_NguyenHoangPhuc.docx";
+                    await db.SaveChangesAsync();
+                }
+            }
+
+            // Seed Thesis 2 (New Thesis)
+            const string newThesisTitle = "Nghiên cứu ứng dụng Học máy trong Phát hiện bất thường mạng";
+            var customThesisNewExists = await db.Theses.AnyAsync(t => t.StudentId == customStudent.Id && t.Title == newThesisTitle);
+            if (!customThesisNewExists)
+            {
+                var thesis = new Thesis
+                {
+                    StudentId = customStudent.Id,
+                    AdvisorId = defaultAdvisor.Id,
+                    Title = newThesisTitle,
+                    Description = "Nghiên cứu các thuật toán học máy giám sát và bán giám sát áp dụng vào phát hiện các mối đe dọa và hành vi bất thường trên hạ tầng mạng UEF.",
+                    Major = "information-security",
+                    Subject = "Khóa luận tốt nghiệp",
+                    SubjectCode = "THESIS203",
+                    Category = "Thesis",
+                    Status = "Approved",
+                    FilePath = "/uploads/225050646_NguyenHoangPhuc_New.docx",
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+                db.Theses.Add(thesis);
+                await db.SaveChangesAsync();
+            }
+            else
+            {
+                var existingThesis = await db.Theses.FirstOrDefaultAsync(t => t.StudentId == customStudent.Id && t.Title == newThesisTitle);
+                if (existingThesis != null)
+                {
+                    existingThesis.FilePath = "/uploads/225050646_NguyenHoangPhuc_New.docx";
                     await db.SaveChangesAsync();
                 }
             }

@@ -110,12 +110,14 @@ public class DriveController : ControllerBase
         var uploadsExists = Directory.Exists(uploadsDir);
         
         var sourceDocxPath = "";
+        var sourceDocxPathNew = "";
         var searchError = "";
         try
         {
             if (mockDriveExists)
             {
                 sourceDocxPath = Directory.GetFiles(mockDriveRoot, "SV2026304_Bao_cao_Chuyen_de.docx", SearchOption.AllDirectories).FirstOrDefault() ?? "";
+                sourceDocxPathNew = Directory.GetFiles(mockDriveRoot, "225050646_NguyenHoangPhuc (2).docx", SearchOption.AllDirectories).FirstOrDefault() ?? "";
             }
         }
         catch (Exception ex)
@@ -124,7 +126,10 @@ public class DriveController : ControllerBase
         }
         
         var targetDocxPath = Path.Combine(uploadsDir, "225050646_NguyenHoangPhuc.docx");
+        var targetDocxPathNew = Path.Combine(uploadsDir, "225050646_NguyenHoangPhuc_New.docx");
+        
         var targetExistsBefore = System.IO.File.Exists(targetDocxPath);
+        var targetNewExistsBefore = System.IO.File.Exists(targetDocxPathNew);
         
         var copySuccess = false;
         var copyError = "";
@@ -142,8 +147,22 @@ public class DriveController : ControllerBase
                 copyError = ex.Message;
             }
         }
+
+        if (!string.IsNullOrEmpty(sourceDocxPathNew) && System.IO.File.Exists(sourceDocxPathNew))
+        {
+            try
+            {
+                if (!uploadsExists) Directory.CreateDirectory(uploadsDir);
+                System.IO.File.Copy(sourceDocxPathNew, targetDocxPathNew, true);
+            }
+            catch (Exception ex)
+            {
+                copyError += "\nNew copy error: " + ex.Message;
+            }
+        }
         
         var targetExistsAfter = System.IO.File.Exists(targetDocxPath);
+        var targetNewExistsAfter = System.IO.File.Exists(targetDocxPathNew);
         
         // Test PDF conversion!
         var testPdfPath = "";
@@ -172,11 +191,14 @@ public class DriveController : ControllerBase
             MockDriveExists = mockDriveExists,
             UploadsExists = uploadsExists,
             SourceDocxPath = sourceDocxPath,
+            SourceDocxPathNew = sourceDocxPathNew,
             SearchError = searchError,
             TargetExistsBefore = targetExistsBefore,
+            TargetNewExistsBefore = targetNewExistsBefore,
             CopySuccess = copySuccess,
             CopyError = copyError,
             TargetExistsAfter = targetExistsAfter,
+            TargetNewExistsAfter = targetNewExistsAfter,
             
             TestPdfPath = testPdfPath,
             TestConvertError = testConvertError,
