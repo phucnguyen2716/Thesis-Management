@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { thesisService } from '../services/api';
 import useLanguage from '../hooks/useLanguage';
+import { getMajorDefaultImage } from '../utils/majorImages';
 
 // ─── Type config (colours + filters) ────────────────────────────────────────
 const getTypeConfig = (lang) => {
