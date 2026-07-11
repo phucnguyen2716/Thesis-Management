@@ -92,6 +92,11 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
+        var jwtKey = builder.Configuration["Jwt:Key"];
+        if (string.IsNullOrEmpty(jwtKey) || jwtKey == "YOUR_JWT_SECRET_KEY" || jwtKey.Length < 32)
+        {
+            jwtKey = "ThisIsAVerySecretKeyForEthesisProject2026!KeepItSafe";
+        }
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
@@ -100,7 +105,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuerSigningKey = true,
             ValidIssuer = builder.Configuration["Jwt:Issuer"],
             ValidAudience = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
         };
     });
 
@@ -586,7 +591,10 @@ public class HangfireAdminAuthorizationFilter : Hangfire.Dashboard.IDashboardAut
         {
             var tokenHandler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
             var jwtKey = _config["Jwt:Key"];
-            if (string.IsNullOrEmpty(jwtKey)) return false;
+            if (string.IsNullOrEmpty(jwtKey) || jwtKey == "YOUR_JWT_SECRET_KEY" || jwtKey.Length < 32)
+            {
+                jwtKey = "ThisIsAVerySecretKeyForEthesisProject2026!KeepItSafe";
+            }
 
             var validationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
             {

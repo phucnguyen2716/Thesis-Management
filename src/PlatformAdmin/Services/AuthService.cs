@@ -183,7 +183,12 @@ public class AuthService : IAuthService
 
     private string GenerateJwt(User user)
     {
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
+        var keyStr = _config["Jwt:Key"];
+        if (string.IsNullOrEmpty(keyStr) || keyStr == "YOUR_JWT_SECRET_KEY" || keyStr.Length < 32)
+        {
+            keyStr = "ThisIsAVerySecretKeyForEthesisProject2026!KeepItSafe";
+        }
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(keyStr));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
         var claims = new[]
         {
