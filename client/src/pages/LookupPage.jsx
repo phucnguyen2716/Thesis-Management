@@ -911,7 +911,7 @@ const LookupPage = () => {
       {showPreviewModal && previewThesis && (() => {
         const submissionsList = (previewThesis.submissions && previewThesis.submissions.length > 0)
           ? previewThesis.submissions
-          : [{ id: 'main', fileName: 'Báo cáo chính.pdf', filePath: previewThesis.pdfUrl, fileSize: 0 }];
+          : [{ id: 'main', fileName: 'Báo cáo chính.pdf', filePath: previewThesis.filePath || previewThesis.pdfUrl, fileSize: 0 }];
 
         return (
           <div className="fixed top-[72px] bottom-0 left-0 md:left-[280px] right-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
