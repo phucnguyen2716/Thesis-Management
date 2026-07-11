@@ -254,6 +254,27 @@ public class DriveSampleDataSeeder : IDriveSampleDataSeeder
             }
 
             var customThesisExists = await db.Theses.AnyAsync(t => t.StudentId == customStudent.Id && t.Category == "Thesis");
+            
+            // Ensure the docx file exists in the uploads directory so it can be dynamically converted
+            var uploadsDir = Path.Combine(Directory.GetCurrentDirectory(), "uploads");
+            if (!Directory.Exists(uploadsDir)) Directory.CreateDirectory(uploadsDir);
+            var targetDocxPath = Path.Combine(uploadsDir, "225050646_NguyenHoangPhuc.docx");
+
+            var mockDriveRoot = Path.Combine(Directory.GetCurrentDirectory(), "mock_google_drive");
+            var sourceDocxPath = Path.Combine(mockDriveRoot, "Topic", "An toàn không gian mạng", "SV2026304_Bao_cao_Chuyen_de.docx");
+
+            if (File.Exists(sourceDocxPath) && !File.Exists(targetDocxPath))
+            {
+                try
+                {
+                    File.Copy(sourceDocxPath, targetDocxPath, true);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to copy custom docx template to uploads folder.");
+                }
+            }
+
             if (!customThesisExists)
             {
                 var thesis = new Thesis
@@ -267,11 +288,22 @@ public class DriveSampleDataSeeder : IDriveSampleDataSeeder
                     SubjectCode = "THESIS202",
                     Category = "Thesis",
                     Status = "Approved",
+                    FilePath = "/uploads/225050646_NguyenHoangPhuc.docx",
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
                 };
                 db.Theses.Add(thesis);
                 await db.SaveChangesAsync();
+            }
+            else
+            {
+                // Force update existing record's FilePath to point to the docx
+                var existingThesis = await db.Theses.FirstOrDefaultAsync(t => t.StudentId == customStudent.Id && t.Category == "Thesis");
+                if (existingThesis != null)
+                {
+                    existingThesis.FilePath = "/uploads/225050646_NguyenHoangPhuc.docx";
+                    await db.SaveChangesAsync();
+                }
             }
         }
 
