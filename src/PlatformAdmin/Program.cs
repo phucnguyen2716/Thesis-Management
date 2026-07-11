@@ -566,6 +566,17 @@ public class HangfireAdminAuthorizationFilter : Hangfire.Dashboard.IDashboardAut
         var httpContext = httpContextProperty.GetValue(context) as Microsoft.AspNetCore.Http.HttpContext;
         if (httpContext == null) return false;
 
+        var path = httpContext.Request.Path.Value ?? "";
+        if (path.Contains("/js", StringComparison.OrdinalIgnoreCase) || 
+            path.Contains("/css", StringComparison.OrdinalIgnoreCase) || 
+            path.Contains("/fonts", StringComparison.OrdinalIgnoreCase) || 
+            path.Contains("/images", StringComparison.OrdinalIgnoreCase) ||
+            path.Contains("/img", StringComparison.OrdinalIgnoreCase) ||
+            path.Contains("/favicons", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
         // 1. Read token from Query parameter
         string? token = httpContext.Request.Query["token"];
 
