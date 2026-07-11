@@ -23,7 +23,14 @@ public class LibreOfficePdfConverter : ILibreOfficePdfConverter
     public LibreOfficePdfConverter(IConfiguration configuration, ILogger<LibreOfficePdfConverter> logger)
     {
         _logger = logger;
-        _sofficePath = configuration["LibreOffice:SofficePath"] ?? "soffice";
+        if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
+        {
+            _sofficePath = configuration["LibreOffice:SofficePath"] ?? @"C:\Program Files\LibreOffice\program\soffice.exe";
+        }
+        else
+        {
+            _sofficePath = "soffice";
+        }
     }
 
     public bool IsWordMimeType(string mimeType, string fileName)
