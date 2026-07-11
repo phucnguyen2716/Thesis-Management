@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { thesisService } from '../services/api';
+import { thesisService, API_URL } from '../services/api';
 import useLanguage from '../hooks/useLanguage';
 import { getMajorDefaultImage } from '../utils/majorImages';
 
@@ -230,7 +230,7 @@ const LookupPage = () => {
       return;
     }
 
-    const fileUrl = filePath.startsWith('http') ? filePath : `http://localhost:5145${filePath}`;
+    const fileUrl = filePath.startsWith('http') ? filePath : `${API_URL}${filePath}`;
     showToastMessage('success', `Đang chuẩn bị tải xuống: ${fileName}...`);
 
     try {
@@ -272,7 +272,7 @@ const LookupPage = () => {
       } catch (err) {
         console.error(err);
         showToastMessage('error', 'Chuyển đổi lỗi. Đang mở tệp tin gốc...');
-        window.open(sub.filePath.startsWith('http') ? sub.filePath : `http://localhost:5145${sub.filePath}`, '_blank');
+        window.open(sub.filePath.startsWith('http') ? sub.filePath : `${API_URL}${sub.filePath}`, '_blank');
       } finally {
         setConvertingFile(null);
       }

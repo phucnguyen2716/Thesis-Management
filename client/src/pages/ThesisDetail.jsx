@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { thesisService } from '../services/api';
+import { thesisService, API_URL } from '../services/api';
 import { logStudentActivity } from '../utils/studentActivityStats';
 import { getMajorDefaultImage } from '../utils/majorImages';
 
@@ -196,7 +196,7 @@ const ThesisDetail = () => {
       return;
     }
 
-    const fileUrl = filePath.startsWith('http') ? filePath : `http://localhost:5145${filePath}`;
+    const fileUrl = filePath.startsWith('http') ? filePath : `${API_URL}${filePath}`;
     showToastMessage('success', `Đang chuẩn bị tải xuống: ${fileName}...`);
 
     try {
