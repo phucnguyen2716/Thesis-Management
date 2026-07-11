@@ -300,10 +300,16 @@ public class DriveController : ControllerBase
         [FromQuery] string? error,
         [FromQuery] string? state)
     {
+        var frontendBase = "http://localhost:5173";
+        if (Request.Host.Host.Contains("onrender.com"))
+        {
+            frontendBase = "https://ethesis-frontend-portal.onrender.com";
+        }
+
         var isLoginFlow = (state == "login");
         var errorRedirectBase = isLoginFlow 
-            ? "http://localhost:5173/login?error=" 
-            : "http://localhost:5173/admin/theses/project";
+            ? $"{frontendBase}/login?error=" 
+            : $"{frontendBase}/admin/theses/project";
 
         if (!string.IsNullOrEmpty(error))
         {
@@ -372,7 +378,7 @@ public class DriveController : ControllerBase
 
                 if (string.IsNullOrEmpty(accessToken))
                 {
-                    return Redirect("http://localhost:5173/login?error=Failed+to+retrieve+access+token");
+                    return Redirect($"{frontendBase}/login?error=Failed+to+retrieve+access+token");
                 }
 
                 // Fetch user info
@@ -383,13 +389,13 @@ public class DriveController : ControllerBase
 
                 if (!userinfoResponse.IsSuccessStatusCode)
                 {
-                    return Redirect("http://localhost:5173/login?error=" + System.Uri.EscapeDataString(userinfoString));
+                    return Redirect($"{frontendBase}/login?error=" + System.Uri.EscapeDataString(userinfoString));
                 }
 
                 var userInfo = System.Text.Json.JsonSerializer.Deserialize<GoogleUserInfo>(userinfoString);
                 if (userInfo == null || string.IsNullOrEmpty(userInfo.Email))
                 {
-                    return Redirect("http://localhost:5173/login?error=Failed+to+retrieve+google+user+info");
+                    return Redirect($"{frontendBase}/login?error=Failed+to+retrieve+google+user+info");
                 }
 
                 // Log in user and link with admin account
@@ -403,10 +409,10 @@ public class DriveController : ControllerBase
                     role = loginResponse.Role
                 });
 
-                return Redirect($"http://localhost:5173/login?google_token={System.Uri.EscapeDataString(loginResponse.Token)}&google_user={System.Uri.EscapeDataString(serializedUser)}");
+                return Redirect($"{frontendBase}/login?google_token={System.Uri.EscapeDataString(loginResponse.Token)}&google_user={System.Uri.EscapeDataString(serializedUser)}");
             }
 
-            return Redirect("http://localhost:5173/admin/theses/project");
+            return Redirect($"{frontendBase}/admin/theses/project");
         }
         catch (Exception ex)
         {
