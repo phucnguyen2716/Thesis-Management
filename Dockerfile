@@ -35,6 +35,9 @@ RUN apt-get update && \
 # Copy build artifacts
 COPY --from=build /app/publish .
 
+# Copy mock google drive data for seeder
+COPY mock_google_drive/ ./mock_google_drive/
+
 # Set environment variables
 ENV ASPNETCORE_URLS=http://+:80
 ENV ASPNETCORE_ENVIRONMENT=Production
