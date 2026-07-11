@@ -26,7 +26,7 @@ services:
     name: ethesis-frontend-portal
     env: static
     buildCommand: cd client && npm install && npm run build
-    publishDir: client/dist
+    staticPublishPath: client/dist
     envVars:
       - key: VITE_API_URL
         fromService:
