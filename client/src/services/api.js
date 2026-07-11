@@ -1,7 +1,10 @@
 import axios from 'axios';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5145';
+const PLAGIARISM_API_URL = import.meta.env.VITE_PLAGIARISM_API_URL || 'http://localhost:5000';
+
 const api = axios.create({
-  baseURL: 'http://localhost:5145/api',
+  baseURL: `${API_URL}/api`,
 });
 
 api.interceptors.request.use((config) => {
@@ -90,7 +93,7 @@ export const plagiarismService = {
  * @returns {Promise<object>} - Kết quả cuối: { overallScore, plagiarismPercentage, totalSentences, plagiarizedSentences, results }
  */
 export const realPlagiarismCheck = async (text, onProgress) => {
-  const response = await fetch('http://localhost:5000/api/plagiarism-check', {
+  const response = await fetch(`${PLAGIARISM_API_URL}/api/plagiarism-check`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ text }),
