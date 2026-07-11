@@ -1,0 +1,92 @@
+
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 950 400" width="950" height="400">
+      <style>
+        .title { font-family: 'Arial', sans-serif; font-size: 15px; font-weight: bold; fill: #000000; }
+        .state-name { font-family: 'Arial', sans-serif; font-size: 11px; font-weight: bold; fill: #000000; }
+        .state-desc { font-family: 'Arial', sans-serif; font-size: 9px; fill: #000000; }
+        .trans-label { font-family: 'Arial', sans-serif; font-size: 9px; fill: #000000; }
+        .conn { stroke: #000000; stroke-width: 1.2; fill: none; }
+      </style>
+      
+      <!-- Background -->
+      <rect width="100%" height="100%" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" rx="16"/>
+      
+      <!-- Header -->
+      <rect width="100%" height="60" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" rx="16"/>
+      <text x="30" y="35" class="title">STATE DIAGRAM - PHASE 4: TRA CỨU &amp; TƯƠNG TÁC ĐỘC GIẢ</text>
+      <rect x="780" y="18" width="140" height="24" rx="12" fill="#000000" opacity="0.05"/>
+      <text x="850" y="33" fill="#000000" font-family="Arial, sans-serif" font-size="9" font-weight="bold" text-anchor="middle">INTERACTION STAGE</text>
+
+      <!-- Connections -->
+      <line x1="80" y1="160" x2="150" y2="160" class="conn" marker-end="url(#arrow)"/>
+
+      <line x1="280" y1="160" x2="360" y2="160" class="conn" marker-end="url(#arrow)"/>
+      <text x="320" y="150" class="trans-label" text-anchor="middle">select()</text>
+
+      <line x1="520" y1="160" x2="600" y2="160" class="conn" marker-end="url(#arrow)"/>
+      <text x="560" y="150" class="trans-label" text-anchor="middle">bookmark()</text>
+
+      <line x1="420" y1="205" x2="420" y2="260" class="conn" marker-end="url(#arrow)"/>
+      <text x="410" y="235" class="trans-label" text-anchor="end">download()</text>
+
+      <line x1="460" y1="260" x2="460" y2="205" class="conn" marker-end="url(#arrow)"/>
+      <text x="470" y="235" class="trans-label" text-anchor="start">done()</text>
+
+      <path d="M 680 115 V 75 H 440 V 115" class="conn" marker-end="url(#arrow)"/>
+      <text x="560" y="65" class="trans-label" text-anchor="middle">view()</text>
+
+      <path d="M 440 115 V 50 H 850 V 150" class="conn" marker-end="url(#arrow)"/>
+      <text x="650" y="40" class="trans-label" text-anchor="middle">close()</text>
+
+      <!-- States -->
+      <!-- Start Circle -->
+      <circle cx="70" cy="160" r="10" fill="#000000"/>
+
+      <!-- AVAILABLE -->
+      <g transform="translate(150, 115)">
+        <rect width="130" height="90" rx="8" ry="8" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+        <text x="65" y="25" class="state-name" text-anchor="middle">AVAILABLE</text>
+        <line x1="0" y1="35" x2="130" y2="35" stroke="#000000" stroke-width="1"/>
+        <text x="10" y="55" class="state-desc">entry / logPublish()</text>
+      </g>
+
+      <!-- VIEWING -->
+      <g transform="translate(360, 115)">
+        <rect width="160" height="90" rx="8" ry="8" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+        <text x="80" y="25" class="state-name" text-anchor="middle">VIEWING</text>
+        <line x1="0" y1="35" x2="160" y2="35" stroke="#000000" stroke-width="1"/>
+        <text x="10" y="55" class="state-desc">entry / incViews()</text>
+        <text x="10" y="75" class="state-desc">do / renderFlipbook()</text>
+      </g>
+
+      <!-- BOOKMARKED -->
+      <g transform="translate(600, 115)">
+        <rect width="160" height="90" rx="8" ry="8" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+        <text x="80" y="25" class="state-name" text-anchor="middle">BOOKMARKED</text>
+        <line x1="0" y1="35" x2="160" y2="35" stroke="#000000" stroke-width="1"/>
+        <text x="10" y="55" class="state-desc">entry / addToFavs()</text>
+      </g>
+
+      <!-- DOWNLOADING -->
+      <g transform="translate(360, 260)">
+        <rect width="160" height="90" rx="8" ry="8" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+        <text x="80" y="25" class="state-name" text-anchor="middle">DOWNLOADING</text>
+        <line x1="0" y1="35" x2="160" y2="35" stroke="#000000" stroke-width="1"/>
+        <text x="10" y="55" class="state-desc">entry / logDownload()</text>
+        <text x="10" y="75" class="state-desc">do / streamFile()</text>
+      </g>
+
+      <!-- End State -->
+      <g transform="translate(840, 150)">
+        <circle cx="10" cy="10" r="10" fill="none" stroke="#000000" stroke-width="1.5"/>
+        <circle cx="10" cy="10" r="6" fill="#000000"/>
+      </g>
+
+      <!-- Definitions -->
+      <defs>
+        <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#000000"/>
+        </marker>
+      </defs>
+    </svg>
+  

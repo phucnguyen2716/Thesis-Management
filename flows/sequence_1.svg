@@ -1,0 +1,107 @@
+
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 480" width="1000" height="480">
+      <defs>
+        <!-- Marker for right arrows (Standard UML Style) -->
+        <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#000000"/>
+        </marker>
+      </defs>
+      
+      <!-- Background (White Canvas) -->
+      <rect width="100%" height="100%" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" rx="16"/>
+      
+      <!-- Header Title -->
+      <rect x="0" y="0" width="100%" height="55" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" rx="16"/>
+      <text x="30" y="34" fill="#000000" font-size="13" font-family="Arial, sans-serif" font-weight="bold" style="text-transform: uppercase;">1. Đăng nhập và xác thực tài khoản độc giả (Login Sequence)</text>
+      
+      <!-- Flow Category Tag -->
+      <rect x="830" y="16" width="140" height="24" rx="12" fill="#000000" opacity="0.05"/>
+      <text x="900" y="31" fill="#000000" font-size="8.5" font-family="Arial, sans-serif" font-weight="bold" text-anchor="middle" letter-spacing="0.5">SEQUENCE DIAGRAM</text>
+
+      <!-- Lifelines Background Dashed Lines -->
+      
+      <!-- Lifeline user -->
+      <g>
+        <!-- Lifeline box -->
+        <rect x="80" y="70" width="140" height="36" rx="4" ry="4" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+        <text x="150" y="92" fill="#000000" font-size="9.5" font-family="Arial, sans-serif" font-weight="bold" text-anchor="middle">Độc giả</text>
+        
+        <!-- Dashed line -->
+        <line x1="150" y1="106" x2="150" y2="430" stroke="#000000" stroke-dasharray="4 4" stroke-width="1"/>
+      </g>
+    
+
+      <!-- Lifeline front -->
+      <g>
+        <!-- Lifeline box -->
+        <rect x="313.3333333333333" y="70" width="140" height="36" rx="4" ry="4" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+        <text x="383.3333333333333" y="92" fill="#000000" font-size="9.5" font-family="Arial, sans-serif" font-weight="bold" text-anchor="middle">Frontend Client</text>
+        
+        <!-- Dashed line -->
+        <line x1="383.3333333333333" y1="106" x2="383.3333333333333" y2="430" stroke="#000000" stroke-dasharray="4 4" stroke-width="1"/>
+      </g>
+    
+
+      <!-- Lifeline api -->
+      <g>
+        <!-- Lifeline box -->
+        <rect x="546.6666666666666" y="70" width="140" height="36" rx="4" ry="4" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+        <text x="616.6666666666666" y="92" fill="#000000" font-size="9.5" font-family="Arial, sans-serif" font-weight="bold" text-anchor="middle">Backend API</text>
+        
+        <!-- Dashed line -->
+        <line x1="616.6666666666666" y1="106" x2="616.6666666666666" y2="430" stroke="#000000" stroke-dasharray="4 4" stroke-width="1"/>
+      </g>
+    
+
+      <!-- Lifeline db -->
+      <g>
+        <!-- Lifeline box -->
+        <rect x="780" y="70" width="140" height="36" rx="4" ry="4" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+        <text x="850" y="92" fill="#000000" font-size="9.5" font-family="Arial, sans-serif" font-weight="bold" text-anchor="middle">PostgreSQL DB</text>
+        
+        <!-- Dashed line -->
+        <line x1="850" y1="106" x2="850" y2="430" stroke="#000000" stroke-dasharray="4 4" stroke-width="1"/>
+      </g>
+    
+      
+      <!-- Activation Bars -->
+      
+<rect x="377.3333333333333" y="120" width="12" height="295" fill="#ffffff" stroke="#000000" stroke-width="1.2"/>
+<rect x="610.6666666666666" y="120" width="12" height="295" fill="#ffffff" stroke="#000000" stroke-width="1.2"/>
+<rect x="844" y="120" width="12" height="295" fill="#ffffff" stroke="#000000" stroke-width="1.2"/>
+
+      <!-- Messages & Returns -->
+      
+        <!-- Message from user to front -->
+        <line x1="156" y1="135" x2="377.3333333333333" y2="135" stroke="#000000" stroke-width="1.2"  marker-end="url(#arrow)"/>
+        <text x="266.66666666666663" y="129" fill="#000000" font-size="8.5" font-family="Arial, sans-serif" font-weight="bold" text-anchor="middle">1. Nhập email &amp; mật khẩu</text>
+      
+        <!-- Message from front to api -->
+        <line x1="389.3333333333333" y1="173" x2="610.6666666666666" y2="173" stroke="#000000" stroke-width="1.2"  marker-end="url(#arrow)"/>
+        <text x="500" y="167" fill="#000000" font-size="8.5" font-family="Arial, sans-serif" font-weight="bold" text-anchor="middle">2. POST /api/auth/login</text>
+      
+        <!-- Message from api to db -->
+        <line x1="622.6666666666666" y1="211" x2="844" y2="211" stroke="#000000" stroke-width="1.2"  marker-end="url(#arrow)"/>
+        <text x="733.3333333333333" y="205" fill="#000000" font-size="8.5" font-family="Arial, sans-serif" font-weight="bold" text-anchor="middle">3. Query User &amp; check BCrypt</text>
+      
+        <!-- Message from db to api -->
+        <line x1="844" y1="249" x2="622.6666666666666" y2="249" stroke="#000000" stroke-width="1.2" stroke-dasharray="3 3" marker-end="url(#arrow)"/>
+        <text x="733.3333333333333" y="243" fill="#000000" font-size="8.5" font-family="Arial, sans-serif" font-weight="bold" text-anchor="middle">4. Trả về thông tin User</text>
+      
+        <!-- Self message on api -->
+        <path d="M 622.6666666666666 287 H 666.6666666666666 V 307 H 622.6666666666666" fill="none" stroke="#000000" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <text x="672.6666666666666" y="301" fill="#000000" font-size="8.5" font-family="Arial, sans-serif" text-anchor="start">5. Sinh mã JWT token</text>
+      
+        <!-- Message from api to front -->
+        <line x1="610.6666666666666" y1="330" x2="389.3333333333333" y2="330" stroke="#000000" stroke-width="1.2" stroke-dasharray="3 3" marker-end="url(#arrow)"/>
+        <text x="500" y="324" fill="#000000" font-size="8.5" font-family="Arial, sans-serif" font-weight="bold" text-anchor="middle">6. Trả JWT token</text>
+      
+        <!-- Message from front to user -->
+        <line x1="377.3333333333333" y1="368" x2="156" y2="368" stroke="#000000" stroke-width="1.2" stroke-dasharray="3 3" marker-end="url(#arrow)"/>
+        <text x="266.66666666666663" y="362" fill="#000000" font-size="8.5" font-family="Arial, sans-serif" font-weight="bold" text-anchor="middle">7. Đăng nhập thành công</text>
+      
+      
+      <!-- Footer Brand -->
+      <text x="500" y="460" fill="#64748b" font-size="8" font-family="Arial, sans-serif" font-weight="bold" text-anchor="middle" letter-spacing="1">UEF ETHESIS PORTAL - DIGITAL LIBRARY SEQUENCE FLOWS</text>
+    </svg>
+  

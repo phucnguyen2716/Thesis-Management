@@ -957,11 +957,11 @@ const Layout = () => {
           </div>
 
           {/* Messages Area */}
-          <div className="flex-1 overflow-y-auto p-3 md:p-4 space-y-3 bg-surface-container-lowest">
+          <div className="flex-1 overflow-y-auto p-3 md:p-4 space-y-3 bg-slate-50">
             {messages.map((msg) => (
               <div key={msg.id} className={`flex items-start gap-1.5 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
                 {msg.sender !== 'user' && (
-                  <div className="w-6 h-6 rounded-full overflow-hidden border border-slate-100 shrink-0 mt-0.5 shadow-sm">
+                  <div className="w-6 h-6 rounded-full overflow-hidden border border-slate-100 shrink-0 mt-0.5 shadow-sm bg-white">
                     <img 
                       src="/uploads/boticon.png" 
                       alt="Bot Avatar" 
@@ -971,7 +971,7 @@ const Layout = () => {
                 )}
                 <div className={`max-w-[85%] sm:max-w-[80%] p-2 py-1.5 sm:p-2.5 md:p-3 rounded-xl text-[10px] md:text-[11px] font-medium leading-normal shadow-sm ${msg.sender === 'user'
                   ? 'bg-primary text-on-primary rounded-tr-none'
-                  : 'bg-surface-container-high text-on-surface rounded-tl-none'
+                  : 'bg-white text-slate-800 border border-slate-100 rounded-tl-none'
                   }`}>
                   {renderMessageText(msg.text, msg.sender)}
                   <div className={`text-[8px] md:text-[9px] mt-1 opacity-60 ${msg.sender === 'user' ? 'text-right' : 'text-left'}`}>
@@ -984,7 +984,6 @@ const Layout = () => {
 
           {/* Chat Input */}
           <form onSubmit={handleSendMessage} className="p-2 md:p-2.5 bg-white border-t border-outline-variant flex items-center gap-2">
-            <button type="button" className="material-symbols-outlined text-[18px] text-on-surface-variant hover:text-primary transition-colors">add_circle</button>
             <input
               type="text"
               placeholder={lang === 'vi' ? "Nhập tin nhắn..." : "Type a message..."}

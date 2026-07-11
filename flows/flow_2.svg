@@ -1,0 +1,86 @@
+
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 280" width="900" height="280">
+      <defs>
+        <!-- Marker for right arrows (Standard UML Style) -->
+        <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#000000"/>
+        </marker>
+      </defs>
+      
+      <!-- Background (White Canvas) -->
+      <rect width="100%" height="100%" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" rx="16"/>
+      
+      <!-- Header Title -->
+      <rect x="0" y="0" width="100%" height="55" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" rx="16"/>
+      <text x="30" y="34" fill="#000000" font-size="13" font-family="Arial, sans-serif" font-weight="bold" style="text-transform: uppercase;">2. Đăng xuất và kết thúc phiên làm việc</text>
+      
+      <!-- Flow Category Tag -->
+      <rect x="730" y="16" width="140" height="24" rx="12" fill="#000000" opacity="0.05"/>
+      <text x="800" y="31" fill="#000000" font-size="8.5" font-family="Arial, sans-serif" font-weight="bold" text-anchor="middle" letter-spacing="0.5">LIBRARY FLOW</text>
+
+      <line x1="180" y1="135" x2="372" y2="135" stroke="#000000" stroke-width="1.2" marker-end="url(#arrow)"/><line x1="520" y1="135" x2="712" y2="135" stroke="#000000" stroke-width="1.2" marker-end="url(#arrow)"/>
+      
+      <!-- Step 1 -->
+      <g transform="translate(40, 100)">
+        <!-- Rounded Box (Classic UML Style: White background, black border) -->
+        <rect x="0" y="0" width="140" height="70" rx="8" ry="8" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+        <!-- Divider separating actor name -->
+        <line x1="0" y1="22" x2="140" y2="22" stroke="#000000" stroke-width="1"/>
+        
+        <!-- Actor Name (Centered, small uppercase text) -->
+        <text x="70" y="14" fill="#000000" font-size="8.5" font-family="Arial, sans-serif" font-weight="bold" text-anchor="middle" style="text-transform: uppercase;">Độc giả</text>
+        
+        <!-- Step Text (Centered) -->
+        <text x="70" y="40" fill="#000000" font-size="9" font-family="Arial, sans-serif" font-weight="bold" text-anchor="middle">Bấm nút Đăng xuất</text>
+        <text x="70" y="53" fill="#000000" font-size="9" font-family="Arial, sans-serif" font-weight="bold" text-anchor="middle">trên menu tài khoản</text>
+        
+        <!-- Small step number badge inside the box -->
+        <circle cx="12" cy="11" r="7" fill="#000000"/>
+        <text x="12" y="14" fill="#ffffff" font-size="8" font-family="Arial, sans-serif" font-weight="bold" text-anchor="middle">1</text>
+      </g>
+    
+
+      <!-- Step 2 -->
+      <g transform="translate(380, 100)">
+        <!-- Rounded Box (Classic UML Style: White background, black border) -->
+        <rect x="0" y="0" width="140" height="70" rx="8" ry="8" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+        <!-- Divider separating actor name -->
+        <line x1="0" y1="22" x2="140" y2="22" stroke="#000000" stroke-width="1"/>
+        
+        <!-- Actor Name (Centered, small uppercase text) -->
+        <text x="70" y="14" fill="#000000" font-size="8.5" font-family="Arial, sans-serif" font-weight="bold" text-anchor="middle" style="text-transform: uppercase;">Frontend client</text>
+        
+        <!-- Step Text (Centered) -->
+        <text x="70" y="40" fill="#000000" font-size="9" font-family="Arial, sans-serif" font-weight="bold" text-anchor="middle">Xóa JWT token khỏi</text>
+        <text x="70" y="53" fill="#000000" font-size="9" font-family="Arial, sans-serif" font-weight="bold" text-anchor="middle">LocalStorage</text>
+        
+        <!-- Small step number badge inside the box -->
+        <circle cx="12" cy="11" r="7" fill="#000000"/>
+        <text x="12" y="14" fill="#ffffff" font-size="8" font-family="Arial, sans-serif" font-weight="bold" text-anchor="middle">2</text>
+      </g>
+    
+
+      <!-- Step 3 -->
+      <g transform="translate(720, 100)">
+        <!-- Rounded Box (Classic UML Style: White background, black border) -->
+        <rect x="0" y="0" width="140" height="70" rx="8" ry="8" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+        <!-- Divider separating actor name -->
+        <line x1="0" y1="22" x2="140" y2="22" stroke="#000000" stroke-width="1"/>
+        
+        <!-- Actor Name (Centered, small uppercase text) -->
+        <text x="70" y="14" fill="#000000" font-size="8.5" font-family="Arial, sans-serif" font-weight="bold" text-anchor="middle" style="text-transform: uppercase;">Frontend client</text>
+        
+        <!-- Step Text (Centered) -->
+        <text x="70" y="40" fill="#000000" font-size="9" font-family="Arial, sans-serif" font-weight="bold" text-anchor="middle">Chuyển hướng về đăng</text>
+        <text x="70" y="53" fill="#000000" font-size="9" font-family="Arial, sans-serif" font-weight="bold" text-anchor="middle">trang nhập</text>
+        
+        <!-- Small step number badge inside the box -->
+        <circle cx="12" cy="11" r="7" fill="#000000"/>
+        <text x="12" y="14" fill="#ffffff" font-size="8" font-family="Arial, sans-serif" font-weight="bold" text-anchor="middle">3</text>
+      </g>
+    
+      
+      <!-- Footer Brand -->
+      <text x="450" y="260" fill="#64748b" font-size="8" font-family="Arial, sans-serif" font-weight="bold" text-anchor="middle" letter-spacing="1">UEF ETHESIS PORTAL - DIGITAL LIBRARY SYSTEMS</text>
+    </svg>
+  

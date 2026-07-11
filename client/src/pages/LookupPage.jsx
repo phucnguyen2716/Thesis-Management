@@ -1,177 +1,185 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { thesisService } from '../services/api';
-import { getMajorDefaultImage } from '../utils/majorImages';
+import useLanguage from '../hooks/useLanguage';
 
 // ─── Type config (colours + filters) ────────────────────────────────────────
-const TYPE_CONFIG = {
-  'do-an': {
-    label: 'Đồ Án Môn Học',
-    icon: 'engineering',
-    desc: 'Thực hành & Ứng dụng',
-    filterLabel: 'Lọc theo Chuyên ngành',
-    filterIcon: 'account_tree',
-    // Very faint blobs — no glare
-    blob1: 'bg-blue-300/6',
-    blob2: 'bg-sky-300/5',
-    // Badge (top of page)
-    badgeBg: 'bg-blue-50 border-blue-100 text-blue-600',
-    badgeIcon: 'text-blue-500',
-    // H1 accent — use softer shade
-    accentText: 'text-blue-500',
-    // Banner card (replaces gradient strip)
-    bannerCard: 'bg-blue-50 border border-blue-200',
-    bannerIconBg: 'bg-blue-500',
-    bannerLabel: 'text-blue-800',
-    bannerDesc: 'text-blue-500',
-    // Filter section divider
-    divider: 'bg-blue-200',
-    // Chips — muted, no shadow
-    chipActive: 'bg-blue-500 text-white',
-    chipIdle: 'bg-white text-blue-600 border border-blue-100 hover:bg-blue-50 hover:border-blue-300',
-    // Card top accent line
-    cardAccent: 'from-blue-200/20 via-blue-400/30 to-blue-200/20',
-    countColor: 'text-blue-500',
-    filters: [
-      { label: 'Tất cả', value: null, icon: 'apps' },
-      { label: 'Trí tuệ nhân tạo', value: 'ai', icon: 'smart_toy' },
-      { label: 'Mạng máy tính', value: 'networking', icon: 'lan' },
-      { label: 'Hệ thống thông tin DN', value: 'is', icon: 'account_tree' },
-      { label: 'An toàn không gian mạng', value: 'security', icon: 'security' },
-      { label: 'Kỹ thuật lập trình', value: 'programming', icon: 'code' },
-    ],
-  },
-  'khoa-luan': {
-    label: 'Khóa luận (Tốt nghiệp)',
-    icon: 'school',
-    desc: 'Nghiên cứu chuyên sâu',
-    filterLabel: 'Lọc theo Chuyên ngành',
-    filterIcon: 'account_tree',
-    blob1: 'bg-violet-300/6',
-    blob2: 'bg-purple-300/5',
-    badgeBg: 'bg-violet-50 border-violet-100 text-violet-600',
-    badgeIcon: 'text-violet-500',
-    accentText: 'text-violet-500',
-    bannerCard: 'bg-violet-50 border border-violet-200',
-    bannerIconBg: 'bg-violet-500',
-    bannerLabel: 'text-violet-800',
-    bannerDesc: 'text-violet-500',
-    divider: 'bg-violet-200',
-    chipActive: 'bg-violet-500 text-white',
-    chipIdle: 'bg-white text-violet-600 border border-violet-100 hover:bg-violet-50 hover:border-violet-300',
-    cardAccent: 'from-violet-200/20 via-violet-400/30 to-violet-200/20',
-    countColor: 'text-violet-500',
-    filters: [
-      { label: 'Tất cả', value: null, icon: 'apps' },
-      { label: 'Công nghệ phần mềm', value: 'software-engineering', icon: 'code', sub: 'SE' },
-      { label: 'Mạng máy tính', value: 'networking', icon: 'lan', sub: 'CN' },
-      { label: 'An toàn không gian mạng', value: 'security', icon: 'shield', sub: 'Cyber' },
-      { label: 'Trí tuệ nhân tạo', value: 'ai', icon: 'smart_toy', sub: 'AI' },
-      { label: 'Hệ thống thông tin', value: 'is', icon: 'account_tree', sub: 'IS' },
-      { label: 'Kỹ thuật lập trình', value: 'programming', icon: 'code', sub: 'Prog' },
-    ],
-  },
-  'chuyen-de': {
-    label: 'Chuyên Đề',
-    icon: 'lightbulb',
-    desc: 'Chủ đề chuyên biệt',
-    filterLabel: 'Lọc theo Chuyên ngành',
-    filterIcon: 'account_tree',
-    blob1: 'bg-amber-300/6',
-    blob2: 'bg-orange-300/5',
-    badgeBg: 'bg-amber-50 border-amber-100 text-amber-700',
-    badgeIcon: 'text-amber-600',
-    accentText: 'text-amber-700',
-    bannerCard: 'bg-amber-50 border border-amber-200',
-    bannerIconBg: 'bg-amber-500',
-    bannerLabel: 'text-amber-900',
-    bannerDesc: 'text-amber-600',
-    divider: 'bg-amber-200',
-    chipActive: 'bg-amber-600 text-white',
-    chipIdle: 'bg-white text-amber-700 border border-amber-100 hover:bg-amber-50 hover:border-amber-300',
-    cardAccent: 'from-amber-200/20 via-amber-400/30 to-amber-200/20',
-    countColor: 'text-amber-600',
-    filters: [
-      { label: 'Tất cả', value: null, icon: 'apps' },
-      { label: 'Công nghệ phần mềm', value: 'software-engineering', icon: 'code', sub: 'SE' },
-      { label: 'Mạng máy tính', value: 'networking', icon: 'lan', sub: 'CN' },
-      { label: 'An toàn không gian mạng', value: 'security', icon: 'shield', sub: 'Cyber' },
-      { label: 'Trí tuệ nhân tạo', value: 'ai', icon: 'smart_toy', sub: 'AI' },
-      { label: 'Hệ thống thông tin', value: 'is', icon: 'account_tree', sub: 'IS' },
-      { label: 'Kỹ thuật lập trình', value: 'programming', icon: 'code', sub: 'Prog' },
-    ],
-  },
+const getTypeConfig = (lang) => {
+  const isEn = lang === 'en';
+  return {
+    'do-an': {
+      label: isEn ? 'Course Project' : 'Đồ Án Môn Học',
+      icon: 'engineering',
+      desc: isEn ? 'Practice & Application' : 'Thực hành & Ứng dụng',
+      filterLabel: isEn ? 'Filter by Major' : 'Lọc theo Chuyên ngành',
+      filterIcon: 'account_tree',
+      // Very faint blobs — no glare
+      blob1: 'bg-blue-300/6',
+      blob2: 'bg-sky-300/5',
+      // Badge (top of page)
+      badgeBg: 'bg-blue-50 border-blue-100 text-blue-600',
+      badgeIcon: 'text-blue-500',
+      // H1 accent — use softer shade
+      accentText: 'text-blue-500',
+      // Banner card (replaces gradient strip)
+      accentBorder: 'border-blue-100',
+      bannerCard: 'bg-blue-50 border border-blue-200',
+      bannerIconBg: 'bg-blue-500',
+      bannerLabel: 'text-blue-800',
+      bannerDesc: 'text-blue-500',
+      // Filter section divider
+      divider: 'bg-blue-200',
+      // Chips — muted, no shadow
+      chipActive: 'bg-blue-500 text-white',
+      chipIdle: 'bg-white text-blue-600 border border-blue-100 hover:bg-blue-50 hover:border-blue-300',
+      // Card top accent line
+      cardAccent: 'from-blue-200/20 via-blue-400/30 to-blue-200/20',
+      countColor: 'text-blue-500',
+      filters: [
+        { label: isEn ? 'All' : 'Tất cả', value: null, icon: 'apps' },
+        { label: isEn ? 'Artificial Intelligence' : 'Trí tuệ nhân tạo', value: 'ai', icon: 'smart_toy' },
+        { label: isEn ? 'Computer Networks' : 'Mạng máy tính', value: 'networking', icon: 'lan' },
+        { label: isEn ? 'Enterprise Info Systems' : 'Hệ thống thông tin DN', value: 'is', icon: 'account_tree' },
+        { label: isEn ? 'Cyber Security' : 'An toàn không gian mạng', value: 'security', icon: 'security' },
+        { label: isEn ? 'Programming Techniques' : 'Kỹ thuật lập trình', value: 'programming', icon: 'code' },
+      ],
+    },
+    'khoa-luan': {
+      label: isEn ? 'Graduation Thesis' : 'Khóa luận (Tốt nghiệp)',
+      icon: 'school',
+      desc: isEn ? 'In-depth Research' : 'Nghiên cứu chuyên sâu',
+      filterLabel: isEn ? 'Filter by Major' : 'Lọc theo Chuyên ngành',
+      filterIcon: 'account_tree',
+      blob1: 'bg-violet-300/6',
+      blob2: 'bg-purple-300/5',
+      badgeBg: 'bg-violet-50 border-violet-100 text-violet-600',
+      badgeIcon: 'text-violet-500',
+      accentText: 'text-violet-500',
+      bannerCard: 'bg-violet-50 border border-violet-200',
+      bannerIconBg: 'bg-violet-500',
+      bannerLabel: 'text-violet-800',
+      bannerDesc: 'text-violet-500',
+      divider: 'bg-violet-200',
+      chipActive: 'bg-violet-500 text-white',
+      chipIdle: 'bg-white text-violet-600 border border-violet-100 hover:bg-violet-50 hover:border-violet-300',
+      cardAccent: 'from-violet-200/20 via-violet-400/30 to-violet-200/20',
+      countColor: 'text-violet-500',
+      filters: [
+        { label: isEn ? 'All' : 'Tất cả', value: null, icon: 'apps' },
+        { label: isEn ? 'Software Engineering' : 'Công nghệ phần mềm', value: 'software-engineering', icon: 'code', sub: 'SE' },
+        { label: isEn ? 'Computer Networks' : 'Mạng máy tính', value: 'networking', icon: 'lan', sub: 'CN' },
+        { label: isEn ? 'Cyber Security' : 'An toàn không gian mạng', value: 'security', icon: 'shield', sub: 'Cyber' },
+        { label: isEn ? 'Artificial Intelligence' : 'Trí tuệ nhân tạo', value: 'ai', icon: 'smart_toy', sub: 'AI' },
+        { label: isEn ? 'Information Systems' : 'Hệ thống thông tin', value: 'is', icon: 'account_tree', sub: 'IS' },
+        { label: isEn ? 'Programming Techniques' : 'Kỹ thuật lập trình', value: 'programming', icon: 'code', sub: 'Prog' },
+      ],
+    },
+    'chuyen-de': {
+      label: isEn ? 'Special Topic' : 'Chuyên Đề',
+      icon: 'lightbulb',
+      desc: isEn ? 'Specialized Subject' : 'Chủ đề chuyên biệt',
+      filterLabel: isEn ? 'Filter by Major' : 'Lọc theo Chuyên ngành',
+      filterIcon: 'account_tree',
+      blob1: 'bg-amber-300/6',
+      blob2: 'bg-orange-300/5',
+      badgeBg: 'bg-amber-50 border-amber-100 text-amber-700',
+      badgeIcon: 'text-amber-600',
+      accentText: 'text-amber-700',
+      bannerCard: 'bg-amber-50 border border-amber-200',
+      bannerIconBg: 'bg-amber-500',
+      bannerLabel: 'text-amber-900',
+      bannerDesc: 'text-amber-600',
+      divider: 'bg-amber-200',
+      chipActive: 'bg-amber-600 text-white',
+      chipIdle: 'bg-white text-amber-700 border border-amber-100 hover:bg-amber-50 hover:border-amber-300',
+      cardAccent: 'from-amber-200/20 via-amber-400/30 to-amber-200/20',
+      countColor: 'text-amber-600',
+      filters: [
+        { label: isEn ? 'All' : 'Tất cả', value: null, icon: 'apps' },
+        { label: isEn ? 'Software Engineering' : 'Công nghệ phần mềm', value: 'software-engineering', icon: 'code', sub: 'SE' },
+        { label: isEn ? 'Computer Networks' : 'Mạng máy tính', value: 'networking', icon: 'lan', sub: 'CN' },
+        { label: isEn ? 'Cyber Security' : 'An toàn không gian mạng', value: 'security', icon: 'shield', sub: 'Cyber' },
+        { label: isEn ? 'Artificial Intelligence' : 'Trí tuệ nhân tạo', value: 'ai', icon: 'smart_toy', sub: 'AI' },
+        { label: isEn ? 'Information Systems' : 'Hệ thống thông tin', value: 'is', icon: 'account_tree', sub: 'IS' },
+        { label: isEn ? 'Programming Techniques' : 'Kỹ thuật lập trình', value: 'programming', icon: 'code', sub: 'Prog' },
+      ],
+    },
+  };
 };
 
-const DO_AN_MAJORS = {
-  'ai': {
-    label: 'Trí tuệ nhân tạo',
-    icon: 'smart_toy',
-    subjects: [
-      { name: 'Máy học', code: 'ITE1173E' },
-      { name: 'Phát triển ứng dụng trí tuệ nhân tạo', code: 'ITE1174E' },
-      { name: 'Đồ án chuyên ngành trí tuệ nhân tạo', code: 'ITE1491' },
-      { name: 'Khai thác dữ liệu và ứng dụng', code: 'ITE1176E' },
-      { name: 'Thị giác máy tính', code: 'ITE1181E' }
-    ]
-  },
-  'networking': {
-    label: 'Mạng máy tính',
-    icon: 'lan',
-    subjects: [
-      { name: 'Mạng máy tính nâng cao', code: 'ITE1235E' },
-      { name: 'Thiết kế mạng máy tính', code: 'ITE1267E' },
-      { name: 'Lập trình mạng máy tính', code: 'ITE1255E' },
-      { name: 'Quản trị mạng', code: 'ITE1241E' },
-      { name: 'Đồ án chuyên ngành mạng máy tính', code: 'ITE1489' }
-    ]
-  },
-  'is': {
-    label: 'Hệ thống thông tin DN',
-    icon: 'account_tree',
-    subjects: [
-      { name: 'Cơ sở dữ liệu nâng cao', code: 'ITE1224E' },
-      { name: 'Hoạch định nguồn nhân lực doanh nghiệp', code: 'ITE1285E' },
-      { name: 'Hệ thống thông tin quản lý', code: 'ITE1129E' },
-      { name: 'Phân tích nghiệp vụ kinh doanh', code: 'ITE1284E' },
-      { name: 'Đồ án chuyên ngành hệ thống thông tin DN', code: 'ITE1488' }
-    ]
-  },
-  'security': {
-    label: 'An toàn không gian mạng',
-    icon: 'security',
-    subjects: [
-      { name: 'An toàn thông tin cho ứng dụng web', code: 'ITE1268E' },
-      { name: 'An toàn hệ thống mạng máy tính', code: 'ITE1232E' },
-      { name: 'Phân tích và đánh giá an toàn thông tin', code: 'ITE1239E' },
-      { name: 'Điều tra số', code: 'ITE1258E' },
-      { name: 'Đồ án chuyên ngành an toàn không gian mạng', code: 'ITE1490' }
-    ]
-  },
-  'programming': {
-    label: 'Kỹ thuật lập trình',
-    icon: 'code',
-    subjects: [
-      { name: 'Lập trình Front-End', code: 'SWE1208E' },
-      { name: 'Mạng máy tính và bảo mật thông tin', code: 'SWE1204E' },
-      { name: 'Phân tích và thiết kế phần mềm', code: 'SWE1107E' },
-      { name: 'Lập trình ứng dụng', code: 'SWE1205E' },
-      { name: 'Phát triển ứng dụng Full-Stack', code: 'SWE1209E' },
-      { name: 'Công cụ phát triển ứng dụng', code: 'SWE1210E' },
-      { name: 'Đồ án kỹ thuật phần mềm', code: 'SWE1422' },
-      { name: 'Đảm bảo chất lượng phần mềm', code: 'SWE1111E' },
-      { name: 'Kiểm thử phần mềm', code: 'SWE1212E' },
-      { name: 'Quản lý dự án kiểm thử', code: 'SWE1114E' },
-      { name: 'Công cụ và kỹ thuật kiểm thử tự động', code: 'SWE1213E' },
-      { name: 'Đồ án chuyên ngành kiểm thử phần mềm', code: 'SWE1415' },
-      { name: 'Phát triển ứng dụng đa nền tảng', code: 'SWE1216E' },
-      { name: 'Phát triển Game', code: 'ITE1279E' },
-      { name: 'Phát triển và vận hành hệ thống công nghệ thông tin', code: 'SWE1219E' },
-      { name: 'Phát triển ứng dụng web nâng cao', code: 'SWE1218E' },
-      { name: 'Đồ án chuyên ngành phát triển ứng dụng', code: 'SWE1420' }
-    ]
-  }
+const getDoAnMajors = (lang) => {
+  const isEn = lang === 'en';
+  return {
+    'ai': {
+      label: isEn ? 'Artificial Intelligence' : 'Trí tuệ nhân tạo',
+      icon: 'smart_toy',
+      subjects: [
+        { name: isEn ? 'Machine Learning' : 'Máy học', code: 'ITE1173E' },
+        { name: isEn ? 'AI Application Development' : 'Phát triển ứng dụng trí tuệ nhân tạo', code: 'ITE1174E' },
+        { name: isEn ? 'AI Major Project' : 'Đồ án chuyên ngành trí tuệ nhân tạo', code: 'ITE1491' },
+        { name: isEn ? 'Data Mining & Applications' : 'Khai thác dữ liệu và ứng dụng', code: 'ITE1176E' },
+        { name: isEn ? 'Computer Vision' : 'Thị giác máy tính', code: 'ITE1181E' }
+      ]
+    },
+    'networking': {
+      label: isEn ? 'Computer Networks' : 'Mạng máy tính',
+      icon: 'lan',
+      subjects: [
+        { name: isEn ? 'Advanced Computer Networks' : 'Mạng máy tính nâng cao', code: 'ITE1235E' },
+        { name: isEn ? 'Computer Network Design' : 'Thiết kế mạng máy tính', code: 'ITE1267E' },
+        { name: isEn ? 'Computer Network Programming' : 'Lập trình mạng máy tính', code: 'ITE1255E' },
+        { name: isEn ? 'Network Administration' : 'Quản trị mạng', code: 'ITE1241E' },
+        { name: isEn ? 'Computer Networks Major Project' : 'Đồ án chuyên ngành mạng máy tính', code: 'ITE1489' }
+      ]
+    },
+    'is': {
+      label: isEn ? 'Enterprise Info Systems' : 'Hệ thống thông tin DN',
+      icon: 'account_tree',
+      subjects: [
+        { name: isEn ? 'Advanced Database Systems' : 'Cơ sở dữ liệu nâng cao', code: 'ITE1224E' },
+        { name: isEn ? 'Enterprise Resource Planning' : 'Hoạch định nguồn nhân lực doanh nghiệp', code: 'ITE1285E' },
+        { name: isEn ? 'Management Information Systems' : 'Hệ thống thông tin quản lý', code: 'ITE1129E' },
+        { name: isEn ? 'Business Analysis' : 'Phân tích nghiệp vụ kinh doanh', code: 'ITE1284E' },
+        { name: isEn ? 'EIS Major Project' : 'Đồ án chuyên ngành hệ thống thông tin DN', code: 'ITE1488' }
+      ]
+    },
+    'security': {
+      label: isEn ? 'Cyber Security' : 'An toàn không gian mạng',
+      icon: 'security',
+      subjects: [
+        { name: isEn ? 'Web Application Security' : 'An toàn thông tin cho ứng dụng web', code: 'ITE1268E' },
+        { name: isEn ? 'Computer Network Security' : 'An toàn hệ thống mạng máy tính', code: 'ITE1232E' },
+        { name: isEn ? 'Information Security Analysis' : 'Phân tích và đánh giá an toàn thông tin', code: 'ITE1239E' },
+        { name: isEn ? 'Digital Forensics' : 'Điều tra số', code: 'ITE1258E' },
+        { name: isEn ? 'Cyber Security Major Project' : 'Đồ án chuyên ngành an toàn không gian mạng', code: 'ITE1490' }
+      ]
+    },
+    'programming': {
+      label: isEn ? 'Programming Techniques' : 'Kỹ thuật lập trình',
+      icon: 'code',
+      subjects: [
+        { name: isEn ? 'Front-End Programming' : 'Lập trình Front-End', code: 'SWE1208E' },
+        { name: isEn ? 'Computer Networks & Security' : 'Mạng máy tính và bảo mật thông tin', code: 'SWE1204E' },
+        { name: isEn ? 'Software Analysis & Design' : 'Phân tích và thiết kế phần mềm', code: 'SWE1107E' },
+        { name: isEn ? 'Application Programming' : 'Lập trình ứng dụng', code: 'SWE1205E' },
+        { name: isEn ? 'Full-Stack App Development' : 'Phát triển ứng dụng Full-Stack', code: 'SWE1209E' },
+        { name: isEn ? 'Application Development Tools' : 'Công cụ phát triển ứng dụng', code: 'SWE1210E' },
+        { name: isEn ? 'Software Engineering Project' : 'Đồ án kỹ thuật phần mềm', code: 'SWE1422' },
+        { name: isEn ? 'Software Quality Assurance' : 'Đảm bảo chất lượng phần mềm', code: 'SWE1111E' },
+        { name: isEn ? 'Software Testing' : 'Kiểm thử phần mềm', code: 'SWE1212E' },
+        { name: isEn ? 'Testing Project Management' : 'Quản lý dự án kiểm thử', code: 'SWE1114E' },
+        { name: isEn ? 'Automated Testing Tools' : 'Công cụ và kỹ thuật kiểm thử tự động', code: 'SWE1213E' },
+        { name: isEn ? 'Software Testing Major Project' : 'Đồ án chuyên ngành kiểm thử phần mềm', code: 'SWE1415' },
+        { name: isEn ? 'Cross-Platform App Development' : 'Phát triển ứng dụng đa nền tảng', code: 'SWE1216E' },
+        { name: isEn ? 'Game Development' : 'Phát triển Game', code: 'ITE1279E' },
+        { name: isEn ? 'IT System Dev & Operations' : 'Phát triển và vận hành hệ thống công nghệ thông tin', code: 'SWE1219E' },
+        { name: isEn ? 'Advanced Web App Development' : 'Phát triển ứng dụng web nâng cao', code: 'SWE1218E' },
+        { name: isEn ? 'Application Development Project' : 'Đồ án chuyên ngành phát triển ứng dụng', code: 'SWE1420' }
+      ]
+    }
+  };
 };
+
 
 const ALL_RESULTS = [];
 
@@ -193,6 +201,10 @@ const formatSize = (bytes) => {
 };
 
 const LookupPage = () => {
+  const { lang } = useLanguage();
+  const TYPE_CONFIG = getTypeConfig(lang);
+  const DO_AN_MAJORS = getDoAnMajors(lang);
+
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
@@ -436,12 +448,12 @@ const LookupPage = () => {
         <div className={`absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full blur-[110px] transition-all duration-700 ${tc ? tc.blob2 : 'bg-blue-400/10'}`} />
       </div>
 
-      <div className="relative z-10 py-4 md:py-8 max-w-[1400px] mx-auto px-4 md:px-8">
+      <div className="relative z-10 py-2 md:py-4 max-w-[1400px] mx-auto px-4 md:px-8">
 
         {/* ── Page Header ──────────────────────────────────────── */}
-        <header className="text-center mb-8 md:mb-12">
+        <header className="text-center mb-4 md:mb-6">
           {/* Top badge */}
-          <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full font-black text-[10px] uppercase tracking-widest mb-5 border transition-all duration-500 ${tc ? tc.badgeBg : 'bg-primary/5 border-primary/10 text-primary'}`}>
+          <div className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full font-black text-[9px] uppercase tracking-widest mb-3 border transition-all duration-500 ${tc ? tc.badgeBg : 'bg-primary/5 border-primary/10 text-primary'}`}>
             <span className={`material-symbols-outlined text-sm ${tc ? tc.badgeIcon : 'text-primary'}`}>
               {tc ? tc.icon : 'database'}
             </span>
@@ -449,14 +461,14 @@ const LookupPage = () => {
           </div>
 
           {/* H1 */}
-          <h1 className="text-4xl sm:text-5xl md:text-7xl font-black text-on-surface mb-4 tracking-tighter leading-none">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-on-surface mb-2 tracking-tighter leading-none">
             {tc ? (
               <>Tra Cứu <span className={`transition-colors duration-500 ${tc.accentText}`}>{tc.label}</span></>
             ) : (
               <>Tra Cứu <span className="text-primary/70">Đề Tài</span></>
             )}
           </h1>
-          <p className="text-on-surface-variant font-medium opacity-60 max-w-2xl mx-auto leading-relaxed text-sm md:text-base">
+          <p className="text-on-surface-variant font-medium opacity-60 max-w-2xl mx-auto leading-relaxed text-xs md:text-sm">
             {tc
               ? tc.desc + ' — Tìm kiếm và khám phá các đề tài xuất sắc của sinh viên UEF.'
               : 'Khám phá hàng nghìn đề tài nghiên cứu, đồ án, khóa luận và chuyên đề xuất sắc từ sinh viên và giảng viên qua các thế hệ.'}
@@ -578,8 +590,8 @@ const LookupPage = () => {
         )}
 
         {/* ── Category Segmented Tabs ───────────────────────────── */}
-        <div className="flex justify-center mb-6 md:mb-8 animate-in fade-in duration-500">
-          <div className="inline-flex p-1.5 bg-surface-container-low rounded-2xl md:rounded-3xl border border-outline-variant/30 shadow-sm overflow-x-auto max-w-full" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+        <div className="flex justify-center mb-4 md:mb-5 animate-in fade-in duration-500">
+          <div className="inline-flex p-1 bg-surface-container-low rounded-2xl md:rounded-3xl border border-outline-variant/30 shadow-sm overflow-x-auto max-w-full" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
             {[
               { key: null, label: 'Tất cả đề tài', icon: 'apps', colorCls: 'text-primary' },
               { key: 'do-an', label: 'Đồ án', icon: 'engineering', colorCls: 'text-blue-500' },
@@ -601,7 +613,7 @@ const LookupPage = () => {
                     p.delete('subject'); // Clear subject when switching category
                     setSearchParams(p);
                   }}
-                  className={`flex items-center gap-2 px-4 py-2.5 md:px-6 md:py-3.5 rounded-xl md:rounded-2xl text-[11px] md:text-xs font-black uppercase tracking-wider whitespace-nowrap transition-all duration-300 cursor-pointer ${
+                  className={`flex items-center gap-2 px-3 py-2 md:px-5 md:py-2.5 rounded-xl md:rounded-2xl text-[10px] md:text-[11px] font-black uppercase tracking-wider whitespace-nowrap transition-all duration-300 cursor-pointer ${
                     isActive 
                       ? 'bg-white shadow-sm text-on-surface border border-outline-variant/10' 
                       : 'text-on-surface-variant/70 hover:text-on-surface hover:bg-white/40 border border-transparent'
@@ -618,26 +630,26 @@ const LookupPage = () => {
         </div>
 
         {/* ── Search Bar ───────────────────────────────────────── */}
-        <div className="max-w-[1000px] mx-auto mb-8 md:mb-14">
-          <div className="bg-white p-2 md:p-3 rounded-[2rem] md:rounded-[3rem] shadow-[0_20px_60px_rgba(0,0,0,0.06)] border border-outline-variant hover:border-outline transition-all flex flex-col md:flex-row items-center gap-2 group">
-            <div className="flex-1 flex items-center gap-3 md:gap-5 px-4 md:px-8 w-full">
-              <span className={`material-symbols-outlined text-xl md:text-2xl transition-transform group-focus-within:scale-110 ${tc ? tc.accentText : 'text-primary'}`}>search</span>
+        <div className="max-w-[1000px] mx-auto mb-5 md:mb-7">
+          <div className="bg-white p-1.5 md:p-2 rounded-[2rem] md:rounded-[3rem] shadow-[0_20px_60px_rgba(0,0,0,0.06)] border border-outline-variant hover:border-outline transition-all flex flex-col md:flex-row items-center gap-2 group">
+            <div className="flex-1 flex items-center gap-2 md:gap-4 px-3 md:px-6 w-full">
+              <span className={`material-symbols-outlined text-lg md:text-xl transition-transform group-focus-within:scale-110 ${tc ? tc.accentText : 'text-primary'}`}>search</span>
               <input
                 type="text"
                 placeholder={tc ? `Tìm kiếm ${tc.label.toLowerCase()}...` : 'Nhập tên đề tài, tác giả hoặc từ khóa...'}
-                className="w-full bg-transparent border-none outline-none text-sm md:text-base font-bold py-3 md:py-4 text-on-surface placeholder:text-on-surface-variant/40"
+                className="w-full bg-transparent border-none outline-none text-xs md:text-sm font-bold py-2.5 md:py-3 text-on-surface placeholder:text-on-surface-variant/40"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
             {/* Always neutral dark button — no bright colour */}
-            <button className="w-full md:w-auto px-8 md:px-12 py-3.5 md:py-5 rounded-[1.8rem] md:rounded-[2.5rem] font-black uppercase tracking-widest text-xs bg-on-surface hover:bg-primary text-white transition-all shadow-md active:scale-95">
+            <button className="w-full md:w-auto px-6 md:px-9 py-2.5 md:py-3.5 rounded-[1.8rem] md:rounded-[2.5rem] font-black uppercase tracking-widest text-[10px] bg-on-surface hover:bg-primary text-white transition-all shadow-md active:scale-95">
               Tìm kiếm ngay
             </button>
           </div>
 
           {/* Trending tags */}
-          <div className="mt-4 flex flex-wrap justify-center gap-2">
+          <div className="mt-2.5 flex flex-wrap justify-center gap-1.5">
             <span className="text-[10px] font-black text-on-surface-variant/40 uppercase tracking-widest py-1.5 px-2">Phổ biến:</span>
             {['#Blockchain', '#AI_Gemini', '#Marketing_Số', '#Kinh_tế_xanh'].map((tag) => (
               <button key={tag} className="px-3 py-1.5 bg-surface-container-low rounded-full text-[10px] font-bold text-on-surface-variant hover:text-primary transition-all border border-transparent hover:border-primary/20">
@@ -655,10 +667,7 @@ const LookupPage = () => {
             </label>
             <div className="relative">
               <select className="w-full px-4 md:px-6 py-3 md:py-3.5 bg-surface-container-lowest rounded-xl md:rounded-2xl outline-none border border-outline-variant focus:border-primary transition-all font-bold text-xs appearance-none cursor-pointer">
-                <option>Tất cả các khoa</option>
-                <option>Công nghệ thông tin</option>
-                <option>Kinh tế - Quản trị</option>
-                <option>Tài chính - Ngân hàng</option>
+                <option>Khoa Công nghệ thông tin</option>
               </select>
               <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant/40 pointer-events-none text-sm">expand_more</span>
             </div>

@@ -50,6 +50,7 @@ import AdminLoginAuditPage from './pages/admin/AdminLoginAuditPage';
 import AdminThesesPage from './pages/admin/AdminThesesPage';
 
 import AdminEventsPage from './pages/admin/AdminEventsPage';
+import AdminHangfirePage from './pages/admin/AdminHangfirePage';
 
 
 
@@ -87,7 +88,15 @@ function App() {
 
           <Route path="theses/:category" element={<AdminThesesPage />} />
           <Route path="events" element={<AdminEventsPage />} />
+          <Route path="hangfire" element={<AdminHangfirePage />} />
         </Route>
+
+        {/* Standalone hangfire route for non-admin users — shows unauthorized page */}
+        <Route path="/admin/hangfire" element={
+          <ProtectedRoute>
+            <AdminHangfirePage />
+          </ProtectedRoute>
+        } />
 
         <Route
           path="/lecturer"

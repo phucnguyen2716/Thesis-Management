@@ -588,6 +588,22 @@ Console.WriteLine("🚀 Hangfire: http://localhost:5145/hangfire");
 Console.WriteLine("🔄 DriveSyncJob: every 10 seconds (Google Drive → DB → API → Frontend)");
 Console.WriteLine("❤️  Health: http://localhost:5145/api/health/dependencies");
 
+// Auto-migrate database on startup
+using (var scope = app.Services.CreateScope())
+{
+    try
+    {
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        Console.WriteLine("⏳ Running database migrations...");
+        db.Database.Migrate();
+        Console.WriteLine("✅ Database migrations applied successfully.");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"❌ Database migration failed: {ex.Message}");
+    }
+}
+
 app.Run();
 
 public class HangfireAdminAuthorizationFilter : Hangfire.Dashboard.IDashboardAuthorizationFilter

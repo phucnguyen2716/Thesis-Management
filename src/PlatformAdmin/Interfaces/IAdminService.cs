@@ -11,5 +11,6 @@ namespace PlatformAdmin.Interfaces
         Task<bool> UpdateUserAsync(int id, UpdateAdminUserRequest request);
         Task<bool> DeleteUserAsync(int id);
         Task<IEnumerable<AdminAuditLogDto>> GetAuditLogsAsync();
+        Task<AdminDashboardDto> GetDashboardStatsAsync();
     }
 }

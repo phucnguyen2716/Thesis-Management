@@ -1,0 +1,123 @@
+
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 480" width="1000" height="480">
+      <defs>
+        <!-- Marker for right arrows (Standard UML Style) -->
+        <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#000000"/>
+        </marker>
+      </defs>
+      
+      <!-- Background (White Canvas) -->
+      <rect width="100%" height="100%" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" rx="16"/>
+      
+      <!-- Header Title -->
+      <rect x="0" y="0" width="100%" height="55" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" rx="16"/>
+      <text x="30" y="34" fill="#000000" font-size="13" font-family="Arial, sans-serif" font-weight="bold" style="text-transform: uppercase;">17. Gửi yêu cầu hỗ trợ tài liệu lên thủ thư (Support Sequence)</text>
+      
+      <!-- Flow Category Tag -->
+      <rect x="830" y="16" width="140" height="24" rx="12" fill="#000000" opacity="0.05"/>
+      <text x="900" y="31" fill="#000000" font-size="8.5" font-family="Arial, sans-serif" font-weight="bold" text-anchor="middle" letter-spacing="0.5">SEQUENCE DIAGRAM</text>
+
+      <!-- Lifelines Background Dashed Lines -->
+      
+      <!-- Lifeline user -->
+      <g>
+        <!-- Lifeline box -->
+        <rect x="80" y="70" width="140" height="36" rx="4" ry="4" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+        <text x="150" y="92" fill="#000000" font-size="9.5" font-family="Arial, sans-serif" font-weight="bold" text-anchor="middle">Độc giả</text>
+        
+        <!-- Dashed line -->
+        <line x1="150" y1="106" x2="150" y2="430" stroke="#000000" stroke-dasharray="4 4" stroke-width="1"/>
+      </g>
+    
+
+      <!-- Lifeline front -->
+      <g>
+        <!-- Lifeline box -->
+        <rect x="255" y="70" width="140" height="36" rx="4" ry="4" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+        <text x="325" y="92" fill="#000000" font-size="9.5" font-family="Arial, sans-serif" font-weight="bold" text-anchor="middle">Frontend Client</text>
+        
+        <!-- Dashed line -->
+        <line x1="325" y1="106" x2="325" y2="430" stroke="#000000" stroke-dasharray="4 4" stroke-width="1"/>
+      </g>
+    
+
+      <!-- Lifeline api -->
+      <g>
+        <!-- Lifeline box -->
+        <rect x="430" y="70" width="140" height="36" rx="4" ry="4" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+        <text x="500" y="92" fill="#000000" font-size="9.5" font-family="Arial, sans-serif" font-weight="bold" text-anchor="middle">Backend API</text>
+        
+        <!-- Dashed line -->
+        <line x1="500" y1="106" x2="500" y2="430" stroke="#000000" stroke-dasharray="4 4" stroke-width="1"/>
+      </g>
+    
+
+      <!-- Lifeline db -->
+      <g>
+        <!-- Lifeline box -->
+        <rect x="605" y="70" width="140" height="36" rx="4" ry="4" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+        <text x="675" y="92" fill="#000000" font-size="9.5" font-family="Arial, sans-serif" font-weight="bold" text-anchor="middle">PostgreSQL DB</text>
+        
+        <!-- Dashed line -->
+        <line x1="675" y1="106" x2="675" y2="430" stroke="#000000" stroke-dasharray="4 4" stroke-width="1"/>
+      </g>
+    
+
+      <!-- Lifeline email -->
+      <g>
+        <!-- Lifeline box -->
+        <rect x="780" y="70" width="140" height="36" rx="4" ry="4" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+        <text x="850" y="92" fill="#000000" font-size="9.5" font-family="Arial, sans-serif" font-weight="bold" text-anchor="middle">Email Service</text>
+        
+        <!-- Dashed line -->
+        <line x1="850" y1="106" x2="850" y2="430" stroke="#000000" stroke-dasharray="4 4" stroke-width="1"/>
+      </g>
+    
+      
+      <!-- Activation Bars -->
+      
+<rect x="319" y="120" width="12" height="295" fill="#ffffff" stroke="#000000" stroke-width="1.2"/>
+<rect x="494" y="120" width="12" height="295" fill="#ffffff" stroke="#000000" stroke-width="1.2"/>
+<rect x="669" y="120" width="12" height="295" fill="#ffffff" stroke="#000000" stroke-width="1.2"/>
+<rect x="844" y="120" width="12" height="295" fill="#ffffff" stroke="#000000" stroke-width="1.2"/>
+
+      <!-- Messages & Returns -->
+      
+        <!-- Message from user to front -->
+        <line x1="156" y1="135" x2="319" y2="135" stroke="#000000" stroke-width="1.2"  marker-end="url(#arrow)"/>
+        <text x="237.5" y="129" fill="#000000" font-size="8.5" font-family="Arial, sans-serif" font-weight="bold" text-anchor="middle">1. Gửi form liên hệ thủ thư</text>
+      
+        <!-- Message from front to api -->
+        <line x1="331" y1="173" x2="494" y2="173" stroke="#000000" stroke-width="1.2"  marker-end="url(#arrow)"/>
+        <text x="412.5" y="167" fill="#000000" font-size="8.5" font-family="Arial, sans-serif" font-weight="bold" text-anchor="middle">2. POST /api/support</text>
+      
+        <!-- Message from api to db -->
+        <line x1="506" y1="211" x2="669" y2="211" stroke="#000000" stroke-width="1.2"  marker-end="url(#arrow)"/>
+        <text x="587.5" y="205" fill="#000000" font-size="8.5" font-family="Arial, sans-serif" font-weight="bold" text-anchor="middle">3. Insert bản ghi SupportRequest</text>
+      
+        <!-- Message from db to api -->
+        <line x1="669" y1="249" x2="506" y2="249" stroke="#000000" stroke-width="1.2" stroke-dasharray="3 3" marker-end="url(#arrow)"/>
+        <text x="587.5" y="243" fill="#000000" font-size="8.5" font-family="Arial, sans-serif" font-weight="bold" text-anchor="middle">4. Xác nhận thành công</text>
+      
+        <!-- Message from api to email -->
+        <line x1="506" y1="287" x2="844" y2="287" stroke="#000000" stroke-width="1.2"  marker-end="url(#arrow)"/>
+        <text x="675" y="281" fill="#000000" font-size="8.5" font-family="Arial, sans-serif" font-weight="bold" text-anchor="middle">5. Gửi email thông báo thủ thư</text>
+      
+        <!-- Message from email to api -->
+        <line x1="844" y1="325" x2="506" y2="325" stroke="#000000" stroke-width="1.2" stroke-dasharray="3 3" marker-end="url(#arrow)"/>
+        <text x="675" y="319" fill="#000000" font-size="8.5" font-family="Arial, sans-serif" font-weight="bold" text-anchor="middle">6. Xác nhận đã gửi mail</text>
+      
+        <!-- Message from api to front -->
+        <line x1="494" y1="363" x2="331" y2="363" stroke="#000000" stroke-width="1.2" stroke-dasharray="3 3" marker-end="url(#arrow)"/>
+        <text x="412.5" y="357" fill="#000000" font-size="8.5" font-family="Arial, sans-serif" font-weight="bold" text-anchor="middle">7. Trả mã trạng thái 200</text>
+      
+        <!-- Message from front to user -->
+        <line x1="319" y1="401" x2="156" y2="401" stroke="#000000" stroke-width="1.2" stroke-dasharray="3 3" marker-end="url(#arrow)"/>
+        <text x="237.5" y="395" fill="#000000" font-size="8.5" font-family="Arial, sans-serif" font-weight="bold" text-anchor="middle">8. Báo gửi yêu cầu thành công</text>
+      
+      
+      <!-- Footer Brand -->
+      <text x="500" y="460" fill="#64748b" font-size="8" font-family="Arial, sans-serif" font-weight="bold" text-anchor="middle" letter-spacing="1">UEF ETHESIS PORTAL - DIGITAL LIBRARY SEQUENCE FLOWS</text>
+    </svg>
+  

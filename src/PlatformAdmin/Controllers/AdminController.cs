@@ -81,5 +81,15 @@ namespace PlatformAdmin.Controllers
             var logs = await _adminService.GetAuditLogsAsync();
             return Ok(logs);
         }
+
+        [HttpGet("dashboard-stats")]
+        [ApiResponse(typeof(AdminDashboardDto), StatusCodes.Status200OK)]
+        [ApiResponse(StatusCodes.Status401Unauthorized)]
+        [ApiResponse(StatusCodes.Status403Forbidden)]
+        public async Task<ActionResult<AdminDashboardDto>> GetDashboardStats()
+        {
+            var stats = await _adminService.GetDashboardStatsAsync();
+            return Ok(stats);
+        }
     }
 }

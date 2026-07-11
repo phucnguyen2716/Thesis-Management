@@ -253,6 +253,86 @@ namespace PlatformAdmin.Controllers
             }
         }
 
+        [HttpPut("history/{id}")]
+        [ApiResponse(StatusCodes.Status200OK)]
+        [ApiResponse(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> UpdateChatHistory(string id, [FromBody] UpdateChatRequest request)
+        {
+            int? userId = null;
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                var nameIdentifier = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (!string.IsNullOrEmpty(nameIdentifier) && int.TryParse(nameIdentifier, out var uid))
+                {
+                    userId = uid;
+                }
+            }
+
+            try
+            {
+                return await _shellScopeFactory.UsingAsync<IActionResult>(async (sp) =>
+                {
+                    var dbContext = sp.GetRequiredService<AppDbContext>();
+                    var item = await dbContext.ChatHistory
+                        .FirstOrDefaultAsync(h => h.Id == id && h.UserId == userId);
+                    
+                    if (item == null)
+                        return NotFound(new { message = "Chat history item not found." });
+
+                    if (!string.IsNullOrWhiteSpace(request.Prompt))
+                        item.Prompt = request.Prompt;
+                    if (!string.IsNullOrWhiteSpace(request.Message))
+                        item.Message = request.Message;
+
+                    await dbContext.SaveChangesAsync();
+                    return Ok(item);
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to update chat history item {Id}", id);
+                return StatusCode(500, new { message = "Failed to update chat history." });
+            }
+        }
+
+        [HttpDelete("history/{id}")]
+        [ApiResponse(StatusCodes.Status200OK)]
+        [ApiResponse(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> DeleteChatHistory(string id)
+        {
+            int? userId = null;
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                var nameIdentifier = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (!string.IsNullOrEmpty(nameIdentifier) && int.TryParse(nameIdentifier, out var uid))
+                {
+                    userId = uid;
+                }
+            }
+
+            try
+            {
+                return await _shellScopeFactory.UsingAsync<IActionResult>(async (sp) =>
+                {
+                    var dbContext = sp.GetRequiredService<AppDbContext>();
+                    var item = await dbContext.ChatHistory
+                        .FirstOrDefaultAsync(h => h.Id == id && h.UserId == userId);
+                    
+                    if (item == null)
+                        return NotFound(new { message = "Chat history item not found." });
+
+                    dbContext.ChatHistory.Remove(item);
+                    await dbContext.SaveChangesAsync();
+                    return Ok(new { message = "Deleted successfully." });
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to delete chat history item {Id}", id);
+                return StatusCode(500, new { message = "Failed to delete chat history." });
+            }
+        }
+
         [HttpGet("search")]
         [ApiResponse(typeof(IEnumerable<ChatHistoryModel>), StatusCodes.Status200OK)]
         [ApiResponse(StatusCodes.Status400BadRequest)]
@@ -409,6 +489,12 @@ namespace PlatformAdmin.Controllers
     public class ChatRequest
     {
         public string Prompt { get; set; } = string.Empty;
+    }
+
+    public class UpdateChatRequest
+    {
+        public string? Prompt { get; set; }
+        public string? Message { get; set; }
     }
 
     public class ChatResponse

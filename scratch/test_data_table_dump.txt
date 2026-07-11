@@ -1,0 +1,38 @@
+=== FILE: C:\Users\nguye\Downloads\225050646_Test DataTable.xlsx ===
+
+--- Sheet: TEST DATA TABLE (SCENARIO 1) ---
+Row 1: ["Test Data ID","Field Name","Value","Type","Description"]
+Row 2: ["TD01","Search Keyword","NVMe","Valid","Valid keyword"]
+Row 3: ["TD02","Search Keyword","nvme","Valid","Lowercase input"]
+Row 4: ["TD03","Search Keyword","NVMe Samsung","Valid","Specific keyword"]
+Row 5: ["TD04","Search Keyword","abcxyz123","Invalid","No matching product"]
+Row 6: ["TD05","Product Index",1,"Valid","Select first product"]
+Row 7: ["TD06","Quantity",1,"Valid","Default quantity"]
+
+--- Sheet: TEST DATA TABLE (SCENARIO 2) ---
+Row 1: ["Test Data ID","Field Name","Value","Type","Description"]
+Row 2: ["TD21","Product Exists","Yes","Valid","Product is already in cart"]
+Row 3: ["TD22","Product Count",1,"Valid","Single product in cart"]
+Row 4: ["TD23","Product Count","Multiple","Valid","Multiple products in cart"]
+Row 5: ["TD24","Action","Remove","Valid","Remove product action"]
+Row 6: ["TD25","Action","Remove Twice","Edge, Chrome","Remove same product twice"]
+Row 7: ["TD26","Network","Slow connection","Edge, Chrome","Slow network condition"]
+
+--- Sheet: TEST DATA TABLE (SCENARIO 3) ---
+Row 1: ["Test Data ID","Field Name","Value","Type","Description"]
+Row 2: ["TD31","Search Keyword","NVMe","Valid","Keyword to find product"]
+Row 3: ["TD32","Product Index",1,"Valid","Select first product"]
+Row 4: ["TD33","Initial Quantity",1,"Valid","Default quantity"]
+Row 5: ["TD34","Action","Spam Click (+)","Edge, Chrome","Rapidly click increase button multiple times"]
+Row 6: ["TD35","Click Count","4–5 times","Edge, Chrome","Number of rapid clicks"]
+Row 7: ["TD36","Max Quantity","System-defined","Edge, Chrome","Maximum quantity allowed by system"]
+
+--- Sheet: TEST DATA TABLE (SCENARIO 4) ---
+Row 1: ["Test Data ID","Field Name","Value","Type","Description"]
+Row 2: ["TD41","Search Keyword","NVMe","Valid","Keyword to find product"]
+Row 3: ["TD42","Product Index",1,"Valid","Select first product"]
+Row 4: ["TD43","Product Exists","Yes","Valid","Product is already in cart"]
+Row 5: ["TD44","Tab Count","2 Tabs","Edge","Open cart in multiple browser tabs"]
+Row 6: ["TD45","Action","Remove","Valid","Remove product action"]
+Row 7: ["TD46","Timing","Simultaneous","Edge","Perform actions at the same time"]
+Row 8: ["TD47","Network","Normal","Valid","Normal network condition"]

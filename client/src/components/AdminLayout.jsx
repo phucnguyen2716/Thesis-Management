@@ -17,6 +17,7 @@ const NAV = [
     ],
   },
   { label: 'Audit login', icon: 'history', path: '/admin/audit' },
+  { label: 'Hangfire Dashboard', icon: 'dns', path: '/admin/hangfire' },
 ];
 
 const AdminLayout = () => {

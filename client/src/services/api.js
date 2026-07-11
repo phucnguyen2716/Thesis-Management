@@ -67,6 +67,8 @@ export const thesisService = {
 export const chatbotService = {
   chat: (prompt) => api.post('/chatbot/chat', { prompt }),
   getHistory: () => api.get('/chatbot/history'),
+  updateHistory: (id, data) => api.put(`/chatbot/history/${id}`, data),
+  deleteHistory: (id) => api.delete(`/chatbot/history/${id}`),
 };
 
 export const geminiService = {
@@ -139,6 +141,7 @@ export const adminService = {
   updateUser: (id, data) => api.put(`/admin/users/${id}`, data),
   deleteUser: (id) => api.delete(`/admin/users/${id}`),
   getAuditLogs: () => api.get('/admin/audit-logs'),
+  getDashboardStats: () => api.get('/admin/dashboard-stats'),
 };
 
 export default api;

@@ -1,0 +1,39 @@
+services:
+  # 1. Backend Web Service (.NET Core with LibreOffice)
+  - type: web
+    name: ethesis-backend-api
+    env: docker
+    dockerfilePath: Dockerfile
+    plan: free
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: Database__Provider
+        value: postgres
+      - key: ConnectionStrings__PostgreSqlConnection
+        fromDatabase:
+          name: ethesis-postgres-db
+          property: connectionString
+      - key: Gemini__ApiKey
+        sync: true
+      - key: RabbitMQ__HostName
+        value: ""
+      - key: ElasticSearch__Uri
+        value: ""
+
+  # 2. Frontend React static site
+  - type: web
+    name: ethesis-frontend-portal
+    env: static
+    buildCommand: cd client && npm install && npm run build
+    publishDir: client/dist
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          name: ethesis-backend-api
+          property: url
+
+databases:
+  # 3. PostgreSQL Database
+  - name: ethesis-postgres-db
+    plan: free

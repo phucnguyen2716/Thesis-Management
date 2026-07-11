@@ -19,6 +19,7 @@ const useLanguage = () => {
   const toggleLanguage = useCallback(() => {
     const newLang = lang === 'vi' ? 'en' : 'vi';
     localStorage.setItem('lang', newLang);
+    setLang(newLang);
     window.dispatchEvent(new Event('language-changed'));
   }, [lang]);
 

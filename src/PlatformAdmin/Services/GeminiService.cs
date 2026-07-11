@@ -145,6 +145,116 @@ namespace PlatformAdmin.Services
                 }
             }
 
+            // Academic Handbook / Cẩm nang hỗ trợ học vụ
+            if (lower.Contains("cẩm nang") || lower.Contains("cam nang") || lower.Contains("academic handbook") || lower.Contains("hỗ trợ học vụ") || lower.Contains("ho tro hoc vu") || lower.Contains("học vụ") || lower.Contains("hoc vu"))
+            {
+                bool isEnglish = IsEnglishPrompt(originalPrompt);
+                if (isEnglish)
+                {
+                    return "📖 **UEF Academic Support Handbook**\n\n" +
+                           "Here is a summary of the key academic regulations and support information:\n\n" +
+                           "**1. 📝 Course Registration**\n" +
+                           "• Registration period: At the beginning of each semester as announced by the Academic Affairs Office.\n" +
+                           "• Students register online via the Student Portal at [https://sinhvien.uef.edu.vn](https://sinhvien.uef.edu.vn).\n" +
+                           "• Late registration requires approval from the Department.\n\n" +
+                           "**2. 📊 Grading & Assessment**\n" +
+                           "• Component scores: Attendance (10%), Midterm (30%), Final exam (60%).\n" +
+                           "• GPA scale: 4.0 (A = 4.0, B+ = 3.5, B = 3.0, C+ = 2.5, C = 2.0, D = 1.0, F = 0).\n" +
+                           "• Students with GPA below 1.0 for two consecutive semesters will receive an academic warning.\n\n" +
+                           "**3. 🎓 Graduation Requirements**\n" +
+                           "• Complete all required credits in the training program (minimum 130 credits).\n" +
+                           "• Cumulative GPA ≥ 2.0/4.0.\n" +
+                           "• English proficiency certificate (IELTS ≥ 5.5 or equivalent).\n" +
+                           "• No outstanding tuition fees or library obligations.\n\n" +
+                           "**4. 📞 Academic Support Contact**\n" +
+                           "• Academic Affairs Office: Building A, Room 101 | Phone: (028) 5422 7788 ext 113\n" +
+                           "• Student email support: phongdaotao@uef.edu.vn\n" +
+                           "• Office hours: Mon-Fri, 8:00 AM – 5:00 PM\n\n" +
+                           "Feel free to ask if you need more details about any specific topic!";
+                }
+                else
+                {
+                    return "📖 **Cẩm nang Hỗ trợ Học vụ UEF**\n\n" +
+                           "Dưới đây là tổng hợp các quy định học vụ và thông tin hỗ trợ quan trọng:\n\n" +
+                           "**1. 📝 Đăng ký học phần**\n" +
+                           "• Thời gian đăng ký: Đầu mỗi học kỳ theo thông báo của Phòng Đào tạo.\n" +
+                           "• Sinh viên đăng ký trực tuyến qua Cổng thông tin sinh viên tại [https://sinhvien.uef.edu.vn](https://sinhvien.uef.edu.vn).\n" +
+                           "• Đăng ký trễ cần có sự phê duyệt của Khoa/Bộ môn.\n\n" +
+                           "**2. 📊 Đánh giá & Chấm điểm**\n" +
+                           "• Cơ cấu điểm thành phần: Chuyên cần (10%), Giữa kỳ (30%), Cuối kỳ (60%).\n" +
+                           "• Thang điểm GPA: 4.0 (A = 4.0, B+ = 3.5, B = 3.0, C+ = 2.5, C = 2.0, D = 1.0, F = 0).\n" +
+                           "• Sinh viên có GPA dưới 1.0 trong 2 học kỳ liên tiếp sẽ bị cảnh báo học vụ.\n\n" +
+                           "**3. 🎓 Điều kiện Tốt nghiệp**\n" +
+                           "• Hoàn thành đủ tín chỉ theo chương trình đào tạo (tối thiểu 130 tín chỉ).\n" +
+                           "• Điểm trung bình tích lũy (GPA) ≥ 2.0/4.0.\n" +
+                           "• Chứng chỉ tiếng Anh đạt chuẩn (IELTS ≥ 5.5 hoặc tương đương).\n" +
+                           "• Không còn nợ học phí và nghĩa vụ với thư viện.\n\n" +
+                           "**4. 📞 Liên hệ Hỗ trợ Học vụ**\n" +
+                           "• Phòng Đào tạo: Tòa nhà A, Phòng 101 | ĐT: (028) 5422 7788 ext 113\n" +
+                           "• Email hỗ trợ sinh viên: phongdaotao@uef.edu.vn\n" +
+                           "• Giờ làm việc: Thứ 2 – Thứ 6, 8:00 – 17:00\n\n" +
+                           "Bạn cần tìm hiểu chi tiết về mục nào thì cứ hỏi tôi nhé!";
+                }
+            }
+
+            // Student Handbook / Sổ tay sinh viên
+            if (lower.Contains("sổ tay") || lower.Contains("so tay") || lower.Contains("student handbook") || lower.Contains("sinh viên handbook"))
+            {
+                bool isEnglish = IsEnglishPrompt(originalPrompt);
+                if (isEnglish)
+                {
+                    return "📘 **UEF Student Handbook**\n\n" +
+                           "Essential information every UEF student needs to know:\n\n" +
+                           "**1. 🏫 Campus Information**\n" +
+                           "• Main campus: 141-145 Dien Bien Phu, Ward 15, Binh Thanh District, HCMC.\n" +
+                           "• Campus 2: 276 Dien Bien Phu, Ward 17, Binh Thanh District, HCMC.\n" +
+                           "• Library open hours: Mon-Sat, 7:30 AM – 8:00 PM.\n\n" +
+                           "**2. 📅 Academic Calendar**\n" +
+                           "• Fall Semester: September – January.\n" +
+                           "• Spring Semester: February – June.\n" +
+                           "• Summer Semester: July – August (optional intensive courses).\n\n" +
+                           "**3. 🎒 Student Rights & Responsibilities**\n" +
+                           "• Students must attend at least 80% of classes per course.\n" +
+                           "• Dress code: Smart casual; no flip-flops or sleeveless shirts in classrooms.\n" +
+                           "• Cheating or plagiarism will result in immediate disciplinary action (grade F and a formal warning).\n\n" +
+                           "**4. 💰 Tuition & Financial Support**\n" +
+                           "• Tuition payment deadline: Within 2 weeks from the start of each semester.\n" +
+                           "• Scholarship opportunities: Academic Excellence, Sports, Community Service.\n" +
+                           "• Financial aid office: Building A, Room 203 | Email: taichinh@uef.edu.vn\n\n" +
+                           "**5. 🏥 Student Support Services**\n" +
+                           "• Health insurance: Compulsory, covered via student health insurance program.\n" +
+                           "• Counseling center: Free psychological counseling for all students.\n" +
+                           "• Career center: Internship and job placement support.\n\n" +
+                           "Need more information on any section? Just ask!";
+                }
+                else
+                {
+                    return "📘 **Sổ tay Sinh viên UEF**\n\n" +
+                           "Thông tin cần thiết mà mỗi sinh viên UEF cần nắm:\n\n" +
+                           "**1. 🏫 Thông tin Cơ sở**\n" +
+                           "• Cơ sở chính: 141-145 Điện Biên Phủ, Phường 15, Quận Bình Thạnh, TP.HCM.\n" +
+                           "• Cơ sở 2: 276 Điện Biên Phủ, Phường 17, Quận Bình Thạnh, TP.HCM.\n" +
+                           "• Giờ mở cửa Thư viện: Thứ 2 – Thứ 7, 7:30 – 20:00.\n\n" +
+                           "**2. 📅 Lịch Học vụ**\n" +
+                           "• Học kỳ Thu: Tháng 9 – Tháng 1.\n" +
+                           "• Học kỳ Xuân: Tháng 2 – Tháng 6.\n" +
+                           "• Học kỳ Hè: Tháng 7 – Tháng 8 (các lớp học phần tăng cường, tùy chọn).\n\n" +
+                           "**3. 🎒 Quyền lợi & Trách nhiệm Sinh viên**\n" +
+                           "• Sinh viên phải tham dự ít nhất 80% số buổi học mỗi môn.\n" +
+                           "• Quy định trang phục: Lịch sự, gọn gàng; không mang dép lê, áo ba lỗ vào lớp.\n" +
+                           "• Gian lận thi cử hoặc đạo văn sẽ bị xử lý kỷ luật ngay (điểm F và khiển trách).\n\n" +
+                           "**4. 💰 Học phí & Hỗ trợ Tài chính**\n" +
+                           "• Hạn nộp học phí: Trong vòng 2 tuần kể từ đầu mỗi học kỳ.\n" +
+                           "• Học bổng: Học bổng Xuất sắc Học thuật, Thể thao, Cộng đồng.\n" +
+                           "• Phòng Tài chính: Tòa nhà A, Phòng 203 | Email: taichinh@uef.edu.vn\n\n" +
+                           "**5. 🏥 Dịch vụ Hỗ trợ Sinh viên**\n" +
+                           "• Bảo hiểm y tế: Bắt buộc, được chi trả qua chương trình BHYT sinh viên.\n" +
+                           "• Trung tâm Tư vấn Tâm lý: Miễn phí cho toàn bộ sinh viên.\n" +
+                           "• Trung tâm Hướng nghiệp: Hỗ trợ thực tập và giới thiệu việc làm.\n\n" +
+                           "Bạn cần biết thêm chi tiết mục nào thì cứ hỏi tôi nhé!";
+                }
+            }
+
             var (apiKey, useMock) = GetGeminiConfig();
             _logger.LogInformation("Generating final natural language response. (Mock: {Mock})", useMock);
 
@@ -271,6 +381,38 @@ namespace PlatformAdmin.Services
                     }
                 }
 
+                // Academic Handbook
+                if (lower.Contains("handbook") || lower.Contains("academic handbook") || lower.Contains("manual") || lower.Contains("academic support"))
+                {
+                    return "📖 **UEF Academic Support Handbook**\n\n" +
+                           "Here is a summary of the key academic regulations and support information:\n\n" +
+                           "**1. 📝 Course Registration**\n" +
+                           "• Registration period: At the beginning of each semester as announced by the Academic Affairs Office.\n" +
+                           "• Students register online via the Student Portal at [https://sinhvien.uef.edu.vn](https://sinhvien.uef.edu.vn).\n\n" +
+                           "**2. 📊 Grading & Assessment**\n" +
+                           "• Component scores: Attendance (10%), Midterm (30%), Final exam (60%).\n" +
+                           "• GPA scale: 4.0 (A = 4.0, B+ = 3.5, B = 3.0, C+ = 2.5, C = 2.0, D = 1.0, F = 0).\n\n" +
+                           "**3. 🎓 Graduation Requirements**\n" +
+                           "• Complete all required credits (minimum 130 credits).\n" +
+                           "• Cumulative GPA ≥ 2.0/4.0.\n" +
+                           "• English proficiency certificate (IELTS ≥ 5.5 or equivalent).\n\n" +
+                           "**4. 📞 Contact:** Academic Affairs Office, Building A, Room 101 | (028) 5422 7788 ext 113\n\n" +
+                           "Feel free to ask if you need more details!";
+                }
+
+                // Student Handbook
+                if (lower.Contains("student handbook") || lower.Contains("student guide"))
+                {
+                    return "📘 **UEF Student Handbook**\n\n" +
+                           "Essential information every UEF student needs to know:\n\n" +
+                           "**1. 🏫 Campus:** 141-145 Dien Bien Phu, Binh Thanh District, HCMC.\n" +
+                           "**2. 📅 Calendar:** Fall (Sep–Jan), Spring (Feb–Jun), Summer (Jul–Aug).\n" +
+                           "**3. 🎒 Attendance:** Minimum 80% per course required.\n" +
+                           "**4. 💰 Tuition:** Payment due within 2 weeks of semester start.\n" +
+                           "**5. 🏥 Support:** Free counseling, health insurance, career center.\n\n" +
+                           "Need more information on any section? Just ask!";
+                }
+
                 // Default Fallback
                 return $"I hear you! As your eThesis academic assistant, I am happy to chat and guide you. Although I'm running in standby mode right now, you can still ask me to search for documents (e.g., \"find AI thesis\"), check formatting guidelines, or explain our mini-games. What part of our Digital Library shall we explore together?";
             }
@@ -353,6 +495,59 @@ namespace PlatformAdmin.Services
                     {
                         return "Tôi đã thực hiện tìm kiếm đề tài nhưng rất tiếc chưa tìm thấy kết quả nào khớp với yêu cầu của bạn. Bạn hãy thử tìm với từ khóa khác nhé!";
                     }
+                }
+
+                // Cẩm nang hỗ trợ học vụ
+                if (lower.Contains("cẩm nang") || lower.Contains("cam nang") || lower.Contains("học vụ") || lower.Contains("hoc vu"))
+                {
+                    return "📖 **Cẩm nang Hỗ trợ Học vụ UEF**\n\n" +
+                           "Dưới đây là tổng hợp các quy định học vụ và thông tin hỗ trợ quan trọng:\n\n" +
+                           "**1. 📝 Đăng ký học phần**\n" +
+                           "• Thời gian đăng ký: Đầu mỗi học kỳ theo thông báo của Phòng Đào tạo.\n" +
+                           "• Sinh viên đăng ký trực tuyến qua Cổng thông tin sinh viên tại [https://sinhvien.uef.edu.vn](https://sinhvien.uef.edu.vn).\n" +
+                           "• Đăng ký trễ cần có sự phê duyệt của Khoa/Bộ môn.\n\n" +
+                           "**2. 📊 Đánh giá & Chấm điểm**\n" +
+                           "• Cơ cấu điểm thành phần: Chuyên cần (10%), Giữa kỳ (30%), Cuối kỳ (60%).\n" +
+                           "• Thang điểm GPA: 4.0 (A = 4.0, B+ = 3.5, B = 3.0, C+ = 2.5, C = 2.0, D = 1.0, F = 0).\n" +
+                           "• Sinh viên có GPA dưới 1.0 trong 2 học kỳ liên tiếp sẽ bị cảnh báo học vụ.\n\n" +
+                           "**3. 🎓 Điều kiện Tốt nghiệp**\n" +
+                           "• Hoàn thành đủ tín chỉ theo chương trình đào tạo (tối thiểu 130 tín chỉ).\n" +
+                           "• Điểm trung bình tích lũy (GPA) ≥ 2.0/4.0.\n" +
+                           "• Chứng chỉ tiếng Anh đạt chuẩn (IELTS ≥ 5.5 hoặc tương đương).\n" +
+                           "• Không còn nợ học phí và nghĩa vụ với thư viện.\n\n" +
+                           "**4. 📞 Liên hệ Hỗ trợ Học vụ**\n" +
+                           "• Phòng Đào tạo: Tòa nhà A, Phòng 101 | ĐT: (028) 5422 7788 ext 113\n" +
+                           "• Email hỗ trợ sinh viên: phongdaotao@uef.edu.vn\n" +
+                           "• Giờ làm việc: Thứ 2 – Thứ 6, 8:00 – 17:00\n\n" +
+                           "Bạn cần tìm hiểu chi tiết về mục nào thì cứ hỏi tôi nhé!";
+                }
+
+                // Sổ tay sinh viên
+                if (lower.Contains("sổ tay") || lower.Contains("so tay"))
+                {
+                    return "📘 **Sổ tay Sinh viên UEF**\n\n" +
+                           "Thông tin cần thiết mà mỗi sinh viên UEF cần nắm:\n\n" +
+                           "**1. 🏫 Thông tin Cơ sở**\n" +
+                           "• Cơ sở chính: 141-145 Điện Biên Phủ, Phường 15, Quận Bình Thạnh, TP.HCM.\n" +
+                           "• Cơ sở 2: 276 Điện Biên Phủ, Phường 17, Quận Bình Thạnh, TP.HCM.\n" +
+                           "• Giờ mở cửa Thư viện: Thứ 2 – Thứ 7, 7:30 – 20:00.\n\n" +
+                           "**2. 📅 Lịch Học vụ**\n" +
+                           "• Học kỳ Thu: Tháng 9 – Tháng 1.\n" +
+                           "• Học kỳ Xuân: Tháng 2 – Tháng 6.\n" +
+                           "• Học kỳ Hè: Tháng 7 – Tháng 8 (các lớp học phần tăng cường, tùy chọn).\n\n" +
+                           "**3. 🎒 Quyền lợi & Trách nhiệm Sinh viên**\n" +
+                           "• Sinh viên phải tham dự ít nhất 80% số buổi học mỗi môn.\n" +
+                           "• Quy định trang phục: Lịch sự, gọn gàng; không mang dép lê, áo ba lỗ vào lớp.\n" +
+                           "• Gian lận thi cử hoặc đạo văn sẽ bị xử lý kỷ luật ngay (điểm F và khiển trách).\n\n" +
+                           "**4. 💰 Học phí & Hỗ trợ Tài chính**\n" +
+                           "• Hạn nộp học phí: Trong vòng 2 tuần kể từ đầu mỗi học kỳ.\n" +
+                           "• Học bổng: Học bổng Xuất sắc Học thuật, Thể thao, Cộng đồng.\n" +
+                           "• Phòng Tài chính: Tòa nhà A, Phòng 203 | Email: taichinh@uef.edu.vn\n\n" +
+                           "**5. 🏥 Dịch vụ Hỗ trợ Sinh viên**\n" +
+                           "• Bảo hiểm y tế: Bắt buộc, được chi trả qua chương trình BHYT sinh viên.\n" +
+                           "• Trung tâm Tư vấn Tâm lý: Miễn phí cho toàn bộ sinh viên.\n" +
+                           "• Trung tâm Hướng nghiệp: Hỗ trợ thực tập và giới thiệu việc làm.\n\n" +
+                           "Bạn cần biết thêm chi tiết mục nào thì cứ hỏi tôi nhé!";
                 }
 
                 // Default Fallback

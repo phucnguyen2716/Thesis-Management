@@ -644,117 +644,376 @@ function getActivityDiagram() {
   `;
 }
 
-// 5. State Diagram SVG
-function getStateDiagram() {
+// 5a. State Diagram Phase 1
+function getStateDiagramPhase1() {
   return `
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 650" width="1000" height="650">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 400" width="900" height="400">
       <style>
-        .title { font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 800; fill: #ffffff; letter-spacing: 0.5px; }
-        .state-name { font-family: 'Inter', sans-serif; font-size: 11px; font-weight: bold; fill: #ffffff; }
-        .trans-label { font-family: 'Consolas', monospace; font-size: 9px; fill: #38bdf8; }
-        .conn { stroke: #475569; stroke-width: 1.5; fill: none; }
+        .title { font-family: 'Arial', sans-serif; font-size: 15px; font-weight: bold; fill: #000000; }
+        .state-name { font-family: 'Arial', sans-serif; font-size: 11px; font-weight: bold; fill: #000000; }
+        .state-desc { font-family: 'Arial', sans-serif; font-size: 9px; fill: #000000; }
+        .trans-label { font-family: 'Arial', sans-serif; font-size: 9px; fill: #000000; }
+        .conn { stroke: #000000; stroke-width: 1.2; fill: none; }
+        .conn-dash { stroke: #000000; stroke-width: 1.2; stroke-dasharray: 3 3; fill: none; }
       </style>
       
-      <!-- Background -->
-      <rect width="100%" height="100%" fill="#0f172a" rx="16"/>
+      <!-- Background (White Canvas) -->
+      <rect width="100%" height="100%" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" rx="16"/>
       
       <!-- Header -->
-      <rect width="100%" height="60" fill="#1e293b" rx="16"/>
-      <text x="30" y="36" class="title">UML STATE MACHINE DIAGRAM - THESIS STATE LIFECYCLE</text>
-      <rect x="830" y="18" width="140" height="24" rx="12" fill="#8b5cf6" opacity="0.2"/>
-      <text x="900" y="33" fill="#8b5cf6" font-family="Inter, sans-serif" font-size="9" font-weight="900" text-anchor="middle">STATE MACHINE</text>
+      <rect width="100%" height="60" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" rx="16"/>
+      <text x="30" y="35" class="title">STATE DIAGRAM - PHASE 1: ĐỀ XUẤT &amp; XÉT DUYỆT ĐỀ TÀI</text>
+      <rect x="730" y="18" width="140" height="24" rx="12" fill="#000000" opacity="0.05"/>
+      <text x="800" y="33" fill="#000000" font-family="Arial, sans-serif" font-size="9" font-weight="bold" text-anchor="middle">PROPOSAL STAGE</text>
+
+      <!-- Connections -->
+      <line x1="80" y1="160" x2="150" y2="160" class="conn" marker-end="url(#arrow)"/>
+      <text x="115" y="150" class="trans-label" text-anchor="middle">create()</text>
+
+      <line x1="310" y1="160" x2="420" y2="160" class="conn" marker-end="url(#arrow)"/>
+      <text x="365" y="150" class="trans-label" text-anchor="middle">submit()</text>
+
+      <line x1="510" y1="205" x2="510" y2="260" class="conn" marker-end="url(#arrow)"/>
+      <text x="520" y="225" class="trans-label">reject()</text>
+
+      <path d="M 420 300 H 230 V 205" class="conn-dash" marker-end="url(#arrow)"/>
+      <text x="240" y="290" class="trans-label">edit()</text>
+
+      <line x1="600" y1="160" x2="700" y2="160" class="conn" marker-end="url(#arrow)"/>
+      <text x="650" y="150" class="trans-label" text-anchor="middle">approve()</text>
 
       <!-- States -->
-      <!-- Start -->
-      <circle cx="80" cy="220" r="10" fill="#ffffff"/>
-      <line x1="90" y1="220" x2="162" y2="220" class="conn" marker-end="url(#arrow)"/>
-      <text x="120" y="210" class="trans-label" text-anchor="middle">Register()</text>
+      <!-- Start Circle -->
+      <circle cx="70" cy="160" r="10" fill="#000000"/>
 
-      <!-- State: Pending -->
-      <g transform="translate(170, 185)">
-        <rect width="120" height="70" rx="12" ry="12" fill="#1e293b" stroke="#a78bfa" stroke-width="2" filter="url(#glow)"/>
-        <text x="60" y="35" class="state-name" text-anchor="middle">PENDING</text>
-        <text x="60" y="50" fill="#64748b" font-family="Inter, sans-serif" font-size="8" text-anchor="middle">Chờ giảng viên duyệt</text>
+      <!-- DRAFT -->
+      <g transform="translate(150, 125)">
+        <rect width="160" height="90" rx="8" ry="8" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+        <text x="80" y="25" class="state-name" text-anchor="middle">DRAFT</text>
+        <line x1="0" y1="35" x2="160" y2="35" stroke="#000000" stroke-width="1"/>
+        <text x="10" y="55" class="state-desc">entry / createRecord()</text>
+        <text x="10" y="75" class="state-desc">do / editMetadata()</text>
       </g>
 
-      <!-- Transition: Pending -> Rejected -->
-      <path d="M 230 260 V 380" class="conn" marker-end="url(#arrow)"/>
-      <text x="240" y="320" class="trans-label">Reject() [Lý do từ chối]</text>
-
-      <!-- State: Rejected -->
-      <g transform="translate(170, 390)">
-        <rect width="120" height="70" rx="12" ry="12" fill="#1e293b" stroke="#ef4444" stroke-width="2"/>
-        <text x="60" y="35" class="state-name" text-anchor="middle">REJECTED</text>
-        <text x="60" y="50" fill="#64748b" font-family="Inter, sans-serif" font-size="8" text-anchor="middle">Đã bị từ chối</text>
+      <!-- PENDING -->
+      <g transform="translate(420, 115)">
+        <rect width="180" height="90" rx="8" ry="8" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+        <text x="90" y="25" class="state-name" text-anchor="middle">PENDING_REVIEW</text>
+        <line x1="0" y1="35" x2="180" y2="35" stroke="#000000" stroke-width="1"/>
+        <text x="10" y="55" class="state-desc">entry / notifyCataloger()</text>
+        <text x="10" y="75" class="state-desc">do / verifyCopyright()</text>
       </g>
 
-      <!-- Transition: Rejected -> Pending -->
-      <path d="M 170 425 H 120 V 240 H 162" class="conn" stroke-dasharray="3 3" marker-end="url(#arrow)"/>
-      <text x="90" y="340" class="trans-label">ReSubmit()</text>
-
-      <!-- Transition: Pending -> InProgress -->
-      <line x1="290" y1="220" x2="412" y2="220" class="conn" marker-end="url(#arrow)"/>
-      <text x="350" y="210" class="trans-label" text-anchor="middle">Approve()</text>
-
-      <!-- State: InProgress -->
-      <g transform="translate(420, 185)">
-        <rect width="130" height="70" rx="12" ry="12" fill="#1e293b" stroke="#3b82f6" stroke-width="2"/>
-        <text x="65" y="35" class="state-name" text-anchor="middle">IN_PROGRESS</text>
-        <text x="65" y="50" fill="#64748b" font-family="Inter, sans-serif" font-size="8" text-anchor="middle">Đang làm đồ án</text>
+      <!-- REJECTED -->
+      <g transform="translate(420, 260)">
+        <rect width="180" height="80" rx="8" ry="8" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+        <text x="90" y="25" class="state-name" text-anchor="middle">REJECTED</text>
+        <line x1="0" y1="35" x2="180" y2="35" stroke="#000000" stroke-width="1"/>
+        <text x="10" y="55" class="state-desc">entry / logErrors()</text>
       </g>
 
-      <!-- Transition: InProgress -> Submitted -->
-      <line x1="550" y1="220" x2="682" y2="220" class="conn" marker-end="url(#arrow)"/>
-      <text x="616" y="210" class="trans-label" text-anchor="middle">SubmitFile()</text>
-
-      <!-- State: Submitted -->
-      <g transform="translate(690, 185)">
-        <rect width="130" height="70" rx="12" ry="12" fill="#1e293b" stroke="#f59e0b" stroke-width="2"/>
-        <text x="65" y="35" class="state-name" text-anchor="middle">SUBMITTED</text>
-        <text x="65" y="50" fill="#64748b" font-family="Inter, sans-serif" font-size="8" text-anchor="middle">Đã nộp bản thảo</text>
-      </g>
-
-      <!-- Transition: Submitted -> UnderReview -->
-      <line x1="755" y1="260" x2="755" y2="382" class="conn" marker-end="url(#arrow)"/>
-      <text x="765" y="320" class="trans-label">StartEvaluation()</text>
-
-      <!-- State: UnderReview -->
-      <g transform="translate(690, 390)">
-        <rect width="130" height="70" rx="12" ry="12" fill="#1e293b" stroke="#8b5cf6" stroke-width="2"/>
-        <text x="65" y="35" class="state-name" text-anchor="middle">UNDER_REVIEW</text>
-        <text x="65" y="50" fill="#64748b" font-family="Inter, sans-serif" font-size="8" text-anchor="middle">Hội đồng/GV đang chấm</text>
-      </g>
-
-      <!-- Transition: UnderReview -> Revision -->
-      <path d="M 690 425 H 520 V 260" class="conn" stroke-dasharray="3 3" marker-end="url(#arrow)"/>
-      <text x="590" y="415" class="trans-label">RequireRevision()</text>
-
-      <!-- Transition: UnderReview -> Approved -->
-      <path d="M 755 465 H 480 V 550" class="conn" marker-end="url(#arrow)"/>
-      <text x="620" y="535" class="trans-label">AcceptThesis() [Điểm đạt]</text>
-
-      <!-- State: Approved -->
-      <g transform="translate(360, 560)">
-        <rect width="240" height="60" rx="12" ry="12" fill="#1e293b" stroke="#10b981" stroke-width="2"/>
-        <text x="120" y="30" class="state-name" text-anchor="middle">APPROVED / FINISHED</text>
-        <text x="120" y="45" fill="#64748b" font-family="Inter, sans-serif" font-size="8" text-anchor="middle">Bảo vệ thành công &amp; lưu thư viện</text>
-      </g>
-
-      <!-- End state pointer -->
-      <line x1="600" y1="590" x2="682" y2="590" class="conn" marker-end="url(#arrow)"/>
-      <g transform="translate(690, 580)">
-        <circle cx="10" cy="10" r="10" fill="#ffffff"/>
-        <circle cx="10" cy="10" r="6" fill="#0f172a"/>
+      <!-- IN_PROGRESS -->
+      <g transform="translate(700, 115)">
+        <rect width="150" height="90" rx="8" ry="8" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+        <text x="75" y="25" class="state-name" text-anchor="middle">PUBLISHED</text>
+        <line x1="0" y1="35" x2="150" y2="35" stroke="#000000" stroke-width="1"/>
+        <text x="10" y="55" class="state-desc">entry / indexElastic()</text>
+        <text x="10" y="75" class="state-desc">do / enableAccess()</text>
       </g>
 
       <!-- Definitions -->
       <defs>
-        <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto">
-          <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#64748b"/>
+        <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#000000"/>
         </marker>
-        <filter id="glow" x="-10%" y="-10%" width="120%" height="120%">
-          <feDropShadow dx="0" dy="0" stdDeviation="3" flood-color="#a78bfa" flood-opacity="0.15"/>
-        </filter>
+      </defs>
+    </svg>
+  `;
+}
+
+// 5b. State Diagram Phase 2
+function getStateDiagramPhase2() {
+  return `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 450" width="900" height="450">
+      <style>
+        .title { font-family: 'Arial', sans-serif; font-size: 15px; font-weight: bold; fill: #000000; }
+        .state-name { font-family: 'Arial', sans-serif; font-size: 11px; font-weight: bold; fill: #000000; }
+        .state-desc { font-family: 'Arial', sans-serif; font-size: 9px; fill: #000000; }
+        .trans-label { font-family: 'Arial', sans-serif; font-size: 9px; fill: #000000; }
+        .conn { stroke: #000000; stroke-width: 1.2; fill: none; }
+      </style>
+      
+      <!-- Background -->
+      <rect width="100%" height="100%" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" rx="16"/>
+      
+      <!-- Header -->
+      <rect width="100%" height="60" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" rx="16"/>
+      <text x="30" y="35" class="title">STATE DIAGRAM - PHASE 2: VẬN HÀNH &amp; CẤP QUYỀN TRUY CẬP</text>
+      <rect x="730" y="18" width="140" height="24" rx="12" fill="#000000" opacity="0.05"/>
+      <text x="800" y="33" fill="#000000" font-family="Arial, sans-serif" font-size="9" font-weight="bold" text-anchor="middle">ACCESS CONTROL</text>
+
+      <!-- Connections -->
+      <line x1="80" y1="160" x2="150" y2="160" class="conn" marker-end="url(#arrow)"/>
+
+      <line x1="310" y1="160" x2="430" y2="160" class="conn" marker-end="url(#arrow)"/>
+
+      <line x1="470" y1="160" x2="580" y2="160" class="conn" marker-end="url(#arrow)"/>
+      <text x="525" y="150" class="trans-label" text-anchor="middle">[isConfidential]</text>
+
+      <path d="M 450 180 V 315 H 580" class="conn" marker-end="url(#arrow)"/>
+      <text x="460" y="240" class="trans-label">[isOutdated]</text>
+
+      <path d="M 665 115 V 70 H 230 V 115" class="conn" marker-end="url(#arrow)"/>
+      <text x="440" y="60" class="trans-label" text-anchor="middle">setPublic()</text>
+
+      <line x1="665" y1="205" x2="665" y2="260" class="conn" marker-end="url(#arrow)"/>
+      <text x="675" y="235" class="trans-label">deprecate()</text>
+
+      <line x1="750" y1="305" x2="830" y2="305" class="conn" marker-end="url(#arrow)"/>
+      <text x="790" y="295" class="trans-label" text-anchor="middle">archive()</text>
+
+      <!-- States -->
+      <!-- Start Circle -->
+      <circle cx="70" cy="160" r="10" fill="#000000"/>
+
+      <!-- PUBLISHED -->
+      <g transform="translate(150, 115)">
+        <rect width="160" height="90" rx="8" ry="8" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+        <text x="80" y="25" class="state-name" text-anchor="middle">PUBLISHED</text>
+        <line x1="0" y1="35" x2="160" y2="35" stroke="#000000" stroke-width="1"/>
+        <text x="10" y="55" class="state-desc">entry / indexElastic()</text>
+        <text x="10" y="75" class="state-desc">do / enableAccess()</text>
+      </g>
+
+      <!-- Decision Guard Diamond -->
+      <polygon points="450,140 470,160 450,180 430,160" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+
+      <!-- RESTRICTED -->
+      <g transform="translate(580, 115)">
+        <rect width="170" height="90" rx="8" ry="8" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+        <text x="85" y="25" class="state-name" text-anchor="middle">RESTRICTED</text>
+        <line x1="0" y1="35" x2="170" y2="35" stroke="#000000" stroke-width="1"/>
+        <text x="10" y="55" class="state-desc">entry / disableAccess()</text>
+        <text x="10" y="75" class="state-desc">do / showMetadataOnly()</text>
+      </g>
+
+      <!-- ARCHIVED -->
+      <g transform="translate(580, 260)">
+        <rect width="170" height="90" rx="8" ry="8" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+        <text x="85" y="25" class="state-name" text-anchor="middle">ARCHIVED</text>
+        <line x1="0" y1="35" x2="170" y2="35" stroke="#000000" stroke-width="1"/>
+        <text x="10" y="55" class="state-desc">entry / moveToColdStore()</text>
+      </g>
+
+      <!-- End State -->
+      <g transform="translate(830, 295)">
+        <circle cx="10" cy="10" r="10" fill="none" stroke="#000000" stroke-width="1.5"/>
+        <circle cx="10" cy="10" r="6" fill="#000000"/>
+      </g>
+
+      <!-- Definitions -->
+      <defs>
+        <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#000000"/>
+        </marker>
+      </defs>
+    </svg>
+  `;
+}
+
+// 5c. State Diagram Phase 3
+function getStateDiagramPhase3() {
+  return `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 480" width="1000" height="480">
+      <style>
+        .title { font-family: 'Arial', sans-serif; font-size: 15px; font-weight: bold; fill: #000000; }
+        .tab-text { font-family: 'Arial', sans-serif; font-size: 10px; font-weight: bold; fill: #000000; }
+        .state-name { font-family: 'Arial', sans-serif; font-size: 11px; font-weight: bold; fill: #000000; }
+        .state-desc { font-family: 'Arial', sans-serif; font-size: 9px; fill: #000000; }
+        .trans-label { font-family: 'Arial', sans-serif; font-size: 9px; fill: #000000; }
+        .conn { stroke: #000000; stroke-width: 1.2; fill: none; }
+      </style>
+      
+      <!-- Background -->
+      <rect width="100%" height="100%" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" rx="16"/>
+      
+      <!-- Header -->
+      <rect width="100%" height="60" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" rx="16"/>
+      <text x="30" y="35" class="title">STATE DIAGRAM - PHASE 3: TIẾN TRÌNH XỬ LÝ TÀI LIỆU SỐ</text>
+      <rect x="830" y="18" width="140" height="24" rx="12" fill="#000000" opacity="0.05"/>
+      <text x="900" y="33" fill="#000000" font-family="Arial, sans-serif" font-size="9" font-weight="bold" text-anchor="middle">FILE PROCESSING</text>
+
+      <!-- Connections -->
+      <line x1="60" y1="226" x2="120" y2="226" class="conn" marker-end="url(#arrow)"/>
+
+      <!-- Inside Composite State Connections -->
+      <line x1="190" y1="180" x2="240" y2="180" class="conn" marker-end="url(#arrow)"/>
+
+      <line x1="360" y1="180" x2="420" y2="180" class="conn" marker-end="url(#arrow)"/>
+      <text x="390" y="170" class="trans-label" text-anchor="middle">upload()</text>
+
+      <line x1="560" y1="180" x2="620" y2="180" class="conn" marker-end="url(#arrow)"/>
+      <text x="590" y="170" class="trans-label" text-anchor="middle">convertSuccess()</text>
+
+      <line x1="695" y1="225" x2="695" y2="280" class="conn" marker-end="url(#arrow)"/>
+      <text x="705" y="255" class="trans-label">scanSuccess()</text>
+
+      <!-- Connection exiting composite state -->
+      <line x1="770" y1="325" x2="860" y2="325" class="conn" marker-end="url(#arrow)"/>
+      <text x="815" y="315" class="trans-label" text-anchor="middle">syncSuccess()</text>
+
+      <!-- External Start Circle -->
+      <circle cx="50" cy="226" r="10" fill="#000000"/>
+
+      <!-- COMPOSITE STATE: FileProcessing -->
+      <rect x="120" y="90" width="680" height="320" rx="12" ry="12" fill="none" stroke="#000000" stroke-width="1.5"/>
+      <rect x="120" y="66" width="140" height="24" rx="4" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+      <text x="130" y="82" class="tab-text">FileProcessing</text>
+
+      <!-- Inner Start Circle -->
+      <circle cx="180" cy="180" r="10" fill="#000000"/>
+
+      <!-- DRAFTING -->
+      <g transform="translate(240, 135)">
+        <rect width="120" height="90" rx="8" ry="8" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+        <text x="60" y="25" class="state-name" text-anchor="middle">DRAFTING</text>
+        <line x1="0" y1="35" x2="120" y2="35" stroke="#000000" stroke-width="1"/>
+        <text x="10" y="55" class="state-desc">entry / saveLocal()</text>
+      </g>
+
+      <!-- CONVERTING -->
+      <g transform="translate(420, 135)">
+        <rect width="140" height="90" rx="8" ry="8" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+        <text x="70" y="25" class="state-name" text-anchor="middle">CONVERTING</text>
+        <line x1="0" y1="35" x2="140" y2="35" stroke="#000000" stroke-width="1"/>
+        <text x="10" y="55" class="state-desc">do / runLibreOffice()</text>
+      </g>
+
+      <!-- SCANNING -->
+      <g transform="translate(620, 135)">
+        <rect width="150" height="90" rx="8" ry="8" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+        <text x="75" y="25" class="state-name" text-anchor="middle">SCANNING</text>
+        <line x1="0" y1="35" x2="150" y2="35" stroke="#000000" stroke-width="1"/>
+        <text x="10" y="55" class="state-desc">do / runGeminiScan()</text>
+      </g>
+
+      <!-- SYNCING -->
+      <g transform="translate(620, 280)">
+        <rect width="150" height="90" rx="8" ry="8" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+        <text x="75" y="25" class="state-name" text-anchor="middle">SYNCING_DRIVE</text>
+        <line x1="0" y1="35" x2="150" y2="35" stroke="#000000" stroke-width="1"/>
+        <text x="10" y="55" class="state-desc">do / uploadToDrive()</text>
+      </g>
+
+      <!-- External Target State: ReadyForPublish -->
+      <g transform="translate(860, 280)">
+        <rect width="120" height="90" rx="8" ry="8" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+        <text x="60" y="25" class="state-name" text-anchor="middle">READY</text>
+        <line x1="0" y1="35" x2="120" y2="35" stroke="#000000" stroke-width="1"/>
+        <text x="10" y="55" class="state-desc">do / setReadyFlag()</text>
+      </g>
+
+      <!-- Definitions -->
+      <defs>
+        <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#000000"/>
+        </marker>
+      </defs>
+    </svg>
+  `;
+}
+
+// 5d. State Diagram Phase 4
+function getStateDiagramPhase4() {
+  return `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 950 400" width="950" height="400">
+      <style>
+        .title { font-family: 'Arial', sans-serif; font-size: 15px; font-weight: bold; fill: #000000; }
+        .state-name { font-family: 'Arial', sans-serif; font-size: 11px; font-weight: bold; fill: #000000; }
+        .state-desc { font-family: 'Arial', sans-serif; font-size: 9px; fill: #000000; }
+        .trans-label { font-family: 'Arial', sans-serif; font-size: 9px; fill: #000000; }
+        .conn { stroke: #000000; stroke-width: 1.2; fill: none; }
+      </style>
+      
+      <!-- Background -->
+      <rect width="100%" height="100%" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" rx="16"/>
+      
+      <!-- Header -->
+      <rect width="100%" height="60" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" rx="16"/>
+      <text x="30" y="35" class="title">STATE DIAGRAM - PHASE 4: TRA CỨU &amp; TƯƠNG TÁC ĐỘC GIẢ</text>
+      <rect x="780" y="18" width="140" height="24" rx="12" fill="#000000" opacity="0.05"/>
+      <text x="850" y="33" fill="#000000" font-family="Arial, sans-serif" font-size="9" font-weight="bold" text-anchor="middle">INTERACTION STAGE</text>
+
+      <!-- Connections -->
+      <line x1="80" y1="160" x2="150" y2="160" class="conn" marker-end="url(#arrow)"/>
+
+      <line x1="280" y1="160" x2="360" y2="160" class="conn" marker-end="url(#arrow)"/>
+      <text x="320" y="150" class="trans-label" text-anchor="middle">select()</text>
+
+      <line x1="520" y1="160" x2="600" y2="160" class="conn" marker-end="url(#arrow)"/>
+      <text x="560" y="150" class="trans-label" text-anchor="middle">bookmark()</text>
+
+      <line x1="420" y1="205" x2="420" y2="260" class="conn" marker-end="url(#arrow)"/>
+      <text x="410" y="235" class="trans-label" text-anchor="end">download()</text>
+
+      <line x1="460" y1="260" x2="460" y2="205" class="conn" marker-end="url(#arrow)"/>
+      <text x="470" y="235" class="trans-label" text-anchor="start">done()</text>
+
+      <path d="M 680 115 V 75 H 440 V 115" class="conn" marker-end="url(#arrow)"/>
+      <text x="560" y="65" class="trans-label" text-anchor="middle">view()</text>
+
+      <path d="M 440 115 V 50 H 850 V 150" class="conn" marker-end="url(#arrow)"/>
+      <text x="650" y="40" class="trans-label" text-anchor="middle">close()</text>
+
+      <!-- States -->
+      <!-- Start Circle -->
+      <circle cx="70" cy="160" r="10" fill="#000000"/>
+
+      <!-- AVAILABLE -->
+      <g transform="translate(150, 115)">
+        <rect width="130" height="90" rx="8" ry="8" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+        <text x="65" y="25" class="state-name" text-anchor="middle">AVAILABLE</text>
+        <line x1="0" y1="35" x2="130" y2="35" stroke="#000000" stroke-width="1"/>
+        <text x="10" y="55" class="state-desc">entry / logPublish()</text>
+      </g>
+
+      <!-- VIEWING -->
+      <g transform="translate(360, 115)">
+        <rect width="160" height="90" rx="8" ry="8" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+        <text x="80" y="25" class="state-name" text-anchor="middle">VIEWING</text>
+        <line x1="0" y1="35" x2="160" y2="35" stroke="#000000" stroke-width="1"/>
+        <text x="10" y="55" class="state-desc">entry / incViews()</text>
+        <text x="10" y="75" class="state-desc">do / renderFlipbook()</text>
+      </g>
+
+      <!-- BOOKMARKED -->
+      <g transform="translate(600, 115)">
+        <rect width="160" height="90" rx="8" ry="8" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+        <text x="80" y="25" class="state-name" text-anchor="middle">BOOKMARKED</text>
+        <line x1="0" y1="35" x2="160" y2="35" stroke="#000000" stroke-width="1"/>
+        <text x="10" y="55" class="state-desc">entry / addToFavs()</text>
+      </g>
+
+      <!-- DOWNLOADING -->
+      <g transform="translate(360, 260)">
+        <rect width="160" height="90" rx="8" ry="8" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+        <text x="80" y="25" class="state-name" text-anchor="middle">DOWNLOADING</text>
+        <line x1="0" y1="35" x2="160" y2="35" stroke="#000000" stroke-width="1"/>
+        <text x="10" y="55" class="state-desc">entry / logDownload()</text>
+        <text x="10" y="75" class="state-desc">do / streamFile()</text>
+      </g>
+
+      <!-- End State -->
+      <g transform="translate(840, 150)">
+        <circle cx="10" cy="10" r="10" fill="none" stroke="#000000" stroke-width="1.5"/>
+        <circle cx="10" cy="10" r="6" fill="#000000"/>
+      </g>
+
+      <!-- Definitions -->
+      <defs>
+        <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#000000"/>
+        </marker>
       </defs>
     </svg>
   `;
@@ -775,11 +1034,10 @@ async function generateUML() {
   console.log(`Starting generation of UML diagrams...`);
 
   const diagrams = [
-    { name: 'erd_diagram', content: getERD() },
-    { name: 'class_diagram', content: getClassDiagram() },
-    { name: 'sequence_diagram', content: getSequenceDiagram() },
-    { name: 'activity_diagram', content: getActivityDiagram() },
-    { name: 'state_diagram', content: getStateDiagram() }
+    { name: 'state_diagram_phase1_proposal', content: getStateDiagramPhase1() },
+    { name: 'state_diagram_phase2_plagiarism', content: getStateDiagramPhase2() },
+    { name: 'state_diagram_phase3_sync_review', content: getStateDiagramPhase3() },
+    { name: 'state_diagram_phase4_defense', content: getStateDiagramPhase4() }
   ];
 
   for (const diag of diagrams) {

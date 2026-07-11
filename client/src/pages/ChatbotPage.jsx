@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { chatbotService } from '../services/api';
 import useLanguage from '../hooks/useLanguage';
-import { ArrowLeft, Plus, Send, LogOut, ChevronDown, BookOpen, FileText } from 'lucide-react';
+import { ArrowLeft, Plus, Send, LogOut, ChevronDown, BookOpen, FileText, MessageSquare, Pencil, Trash2, Check, X } from 'lucide-react';
 
 const DEFAULT_AVATAR = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80';
 
@@ -26,6 +26,9 @@ const ChatbotPage = () => {
   const [messages, setMessages] = useState([
     { id: 1, text: lang === 'vi' ? "Xin chào! Tôi có thể hỗ trợ gì cho bạn về hệ thống đề tài?" : "Hello! How can I assist you with the academic thesis system?", sender: "system", time: "10:00" }
   ]);
+  const [chatHistory, setChatHistory] = useState([]);
+  const [editingMsgId, setEditingMsgId] = useState(null);
+  const [editText, setEditText] = useState('');
 
   const messagesEndRef = useRef(null);
 
@@ -52,6 +55,9 @@ const ChatbotPage = () => {
       const res = await chatbotService.getHistory();
       const historyData = res.data || [];
       const sortedHistory = [...historyData].reverse();
+
+      // Store history items for sidebar display
+      setChatHistory(sortedHistory);
       
       const loadedMessages = [
         { 
@@ -136,13 +142,41 @@ const ChatbotPage = () => {
     }
   };
 
-  const handleQuickQuestion = (text) => {
-    setChatMessage(text);
-    // Submit using a small timeout so that the state updates
-    setTimeout(() => {
-      const inputEl = document.getElementById('chatbot-input-field');
-      inputEl?.focus();
-    }, 50);
+  const handleQuickQuestion = async (text) => {
+    if (loading) return;
+
+    const userMsgTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const newUserMessage = {
+      id: Date.now(),
+      text: text,
+      sender: "user",
+      time: userMsgTime
+    };
+
+    setMessages(prev => [...prev, newUserMessage]);
+    setChatMessage('');
+    setLoading(true);
+
+    try {
+      const res = await chatbotService.chat(text);
+      const data = res.data;
+
+      setMessages(prev => [...prev, {
+        id: Date.now() + 1,
+        text: data.message || (lang === 'vi' ? "Không thể tải phản hồi." : "Failed to load response."),
+        sender: "system",
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      }]);
+    } catch (err) {
+      setMessages(prev => [...prev, {
+        id: Date.now() + 1,
+        text: lang === 'vi' ? "Không thể kết nối đến máy chủ AI. Vui lòng thử lại!" : "Unable to connect to the AI server. Please try again!",
+        sender: "system",
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      }]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const startNewChat = () => {
@@ -151,10 +185,64 @@ const ChatbotPage = () => {
     ]);
   };
 
+  const scrollToMessage = (itemId) => {
+    const promptEl = document.getElementById(`msg-${itemId}-prompt`);
+    if (promptEl) {
+      promptEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      promptEl.classList.add('bg-yellow-50');
+      setTimeout(() => promptEl.classList.remove('bg-yellow-50'), 2000);
+    }
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     navigate('/login');
+  };
+
+  const startEditMessage = (msg) => {
+    setEditingMsgId(msg.id);
+    setEditText(msg.text);
+  };
+
+  const cancelEdit = () => {
+    setEditingMsgId(null);
+    setEditText('');
+  };
+
+  const saveEditMessage = async (msgId) => {
+    if (!editText.trim()) return;
+    // Update local state
+    setMessages(prev => prev.map(m => m.id === msgId ? { ...m, text: editText } : m));
+    setEditingMsgId(null);
+
+    // Try to update in backend (extract real history id from msg id like "abc123-prompt")
+    const realId = String(msgId).split('-prompt')[0].split('-msg')[0];
+    try {
+      await chatbotService.updateHistory(realId, { prompt: editText });
+      // Also update sidebar history
+      setChatHistory(prev => prev.map(h => h.id === realId ? { ...h, prompt: editText } : h));
+    } catch (err) {
+      console.error('Failed to update message on server', err);
+    }
+    setEditText('');
+  };
+
+  const handleDeleteMessage = async (msgId) => {
+    // Remove from local messages (remove both prompt and response)
+    const realId = String(msgId).split('-prompt')[0].split('-msg')[0];
+    setMessages(prev => prev.filter(m => {
+      const mRealId = String(m.id).split('-prompt')[0].split('-msg')[0];
+      return mRealId !== realId || m.id === 1;
+    }));
+
+    // Remove from backend
+    try {
+      await chatbotService.deleteHistory(realId);
+      setChatHistory(prev => prev.filter(h => h.id !== realId));
+    } catch (err) {
+      console.error('Failed to delete message on server', err);
+    }
   };
 
   const renderMessageText = (text, sender) => {
@@ -276,7 +364,45 @@ const ChatbotPage = () => {
         }
       }
 
-      return part;
+      // 3. Render plain text with markdown formatting (bold, newlines, bullets)
+      return (
+        <span key={`text-${index}`}>
+          {part.split('\n').map((line, lineIdx) => {
+            // Render bold **text** 
+            const renderBold = (str) => {
+              const boldParts = str.split(/(\*\*[^*]+\*\*)/g);
+              return boldParts.map((bp, bpIdx) => {
+                if (bp.startsWith('**') && bp.endsWith('**')) {
+                  return <strong key={bpIdx} className="font-extrabold">{bp.slice(2, -2)}</strong>;
+                }
+                return bp;
+              });
+            };
+
+            const trimmedLine = line.trim();
+            const isBullet = trimmedLine.startsWith('•') || trimmedLine.startsWith('- ');
+            const isNumbered = /^\d+\.\s/.test(trimmedLine);
+
+            return (
+              <span key={lineIdx}>
+                {lineIdx > 0 && <br />}
+                {isBullet ? (
+                  <span className="flex gap-1.5 ml-2 mt-0.5">
+                    <span className="text-primary shrink-0">•</span>
+                    <span>{renderBold(trimmedLine.replace(/^[•\-]\s*/, ''))}</span>
+                  </span>
+                ) : isNumbered ? (
+                  <span className="flex gap-1.5 mt-1.5 font-bold">
+                    {renderBold(trimmedLine)}
+                  </span>
+                ) : (
+                  <span>{renderBold(line)}</span>
+                )}
+              </span>
+            );
+          })}
+        </span>
+      );
     });
   };
 
@@ -284,8 +410,8 @@ const ChatbotPage = () => {
     <div className="flex h-screen w-screen bg-slate-50 font-sans overflow-hidden">
       
       {/* Left Sidebar */}
-      <aside className="w-[280px] bg-white border-r border-slate-100 flex flex-col justify-between p-5 shrink-0 h-full">
-        <div className="flex flex-col gap-6">
+      <aside className="w-[280px] bg-white border-r border-slate-100 flex flex-col p-5 shrink-0 h-full">
+        <div className="flex flex-col gap-4">
           {/* Logo capsule - redirects back to home */}
           <div 
             onClick={() => navigate('/')} 
@@ -302,17 +428,45 @@ const ChatbotPage = () => {
           {/* New Chat Button */}
           <button
             onClick={startNewChat}
-            className="flex items-center justify-center gap-2 w-12 h-12 bg-primary hover:bg-[#8C000E] text-white rounded-xl shadow-md hover:shadow-lg active:scale-95 transition-all duration-200"
-            title="Cuộc trò chuyện mới"
+            className="w-full flex items-center justify-center gap-2 py-2.5 bg-primary hover:bg-[#8C000E] text-white rounded-xl shadow-md hover:shadow-lg active:scale-95 transition-all duration-200 text-[11px] font-extrabold uppercase tracking-wider"
+            title={lang === 'vi' ? 'Cuộc trò chuyện mới' : 'New chat'}
           >
-            <Plus size={20} />
+            <Plus size={14} />
+            <span>{lang === 'vi' ? 'Trò chuyện mới' : 'New Chat'}</span>
           </button>
+        </div>
+
+        {/* Chat History List */}
+        <div className="flex-1 overflow-y-auto mt-4 -mx-2 px-2 space-y-1">
+          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">
+            {lang === 'vi' ? 'Lịch sử trò chuyện' : 'Chat History'}
+          </p>
+          {chatHistory.length === 0 ? (
+            <p className="text-[10px] text-slate-400 text-center py-6 italic">
+              {lang === 'vi' ? 'Chưa có cuộc trò chuyện nào' : 'No conversations yet'}
+            </p>
+          ) : (
+            chatHistory.map((item) => (
+              <div
+                key={item.id}
+                onClick={() => scrollToMessage(item.id)}
+                className="flex items-start gap-2 p-2 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors group"
+                title={item.prompt}
+              >
+                <MessageSquare size={13} className="text-slate-400 group-hover:text-primary shrink-0 mt-0.5 transition-colors" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-[10px] font-semibold text-slate-700 truncate group-hover:text-primary transition-colors">{item.prompt}</p>
+                  <p className="text-[8px] text-slate-400 mt-0.5">{formatTime(item.createdAt)}</p>
+                </div>
+              </div>
+            ))
+          )}
         </div>
 
         {/* Quick manuals / manuals at bottom-left */}
         <div className="flex flex-col gap-2.5">
           <button
-            onClick={() => handleQuickQuestion(lang === 'vi' ? "Xem cẩm nang hỗ trợ học vụ" : "Show academic handbook")}
+            onClick={() => handleQuickQuestion("Xem cẩm nang hỗ trợ học vụ")}
             className="w-full py-3 px-4 bg-primary hover:bg-[#8C000E] text-white rounded-xl text-[11px] font-extrabold uppercase tracking-wider flex items-center justify-center gap-2 shadow-md hover:shadow-lg active:scale-98 transition-all"
           >
             <BookOpen size={14} />
@@ -320,7 +474,7 @@ const ChatbotPage = () => {
           </button>
           
           <button
-            onClick={() => handleQuickQuestion(lang === 'vi' ? "Xem sổ tay sinh viên" : "Show student handbook")}
+            onClick={() => handleQuickQuestion("Xem sổ tay sinh viên")}
             className="w-full py-3 px-4 bg-primary hover:bg-[#8C000E] text-white rounded-xl text-[11px] font-extrabold uppercase tracking-wider flex items-center justify-center gap-2 shadow-md hover:shadow-lg active:scale-98 transition-all"
           >
             <FileText size={14} />
@@ -381,19 +535,15 @@ const ChatbotPage = () => {
         </header>
 
         {/* Chat Area */}
-        <div className="flex-1 overflow-hidden flex flex-col relative bg-slate-50/30">
+        <div className="flex-1 overflow-hidden flex flex-col relative bg-white">
           {messages.length <= 1 && !loading ? (
             /* Welcome / Mascot Landing Screen */
             <div className="flex-1 flex flex-col items-center justify-center p-6 text-center max-w-xl mx-auto animate-fade-in">
-              <div className="w-48 h-48 md:w-56 md:h-56 mb-6 select-none flex items-center justify-center overflow-hidden">
-                <video 
-                  src="/uploads/chatbot-video.mp4" 
-                  autoPlay 
-                  loop 
-                  muted 
-                  playsInline
-                  disablePictureInPicture={true}
-                  className="w-full h-full object-contain mix-blend-multiply"
+              <div className="w-48 h-48 md:w-56 md:h-56 mb-6 select-none flex items-center justify-center">
+                <img 
+                  src="/uploads/chatbot.png" 
+                  alt="UEF Robot Mascot"
+                  className="w-full h-full object-contain"
                 />
               </div>
               <h2 className="text-2xl font-black text-slate-800 mb-3 tracking-tight">
@@ -409,9 +559,9 @@ const ChatbotPage = () => {
             /* Conversation Messages List */
             <div className="flex-1 overflow-y-auto p-6 space-y-4">
               {messages.map((msg) => (
-                <div key={msg.id} className={`flex items-start gap-3 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+                <div key={msg.id} id={`msg-${msg.id}`} className={`group/msg flex items-start gap-3 transition-colors duration-500 rounded-xl ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
                   {msg.sender !== 'user' && (
-                    <div className="w-8 h-8 rounded-full overflow-hidden border border-slate-100 shrink-0 shadow-sm">
+                    <div className="w-8 h-8 rounded-full overflow-hidden border border-slate-100 shrink-0 shadow-sm bg-white">
                       <img 
                         src="/uploads/boticon.png" 
                         alt="Bot Avatar" 
@@ -419,22 +569,84 @@ const ChatbotPage = () => {
                       />
                     </div>
                   )}
+
+                  {/* Edit/Delete buttons - appear on hover, before user bubble */}
+                  {msg.sender === 'user' && msg.id !== 1 && editingMsgId !== msg.id && (
+                    <div className="flex items-center gap-1 opacity-0 group-hover/msg:opacity-100 transition-opacity duration-200 shrink-0 self-center">
+                      <button
+                        onClick={() => startEditMessage(msg)}
+                        className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-blue-500 transition-all"
+                        title={lang === 'vi' ? 'Chỉnh sửa' : 'Edit'}
+                      >
+                        <Pencil size={13} />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteMessage(msg.id)}
+                        className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition-all"
+                        title={lang === 'vi' ? 'Xóa' : 'Delete'}
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  )}
+
                   <div className={`max-w-[75%] p-3 px-4 rounded-2xl text-[12px] font-medium leading-relaxed shadow-sm ${msg.sender === 'user'
                     ? 'bg-primary text-white rounded-tr-none'
                     : 'bg-white text-slate-800 border border-slate-100 rounded-tl-none'
                     }`}>
-                    {renderMessageText(msg.text, msg.sender)}
+                    {editingMsgId === msg.id ? (
+                      <div className="flex flex-col gap-2">
+                        <textarea
+                          value={editText}
+                          onChange={(e) => setEditText(e.target.value)}
+                          className="w-full bg-white/20 border border-white/30 rounded-lg p-2 text-[12px] text-white placeholder:text-white/50 focus:outline-none focus:ring-1 focus:ring-white/50 resize-none min-w-[200px]"
+                          rows={Math.max(2, editText.split('\n').length)}
+                          autoFocus
+                        />
+                        <div className="flex gap-1.5 justify-end">
+                          <button
+                            onClick={cancelEdit}
+                            className="p-1 rounded-md bg-white/10 hover:bg-white/20 text-white/80 transition-all"
+                            title={lang === 'vi' ? 'Hủy' : 'Cancel'}
+                          >
+                            <X size={14} />
+                          </button>
+                          <button
+                            onClick={() => saveEditMessage(msg.id)}
+                            className="p-1 rounded-md bg-white/20 hover:bg-white/30 text-white transition-all"
+                            title={lang === 'vi' ? 'Lưu' : 'Save'}
+                          >
+                            <Check size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>{renderMessageText(msg.text, msg.sender)}</>
+                    )}
                     <div className={`text-[9px] mt-1.5 opacity-50 ${msg.sender === 'user' ? 'text-right' : 'text-left'}`}>
                       {msg.time}
                     </div>
                   </div>
+
+                  {/* Edit/Delete buttons for bot messages - appear after bubble */}
+                  {msg.sender !== 'user' && msg.id !== 1 && (
+                    <div className="flex items-center gap-1 opacity-0 group-hover/msg:opacity-100 transition-opacity duration-200 shrink-0 self-center">
+                      <button
+                        onClick={() => handleDeleteMessage(msg.id)}
+                        className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition-all"
+                        title={lang === 'vi' ? 'Xóa' : 'Delete'}
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
               
               {/* Typing/Loading Indicator */}
               {loading && (
                 <div className="flex items-start gap-3 justify-start animate-pulse">
-                  <div className="w-8 h-8 rounded-full overflow-hidden border border-slate-100 shrink-0 shadow-sm">
+                  <div className="w-8 h-8 rounded-full overflow-hidden border border-slate-100 shrink-0 shadow-sm bg-white">
                     <img 
                       src="/uploads/boticon.png" 
                       alt="Bot Avatar" 
