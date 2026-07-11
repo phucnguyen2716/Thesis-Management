@@ -88,8 +88,8 @@ google-oauth-token.json
 src/PlatformAdmin/ethesis.db
 src/PlatformAdmin/temporary_pdf/
 src/PlatformAdmin/uploads/
-src/PlatformAdmin/mock_google_drive/
-mock_google_drive/
+# src/PlatformAdmin/mock_google_drive/
+# mock_google_drive/
 .dotnet/
 .node/
 dotnet-install.ps1

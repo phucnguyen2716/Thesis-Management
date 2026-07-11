@@ -1,0 +1,116 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R 5 0 R 7 0 R 9 0 R] /Count 4 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >> >> >>
+endobj
+4 0 obj
+<< /Length 485 >>
+stream
+BT
+/F1 12 Tf
+70 750 Td
+14 TL
+(eThesis Fallback PDF Report - Page 1 \(Cover Page\)) '
+(------------------------------------------------) '
+(File name: SV2026402_Slide_ThuyetTrinh.pdf) '
+(Student UID: SV2026402) '
+(Subject: Khoa luan tot nghiep chuyen sau Mang may tinh \(N/A\)) '
+(Major: Mang may tinh) '
+(Project: Khoa luan tot nghiep chuyen sau Mang may tinh) '
+() '
+(Tom tat: Do an nghien cuu va phat trien ung dung Khoa luan tot nghiep chuyen sau Mang may tinh.) '
+ET
+
+endstream
+endobj
+5 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 6 0 R /Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >> >> >>
+endobj
+6 0 obj
+<< /Length 618 >>
+stream
+BT
+/F1 12 Tf
+70 750 Td
+14 TL
+(eThesis Fallback PDF Report - Page 2 \(Literature Review\)) '
+(------------------------------------------------) '
+(Research Topic: Khoa luan tot nghiep chuyen sau Mang may tinh) '
+(Student: SV2026402) '
+() '
+(1. Introduction) '
+(This research addresses key challenges in Mang may tinh. ) '
+(We investigate various methodologies and state-of-the-art architectures.) '
+() '
+(2. Related Work) '
+(Prior studies in Khoa luan tot nghiep chuyen sau Mang may tinh have proposed several frameworks.) '
+(However, limitations in performance and security remain to be solved.) '
+ET
+
+endstream
+endobj
+7 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 8 0 R /Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >> >> >>
+endobj
+8 0 obj
+<< /Length 643 >>
+stream
+BT
+/F1 12 Tf
+70 750 Td
+14 TL
+(eThesis Fallback PDF Report - Page 3 \(Methodology & Conclusion\)) '
+(------------------------------------------------) '
+(Research Topic: Khoa luan tot nghiep chuyen sau Mang may tinh) '
+(Student: SV2026402) '
+() '
+(3. Proposed Methodology) '
+(We design an integrated microservices system using secure cloud technologies.) '
+(The experimental results demonstrate a significant improvement in efficiency.) '
+() '
+(4. Conclusion) '
+(This graduation thesis / report successfully achieves its primary objectives.) '
+(Future work will focus on integrating advanced machine learning techniques.) '
+ET
+
+endstream
+endobj
+9 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 10 0 R /Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >> >> >>
+endobj
+10 0 obj
+<< /Length 648 >>
+stream
+BT
+/F1 12 Tf
+70 750 Td
+14 TL
+(eThesis Fallback PDF Report - Page 4 \(Evaluation & References\)) '
+(------------------------------------------------) '
+(Research Topic: Khoa luan tot nghiep chuyen sau Mang may tinh) '
+(Student: SV2026402) '
+() '
+(5. Evaluation Results) '
+(The proposed system was evaluated against baseline configurations.) '
+(We observed a 15% reduction in request latency and 99.9% uptime.) '
+() '
+(6. References) '
+([1] Author A, "Advanced Systems in Mang may tinh", Journal of eThesis, 2025.) '
+([2] Author B, "Research and Applications in Khoa luan tot nghiep chuyen sau Mang may tinh", UEF Press, 2026.) '
+ET
+
+endstream
+endobj
+xref
+0 1
+0000000000 65535 f 
+trailer
+<< /Size 11 /Root 1 0 R >>
+startxref
+370
+%%EOF
