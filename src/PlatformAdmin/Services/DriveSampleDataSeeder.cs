@@ -440,6 +440,65 @@ public class DriveSampleDataSeeder : IDriveSampleDataSeeder
                     await db.SaveChangesAsync();
                 }
             }
+
+            // Seed events in SocialPosts
+            var hasEvents = await db.SocialPosts.AnyAsync(p => p.Category == "Sự kiện");
+            if (!hasEvents)
+            {
+                var eventsList = new List<SocialPost>
+                {
+                    new SocialPost
+                    {
+                        Title = "Hội thảo: Hướng dẫn viết bài báo khoa học và Công bố quốc tế 2025",
+                        Category = "Sự kiện",
+                        BadgeClass = "bg-amber-500 text-white",
+                        Image = "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=800&q=80",
+                        Desc = "Hội thảo chuyên đề giúp sinh viên nắm vững phương pháp viết bài báo khoa học, cách lập luận và trình bày kết quả nghiên cứu chuẩn Scopus/ISI.",
+                        Content = "{\"eventType\":\"Hội thảo\",\"location\":\"Hội trường A, Cơ sở 1 - UEF\",\"startDate\":\"2025-07-15\",\"endDate\":\"2025-07-15\",\"organizer\":\"Khoa Công nghệ thông tin\",\"contactPhone\":\"0901234567\",\"contactEmail\":\"cntt@uef.edu.vn\",\"maxParticipants\":\"250\",\"link\":\"https://uef.edu.vn/scientific-writing-2025\",\"status\":\"upcoming\"}",
+                        Published = true,
+                        CreatedAt = DateTime.UtcNow.AddDays(-5),
+                        AuthorId = 1
+                    },
+                    new SocialPost
+                    {
+                        Title = "Workshop: Kỹ năng nghiên cứu khoa học và Khai thác cơ sở dữ liệu",
+                        Category = "Sự kiện",
+                        BadgeClass = "bg-amber-500 text-white",
+                        Image = "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=800&q=80",
+                        Desc = "Workshop thực hành giúp sinh viên làm quen với các công cụ tìm kiếm bài báo khoa học, quản lý trích dẫn tài liệu tham khảo (Mendeley/Zotero).",
+                        Content = "{\"eventType\":\"Workshop\",\"location\":\"Phòng Lab 301, Tòa nhà B\",\"startDate\":\"2025-06-20\",\"endDate\":\"2025-06-20\",\"organizer\":\"PGS.TS. Nguyễn Văn An\",\"contactPhone\":\"0901234567\",\"contactEmail\":\"nguyen.van.an@uef.edu.vn\",\"maxParticipants\":\"60\",\"link\":\"\",\"status\":\"ongoing\"}",
+                        Published = true,
+                        CreatedAt = DateTime.UtcNow.AddDays(-3),
+                        AuthorId = 1
+                    },
+                    new SocialPost
+                    {
+                        Title = "Seminar: Quy chuẩn viết báo cáo Nghiên cứu khoa học sinh viên cấp Trường",
+                        Category = "Sự kiện",
+                        BadgeClass = "bg-amber-500 text-white",
+                        Image = "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80",
+                        Desc = "Seminar chuyên đề chia sẻ quy chuẩn trình bày khóa luận, báo cáo khoa học cấp trường, định dạng theo chuẩn IEEE/APA và quy trình phản biện.",
+                        Content = "{\"eventType\":\"Seminar\",\"location\":\"Online - Microsoft Teams\",\"startDate\":\"2025-05-25\",\"endDate\":\"2025-05-25\",\"organizer\":\"TS. Trần Thị Bích Ngọc\",\"contactPhone\":\"0912345678\",\"contactEmail\":\"tran.bich.ngoc@uef.edu.vn\",\"maxParticipants\":\"300\",\"link\":\"https://teams.microsoft.com/seminar-research-standard\",\"status\":\"completed\"}",
+                        Published = true,
+                        CreatedAt = DateTime.UtcNow.AddDays(-20),
+                        AuthorId = 1
+                    }
+                };
+                db.SocialPosts.AddRange(eventsList);
+                await db.SaveChangesAsync();
+                _logger.LogInformation("Successfully seeded academic events into SocialPosts table.");
+            }
+
+            // Clean up any old non-academic events
+            var oldEvents = await db.SocialPosts
+                .Where(p => p.Category == "Sự kiện" && (p.Title.Contains("Hackathon") || p.Title.Contains("Tuyển dụng") || p.Title.Contains("Job Fair")))
+                .ToListAsync();
+            if (oldEvents.Any())
+            {
+                db.SocialPosts.RemoveRange(oldEvents);
+                await db.SaveChangesAsync();
+                _logger.LogInformation("Removed old non-academic events from database.");
+            }
         }
 
         var existing = await _drive.CountFilesInCourseProjectStorageAsync();

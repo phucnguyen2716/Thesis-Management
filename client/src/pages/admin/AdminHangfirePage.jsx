@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShieldAlert, ArrowLeft, Lock, Server } from 'lucide-react';
+import { API_URL } from '../../services/api';
 
 const AdminHangfirePage = () => {
   const navigate = useNavigate();
@@ -103,7 +104,7 @@ const AdminHangfirePage = () => {
 
       {/* Hangfire iframe */}
       <iframe
-        src={`http://localhost:5145/hangfire?token=${encodeURIComponent(localStorage.getItem('token') || '')}`}
+        src={`${API_URL}/hangfire?token=${encodeURIComponent(localStorage.getItem('token') || '')}`}
         className="flex-1 w-full border-0"
         title="Hangfire Dashboard"
         sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
