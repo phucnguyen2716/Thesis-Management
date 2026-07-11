@@ -124,17 +124,17 @@ public class DriveController : ControllerBase
         }
         
         var targetDocxPath = Path.Combine(uploadsDir, "225050646_NguyenHoangPhuc.docx");
-        var targetExistsBefore = File.Exists(targetDocxPath);
+        var targetExistsBefore = System.IO.File.Exists(targetDocxPath);
         
         var copySuccess = false;
         var copyError = "";
         
-        if (!string.IsNullOrEmpty(sourceDocxPath) && File.Exists(sourceDocxPath))
+        if (!string.IsNullOrEmpty(sourceDocxPath) && System.IO.File.Exists(sourceDocxPath))
         {
             try
             {
                 if (!uploadsExists) Directory.CreateDirectory(uploadsDir);
-                File.Copy(sourceDocxPath, targetDocxPath, true);
+                System.IO.File.Copy(sourceDocxPath, targetDocxPath, true);
                 copySuccess = true;
             }
             catch (Exception ex)
@@ -143,7 +143,7 @@ public class DriveController : ControllerBase
             }
         }
         
-        var targetExistsAfter = File.Exists(targetDocxPath);
+        var targetExistsAfter = System.IO.File.Exists(targetDocxPath);
         
         return Ok(new
         {
