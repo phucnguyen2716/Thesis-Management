@@ -53,7 +53,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     var provider = builder.Configuration["Database:Provider"]?.Trim().ToLowerInvariant();
     if (provider == "postgresql" || provider == "postgres")
     {
-        options.UseNpgsql(builder.Configuration.GetConnectionString("PostgreSqlConnection"));
+        var rawConn = builder.Configuration.GetConnectionString("PostgreSqlConnection");
+        options.UseNpgsql(ConnectionStringParser.Parse(rawConn));
     }
     else if (provider == "sqlite")
     {
@@ -114,7 +115,8 @@ builder.Services.AddCors(options =>
 });
 
 // Hangfire — Background Job Processing
-var hangfireConnStr = builder.Configuration.GetConnectionString("PostgreSqlConnection");
+var rawHangfireConn = builder.Configuration.GetConnectionString("PostgreSqlConnection");
+var hangfireConnStr = ConnectionStringParser.Parse(rawHangfireConn);
 builder.Services.AddHangfire(config => config
     .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
     .UseSimpleAssemblyNameTypeSerializer()
@@ -682,6 +684,35 @@ public class HangfireAdminAuthorizationFilter : Hangfire.Dashboard.IDashboardAut
         {
             return false;
         }
+    }
+}
+
+public static class ConnectionStringParser
+{
+    public static string? Parse(string? connStr)
+    {
+        if (string.IsNullOrEmpty(connStr)) return connStr;
+        if (connStr.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase) ||
+            connStr.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase))
+        {
+            try
+            {
+                var uri = new Uri(connStr);
+                var userInfo = uri.UserInfo.Split(':');
+                var username = userInfo[0];
+                var password = userInfo.Length > 1 ? userInfo[1] : "";
+                var host = uri.Host;
+                var port = uri.Port > 0 ? uri.Port : 5432;
+                var database = uri.AbsolutePath.TrimStart('/');
+                
+                return $"Host={host};Port={port};Database={database};Username={username};Password={password};SSL Mode=Require;Trust Server Certificate=true;";
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"⚠️ Failed to parse PostgreSQL Connection URL: {ex.Message}");
+            }
+        }
+        return connStr;
     }
 }
 
