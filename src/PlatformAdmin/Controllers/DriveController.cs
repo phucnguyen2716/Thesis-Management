@@ -193,6 +193,16 @@ public class DriveController : ControllerBase
             return BadRequest(new { success = false, message = "File path is required." });
         }
 
+        // Normalize absolute local/production URLs to relative paths
+        if (filePath.Contains("/uploads/"))
+        {
+            filePath = "/uploads/" + filePath.Split("/uploads/")[1];
+        }
+        else if (filePath.Contains("/temporary_pdf/"))
+        {
+            filePath = "/temporary_pdf/" + filePath.Split("/temporary_pdf/")[1];
+        }
+
         // If it is already a local PDF path, return it directly
         if (filePath.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase) && (filePath.StartsWith("/temporary_pdf") || filePath.StartsWith("/uploads")))
         {
