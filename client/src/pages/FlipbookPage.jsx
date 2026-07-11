@@ -126,11 +126,24 @@ const FlipbookPage = () => {
       }
     };
 
+    const needsConversion = (url) => {
+      if (!url) return false;
+      const lowercaseUrl = url.toLowerCase();
+      return lowercaseUrl.includes("drive.google.com") || 
+             lowercaseUrl.includes("docs.google.com") || 
+             lowercaseUrl.endsWith(".docx") || 
+             lowercaseUrl.endsWith(".doc") || 
+             lowercaseUrl.endsWith(".xlsx") || 
+             lowercaseUrl.endsWith(".xls") || 
+             lowercaseUrl.endsWith(".pptx") || 
+             lowercaseUrl.endsWith(".ppt");
+    };
+
     // 1. Try to load from navigation state
     if (location.state) {
       const pdfUrl = fileParam || location.state.filePath || location.state.pdfUrl || "/Document%20Detail.pdf";
       const baseData = { ...location.state };
-      if (pdfUrl.includes("drive.google.com") || pdfUrl.includes("docs.google.com")) {
+      if (needsConversion(pdfUrl)) {
         handleGoogleDriveUrl(pdfUrl, baseData);
       } else {
         setThesis({
@@ -149,7 +162,7 @@ const FlipbookPage = () => {
         if (res.data) {
           const pdfUrl = fileParam || res.data.filePath || "/Document%20Detail.pdf";
           const baseData = { ...res.data };
-          if (pdfUrl.includes("drive.google.com") || pdfUrl.includes("docs.google.com")) {
+          if (needsConversion(pdfUrl)) {
             handleGoogleDriveUrl(pdfUrl, baseData);
           } else {
             setThesis({
