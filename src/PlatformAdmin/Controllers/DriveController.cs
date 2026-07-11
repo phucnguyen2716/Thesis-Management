@@ -111,6 +111,7 @@ public class DriveController : ControllerBase
         
         var sourceDocxPath = "";
         var sourceDocxPathNew = "";
+        var sourceDocxPathNew2 = "";
         var searchError = "";
         try
         {
@@ -118,6 +119,7 @@ public class DriveController : ControllerBase
             {
                 sourceDocxPath = Directory.GetFiles(mockDriveRoot, "225050646_NguyenHoangPhuc.docx", SearchOption.AllDirectories).FirstOrDefault() ?? "";
                 sourceDocxPathNew = Directory.GetFiles(mockDriveRoot, "225050646_NguyenHoangPhuc (2).docx", SearchOption.AllDirectories).FirstOrDefault() ?? "";
+                sourceDocxPathNew2 = Directory.GetFiles(mockDriveRoot, "225050646_NguyenHoangPhuc (1).docx", SearchOption.AllDirectories).FirstOrDefault() ?? "";
             }
         }
         catch (Exception ex)
@@ -127,9 +129,11 @@ public class DriveController : ControllerBase
         
         var targetDocxPath = Path.Combine(uploadsDir, "225050646_NguyenHoangPhuc.docx");
         var targetDocxPathNew = Path.Combine(uploadsDir, "225050646_NguyenHoangPhuc_New.docx");
+        var targetDocxPathNew2 = Path.Combine(uploadsDir, "225050646_NguyenHoangPhuc_New2.docx");
         
         var targetExistsBefore = System.IO.File.Exists(targetDocxPath);
         var targetNewExistsBefore = System.IO.File.Exists(targetDocxPathNew);
+        var targetNew2ExistsBefore = System.IO.File.Exists(targetDocxPathNew2);
         
         var copySuccess = false;
         var copyError = "";
@@ -160,9 +164,23 @@ public class DriveController : ControllerBase
                 copyError += "\nNew copy error: " + ex.Message;
             }
         }
+
+        if (!string.IsNullOrEmpty(sourceDocxPathNew2) && System.IO.File.Exists(sourceDocxPathNew2))
+        {
+            try
+            {
+                if (!uploadsExists) Directory.CreateDirectory(uploadsDir);
+                System.IO.File.Copy(sourceDocxPathNew2, targetDocxPathNew2, true);
+            }
+            catch (Exception ex)
+            {
+                copyError += "\nNew2 copy error: " + ex.Message;
+            }
+        }
         
         var targetExistsAfter = System.IO.File.Exists(targetDocxPath);
         var targetNewExistsAfter = System.IO.File.Exists(targetDocxPathNew);
+        var targetNew2ExistsAfter = System.IO.File.Exists(targetDocxPathNew2);
         
         // Test PDF conversion!
         var testPdfPath = "";
@@ -192,13 +210,16 @@ public class DriveController : ControllerBase
             UploadsExists = uploadsExists,
             SourceDocxPath = sourceDocxPath,
             SourceDocxPathNew = sourceDocxPathNew,
+            SourceDocxPathNew2 = sourceDocxPathNew2,
             SearchError = searchError,
             TargetExistsBefore = targetExistsBefore,
             TargetNewExistsBefore = targetNewExistsBefore,
+            TargetNew2ExistsBefore = targetNew2ExistsBefore,
             CopySuccess = copySuccess,
             CopyError = copyError,
             TargetExistsAfter = targetExistsAfter,
             TargetNewExistsAfter = targetNewExistsAfter,
+            TargetNew2ExistsAfter = targetNew2ExistsAfter,
             
             TestPdfPath = testPdfPath,
             TestConvertError = testConvertError,

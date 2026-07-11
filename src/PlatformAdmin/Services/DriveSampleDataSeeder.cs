@@ -315,6 +315,34 @@ public class DriveSampleDataSeeder : IDriveSampleDataSeeder
                 }
             }
 
+            // Third file (new 8.91 MB sample data)
+            var targetDocxPathNew2 = Path.Combine(uploadsDir, "225050646_NguyenHoangPhuc_New2.docx");
+            var sourceDocxPathNew2 = "";
+            try
+            {
+                var mockDriveRoot = Path.Combine(Directory.GetCurrentDirectory(), "mock_google_drive");
+                if (Directory.Exists(mockDriveRoot))
+                {
+                    sourceDocxPathNew2 = Directory.GetFiles(mockDriveRoot, "225050646_NguyenHoangPhuc (1).docx", SearchOption.AllDirectories).FirstOrDefault() ?? "";
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to search for custom docx template new2.");
+            }
+
+            if (!string.IsNullOrEmpty(sourceDocxPathNew2) && File.Exists(sourceDocxPathNew2))
+            {
+                try
+                {
+                    File.Copy(sourceDocxPathNew2, targetDocxPathNew2, true);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to copy custom docx template new2 to uploads folder.");
+                }
+            }
+
             // Seed Thesis 1
             if (!customThesisExists)
             {
@@ -376,6 +404,39 @@ public class DriveSampleDataSeeder : IDriveSampleDataSeeder
                 if (existingThesis != null)
                 {
                     existingThesis.FilePath = "/uploads/225050646_NguyenHoangPhuc_New.docx";
+                    await db.SaveChangesAsync();
+                }
+            }
+
+            // Seed Thesis 3 (New 8.91 MB Thesis)
+            const string newThesisTitle2 = "Phát triển ứng dụng di động hỗ trợ quản lý khóa luận tốt nghiệp";
+            var customThesisNew2Exists = await db.Theses.AnyAsync(t => t.StudentId == customStudent.Id && t.Title == newThesisTitle2);
+            if (!customThesisNew2Exists)
+            {
+                var thesis = new Thesis
+                {
+                    StudentId = customStudent.Id,
+                    AdvisorId = defaultAdvisor.Id,
+                    Title = newThesisTitle2,
+                    Description = "Xây dựng ứng dụng di động đa nền tảng giúp sinh viên và giảng viên dễ dàng tương tác, trao đổi và quản lý tiến độ thực hiện khóa luận tốt nghiệp.",
+                    Major = "software-engineering",
+                    Subject = "Khóa luận tốt nghiệp",
+                    SubjectCode = "THESIS204",
+                    Category = "Thesis",
+                    Status = "Approved",
+                    FilePath = "/uploads/225050646_NguyenHoangPhuc_New2.docx",
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+                db.Theses.Add(thesis);
+                await db.SaveChangesAsync();
+            }
+            else
+            {
+                var existingThesis = await db.Theses.FirstOrDefaultAsync(t => t.StudentId == customStudent.Id && t.Title == newThesisTitle2);
+                if (existingThesis != null)
+                {
+                    existingThesis.FilePath = "/uploads/225050646_NguyenHoangPhuc_New2.docx";
                     await db.SaveChangesAsync();
                 }
             }
