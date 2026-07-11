@@ -15,11 +15,11 @@ services:
           name: ethesis-postgres-db
           property: connectionString
       - key: Gemini__ApiKey
-        sync: true
+        sync: false
       - key: RabbitMQ__HostName
-        value: ""
+        sync: false
       - key: ElasticSearch__Uri
-        value: ""
+        sync: false
 
   # 2. Frontend React static site
   - type: web
@@ -29,9 +29,7 @@ services:
     staticPublishPath: client/dist
     envVars:
       - key: VITE_API_URL
-        fromService:
-          name: ethesis-backend-api
-          property: url
+        sync: false
 
 databases:
   # 3. PostgreSQL Database
