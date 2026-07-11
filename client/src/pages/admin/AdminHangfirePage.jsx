@@ -71,7 +71,12 @@ const AdminHangfirePage = () => {
               Về Trang chủ
             </button>
           </div>
-    return (
+        </div>
+      </div>
+    );
+  }
+
+  return (
     <div className="flex-1 flex flex-col h-full overflow-hidden">
       {/* Header */}
       <div className="h-14 px-6 flex items-center justify-between border-b border-slate-100 bg-white shrink-0 shadow-sm">
