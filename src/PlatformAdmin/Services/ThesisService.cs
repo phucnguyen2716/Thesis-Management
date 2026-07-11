@@ -48,7 +48,7 @@ public class ThesisService : IThesisService
     {
         var q = BaseQuery().AsQueryable();
         if (!string.IsNullOrEmpty(status)) q = q.Where(t => t.Status == status);
-        if (!string.IsNullOrEmpty(search)) q = q.Where(t => t.Title.Contains(search) || t.Student.FullName.Contains(search));
+        if (!string.IsNullOrEmpty(search)) q = q.Where(t => t.Title.Contains(search) || t.Student.FullName.Contains(search) || t.Student.StudentId.Contains(search));
         
         if (studentId.HasValue && advisorId.HasValue)
         {
