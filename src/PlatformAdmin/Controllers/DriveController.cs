@@ -98,6 +98,67 @@ public class DriveController : ControllerBase
     }
 
 
+    [HttpGet("diagnose-seed")]
+    [AllowAnonymous]
+    public IActionResult DiagnoseSeed()
+    {
+        var currentDir = Directory.GetCurrentDirectory();
+        var mockDriveRoot = Path.Combine(currentDir, "mock_google_drive");
+        var uploadsDir = Path.Combine(currentDir, "uploads");
+        
+        var mockDriveExists = Directory.Exists(mockDriveRoot);
+        var uploadsExists = Directory.Exists(uploadsDir);
+        
+        var sourceDocxPath = "";
+        var searchError = "";
+        try
+        {
+            if (mockDriveExists)
+            {
+                sourceDocxPath = Directory.GetFiles(mockDriveRoot, "SV2026304_Bao_cao_Chuyen_de.docx", SearchOption.AllDirectories).FirstOrDefault() ?? "";
+            }
+        }
+        catch (Exception ex)
+        {
+            searchError = ex.Message;
+        }
+        
+        var targetDocxPath = Path.Combine(uploadsDir, "225050646_NguyenHoangPhuc.docx");
+        var targetExistsBefore = File.Exists(targetDocxPath);
+        
+        var copySuccess = false;
+        var copyError = "";
+        
+        if (!string.IsNullOrEmpty(sourceDocxPath) && File.Exists(sourceDocxPath))
+        {
+            try
+            {
+                if (!uploadsExists) Directory.CreateDirectory(uploadsDir);
+                File.Copy(sourceDocxPath, targetDocxPath, true);
+                copySuccess = true;
+            }
+            catch (Exception ex)
+            {
+                copyError = ex.Message;
+            }
+        }
+        
+        var targetExistsAfter = File.Exists(targetDocxPath);
+        
+        return Ok(new
+        {
+            CurrentDirectory = currentDir,
+            MockDriveExists = mockDriveExists,
+            UploadsExists = uploadsExists,
+            SourceDocxPath = sourceDocxPath,
+            SearchError = searchError,
+            TargetExistsBefore = targetExistsBefore,
+            CopySuccess = copySuccess,
+            CopyError = copyError,
+            TargetExistsAfter = targetExistsAfter
+        });
+    }
+
     [HttpPost("convert")]
     [AllowAnonymous]
     public async Task<IActionResult> ConvertDriveFile([FromQuery] string filePath)
