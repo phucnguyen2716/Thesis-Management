@@ -229,6 +229,47 @@ public class DriveSampleDataSeeder : IDriveSampleDataSeeder
                         }
                     }
                 }
+
+                // Seed custom student: Nguyễn Hoàng Phúc
+                var customUid = "225050646";
+                if (!userCache.TryGetValue(customUid, out var customStudent))
+                {
+                    customStudent = new User
+                    {
+                        FullName = "Nguyễn Hoàng Phúc",
+                        Email = "225050646@ethesis.edu.vn",
+                        PasswordHash = global::BCrypt.Net.BCrypt.HashPassword("123"),
+                        Role = "Student",
+                        StudentId = customUid,
+                        Department = "Công nghệ thông tin",
+                        IsActive = true,
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    db.Users.Add(customStudent);
+                    await db.SaveChangesAsync();
+                    userCache[customUid] = customStudent;
+                }
+
+                var customThesisExists = await db.Theses.AnyAsync(t => t.StudentId == customStudent.Id && t.Category == "Thesis");
+                if (!customThesisExists)
+                {
+                    var thesis = new Thesis
+                    {
+                        StudentId = customStudent.Id,
+                        AdvisorId = defaultAdvisor.Id,
+                        Title = "Xây dựng hệ thống quản lý và kiểm tra đạo văn khóa luận tốt nghiệp eThesis",
+                        Description = "Đề tài nghiên cứu khoa học chuyên sâu về quản lý tài liệu học thuật và tích hợp công nghệ phân tích đạo văn thời gian thực.",
+                        Major = "software-engineering",
+                        Subject = "Khóa luận tốt nghiệp",
+                        SubjectCode = "THESIS202",
+                        Category = "Thesis",
+                        Status = "Approved",
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow
+                    };
+                    db.Theses.Add(thesis);
+                }
+
                 await db.SaveChangesAsync();
                 _logger.LogInformation("Successfully seeded Topic and Thesis database records.");
             }
