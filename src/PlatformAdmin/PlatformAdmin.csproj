@@ -39,7 +39,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="mock_google_drive\**\*">
+    <Content Include="mock_google_drive/**/*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
