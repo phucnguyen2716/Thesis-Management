@@ -260,10 +260,21 @@ public class DriveSampleDataSeeder : IDriveSampleDataSeeder
             if (!Directory.Exists(uploadsDir)) Directory.CreateDirectory(uploadsDir);
             var targetDocxPath = Path.Combine(uploadsDir, "225050646_NguyenHoangPhuc.docx");
 
-            var mockDriveRoot = Path.Combine(Directory.GetCurrentDirectory(), "mock_google_drive");
-            var sourceDocxPath = Path.Combine(mockDriveRoot, "Topic", "An toàn không gian mạng", "SV2026304_Bao_cao_Chuyen_de.docx");
+            var sourceDocxPath = "";
+            try
+            {
+                var mockDriveRoot = Path.Combine(Directory.GetCurrentDirectory(), "mock_google_drive");
+                if (Directory.Exists(mockDriveRoot))
+                {
+                    sourceDocxPath = Directory.GetFiles(mockDriveRoot, "SV2026304_Bao_cao_Chuyen_de.docx", SearchOption.AllDirectories).FirstOrDefault() ?? "";
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to search for custom docx template.");
+            }
 
-            if (File.Exists(sourceDocxPath) && !File.Exists(targetDocxPath))
+            if (!string.IsNullOrEmpty(sourceDocxPath) && File.Exists(sourceDocxPath))
             {
                 try
                 {
