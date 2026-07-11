@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
-import { thesisService } from '../services/api';
+import { thesisService, API_URL, resolveFileUrl } from '../services/api';
 
 const FlipbookPage = () => {
   const { id } = useParams();
@@ -104,7 +104,7 @@ const FlipbookPage = () => {
     const handleGoogleDriveUrl = async (url, baseData) => {
       setConverting(true);
       try {
-        const convertRes = await thesisService.convertDriveFile(url);
+        const convertRes = await thesisService.convertDriveFile(resolveFileUrl(url));
         if (convertRes.data && convertRes.data.success) {
           const convertedPath = convertRes.data.localPath;
           setThesis({
@@ -214,10 +214,7 @@ const FlipbookPage = () => {
         };
         
         // Using the PDF source from thesis data dynamically
-        let pdfSource = thesis.pdfUrl || "/Document%20Detail.pdf";
-        if (pdfSource && (pdfSource.startsWith("/temporary_pdf") || pdfSource.startsWith("/uploads"))) {
-          pdfSource = `http://localhost:5145${pdfSource}`;
-        }
+        let pdfSource = resolveFileUrl(thesis.pdfUrl) || "/Document%20Detail.pdf";
         flipNode.setAttribute("source", pdfSource);
         flipNode.setAttribute("id", "df_manual_book");
         
@@ -244,26 +241,23 @@ const FlipbookPage = () => {
 
   const getEmbedUrl = (url) => {
     if (!url) return "/Document%20Detail.pdf";
-    if (url.includes("drive.google.com") || url.includes("docs.google.com")) {
-      const match = url.match(/\/d\/([^/]+)/);
+    const resolved = resolveFileUrl(url);
+    if (resolved.includes("drive.google.com") || resolved.includes("docs.google.com")) {
+      const match = resolved.match(/\/d\/([^/]+)/);
       if (match && match[1]) {
-        if (url.includes("docs.google.com/document")) {
+        if (resolved.includes("docs.google.com/document")) {
           return `https://docs.google.com/document/d/${match[1]}/preview`;
         }
-        if (url.includes("docs.google.com/spreadsheets")) {
+        if (resolved.includes("docs.google.com/spreadsheets")) {
           return `https://docs.google.com/spreadsheets/d/${match[1]}/preview`;
         }
-        if (url.includes("docs.google.com/presentation")) {
+        if (resolved.includes("docs.google.com/presentation")) {
           return `https://docs.google.com/presentation/d/${match[1]}/preview`;
         }
         return `https://drive.google.com/file/d/${match[1]}/preview`;
       }
     }
-    if (url.startsWith("http")) return url;
-    if (url.startsWith("/temporary_pdf") || url.startsWith("/uploads")) {
-      return `http://localhost:5145${url}`;
-    }
-    return url;
+    return resolved;
   };
 
   return (

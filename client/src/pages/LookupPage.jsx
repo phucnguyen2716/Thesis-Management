@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { thesisService, API_URL } from '../services/api';
+import { thesisService, API_URL, resolveFileUrl } from '../services/api';
 import useLanguage from '../hooks/useLanguage';
 import { getMajorDefaultImage } from '../utils/majorImages';
 
@@ -261,25 +261,25 @@ const LookupPage = () => {
       setConvertingFile(sub.id || sub.fileName);
       showToastMessage('success', 'Đang chuyển đổi tài liệu sang PDF...');
       try {
-        const res = await thesisService.convertDriveFile(sub.filePath);
+        const res = await thesisService.convertDriveFile(resolveFileUrl(sub.filePath));
         if (res.data && res.data.success) {
           const convertedPath = res.data.localPath;
           showToastMessage('success', 'Chuyển đổi thành công! Đang mở sách 3D...');
-          window.open(`/theses/${previewThesis.id}/flipbook?file=${encodeURIComponent(convertedPath)}`, '_blank');
+          window.open(`/theses/${previewThesis.id}/flipbook?file=${encodeURIComponent(resolveFileUrl(convertedPath))}`, '_blank');
         } else {
           throw new Error('Chuyển đổi thất bại');
         }
       } catch (err) {
         console.error(err);
         showToastMessage('error', 'Chuyển đổi lỗi. Đang mở tệp tin gốc...');
-        window.open(sub.filePath.startsWith('http') ? sub.filePath : `${API_URL}${sub.filePath}`, '_blank');
+        window.open(resolveFileUrl(sub.filePath), '_blank');
       } finally {
         setConvertingFile(null);
       }
     } else if (ext === 'pdf') {
-      window.open(`/theses/${previewThesis.id}/flipbook?file=${encodeURIComponent(sub.filePath)}`, '_blank');
+      window.open(`/theses/${previewThesis.id}/flipbook?file=${encodeURIComponent(resolveFileUrl(sub.filePath))}`, '_blank');
     } else {
-      handleDownload(sub.filePath, sub.fileName);
+      handleDownload(resolveFileUrl(sub.filePath), sub.fileName);
     }
   };
 
