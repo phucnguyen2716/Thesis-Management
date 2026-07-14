@@ -23,6 +23,7 @@ const ChatbotPage = () => {
 
   const [chatMessage, setChatMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [messages, setMessages] = useState([
     { id: 1, text: lang === 'vi' ? "Xin chào! Tôi có thể hỗ trợ gì cho bạn về hệ thống đề tài?" : "Hello! How can I assist you with the academic thesis system?", sender: "system", time: "10:00" }
   ]);
@@ -407,10 +408,20 @@ const ChatbotPage = () => {
   };
 
   return (
-    <div className="flex h-screen w-screen bg-slate-50 font-sans overflow-hidden">
+    <div className="flex h-screen w-screen bg-slate-50 font-sans overflow-hidden relative">
       
+      {/* Backdrop overlay for mobile sidebar */}
+      {isSidebarOpen && (
+        <div 
+          className="md:hidden fixed inset-0 bg-black/45 z-35 backdrop-blur-sm transition-opacity duration-300"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
       {/* Left Sidebar */}
-      <aside className="w-[280px] bg-white border-r border-slate-100 flex flex-col p-5 shrink-0 h-full">
+      <aside className={`fixed md:relative top-0 bottom-0 left-0 z-40 w-[280px] bg-white border-r border-slate-100 flex flex-col p-5 shrink-0 h-full transition-transform duration-300 md:translate-x-0 ${
+        isSidebarOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'
+      }`}>
         <div className="flex flex-col gap-4">
           {/* Logo capsule - redirects back to home */}
           <div 
@@ -427,7 +438,10 @@ const ChatbotPage = () => {
 
           {/* New Chat Button */}
           <button
-            onClick={startNewChat}
+            onClick={() => {
+              startNewChat();
+              setIsSidebarOpen(false);
+            }}
             className="w-full flex items-center justify-center gap-2 py-2.5 bg-primary hover:bg-[#8C000E] text-white rounded-xl shadow-md hover:shadow-lg active:scale-95 transition-all duration-200 text-[11px] font-extrabold uppercase tracking-wider"
             title={lang === 'vi' ? 'Cuộc trò chuyện mới' : 'New chat'}
           >
@@ -449,7 +463,10 @@ const ChatbotPage = () => {
             chatHistory.map((item) => (
               <div
                 key={item.id}
-                onClick={() => scrollToMessage(item.id)}
+                onClick={() => {
+                  scrollToMessage(item.id);
+                  setIsSidebarOpen(false);
+                }}
                 className="flex items-start gap-2 p-2 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors group"
                 title={item.prompt}
               >
@@ -466,7 +483,10 @@ const ChatbotPage = () => {
         {/* Quick manuals / manuals at bottom-left */}
         <div className="flex flex-col gap-2.5">
           <button
-            onClick={() => handleQuickQuestion("Xem cẩm nang hỗ trợ học vụ")}
+            onClick={() => {
+              handleQuickQuestion("Xem cẩm nang hỗ trợ học vụ");
+              setIsSidebarOpen(false);
+            }}
             className="w-full py-3 px-4 bg-primary hover:bg-[#8C000E] text-white rounded-xl text-[11px] font-extrabold uppercase tracking-wider flex items-center justify-center gap-2 shadow-md hover:shadow-lg active:scale-98 transition-all"
           >
             <BookOpen size={14} />
@@ -474,7 +494,10 @@ const ChatbotPage = () => {
           </button>
           
           <button
-            onClick={() => handleQuickQuestion("Xem sổ tay sinh viên")}
+            onClick={() => {
+              handleQuickQuestion("Xem sổ tay sinh viên");
+              setIsSidebarOpen(false);
+            }}
             className="w-full py-3 px-4 bg-primary hover:bg-[#8C000E] text-white rounded-xl text-[11px] font-extrabold uppercase tracking-wider flex items-center justify-center gap-2 shadow-md hover:shadow-lg active:scale-98 transition-all"
           >
             <FileText size={14} />
@@ -487,28 +510,38 @@ const ChatbotPage = () => {
       <main className="flex-1 flex flex-col h-full bg-white overflow-hidden relative">
         
         {/* Header Bar */}
-        <header className="h-[72px] px-8 flex items-center justify-between border-b border-slate-100 shrink-0">
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition-all active:scale-95"
-            title="Quay lại"
-          >
-            <ArrowLeft size={14} />
-            <span>{lang === 'vi' ? 'Quay lại' : 'Back'}</span>
-          </button>
+        <header className="h-[72px] px-4 md:px-8 flex items-center justify-between border-b border-slate-100 shrink-0">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => navigate(-1)}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition-all active:scale-95"
+              title="Quay lại"
+            >
+              <ArrowLeft size={14} />
+              <span className="hidden sm:inline">{lang === 'vi' ? 'Quay lại' : 'Back'}</span>
+            </button>
+            <button
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className="md:hidden flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition-all active:scale-95"
+              title={lang === 'vi' ? 'Lịch sử' : 'History'}
+            >
+              <MessageSquare size={14} />
+              <span>{lang === 'vi' ? 'Lịch sử' : 'History'}</span>
+            </button>
+          </div>
 
           {/* User Account Dropdown */}
           <div className="relative" ref={profileMenuRef}>
             <button
               onClick={() => setShowProfileMenu(!showProfileMenu)}
-              className="flex items-center gap-2.5 px-4 py-2 bg-slate-50 hover:bg-slate-100 active:bg-slate-200 border border-slate-100 rounded-xl transition-all cursor-pointer font-bold text-xs select-none"
+              className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 hover:bg-slate-100 active:bg-slate-200 border border-slate-100 rounded-xl transition-all cursor-pointer font-bold text-xs select-none"
             >
               <img
                 alt="User profile avatar"
                 className="w-6 h-6 rounded-full object-cover border border-slate-200"
                 src={user.avatarUrl?.trim() || DEFAULT_AVATAR}
               />
-              <span className="text-slate-700 font-extrabold">{lang === 'vi' ? `Xin chào, ${user.fullName}!` : `Hello, ${user.fullName}!`}</span>
+              <span className="text-slate-700 font-extrabold hidden sm:inline">{lang === 'vi' ? `Xin chào, ${user.fullName}!` : `Hello, ${user.fullName}!`}</span>
               <ChevronDown size={14} className={`text-slate-400 transition-transform ${showProfileMenu ? 'rotate-180' : ''}`} />
             </button>
 
