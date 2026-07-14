@@ -536,7 +536,7 @@ const LookupPage = () => {
         )}
 
         {/* ── Filter chips row (horizontal scroll, mobile-friendly) ── */}
-        {tc && (
+        {tc && thesisType !== 'khoa-luan' && thesisType !== 'chuyen-de' && (
           <div className="mb-7">
             {/* Section label */}
             <div className="flex items-center gap-2 mb-3 px-1">
