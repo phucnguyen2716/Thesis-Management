@@ -843,7 +843,6 @@ const LookupPage = () => {
                   <div className="p-6 md:p-8 flex-1 flex flex-col">
                     <div className="flex items-center gap-2 mb-4">
                       <span className="px-2 py-1 bg-surface-container-high text-on-surface-variant text-[8px] font-black uppercase tracking-widest rounded-md">#{r.id}</span>
-                      <span className={`text-[8px] font-black uppercase tracking-widest ${tc ? tc.accentText : 'text-primary'}`}>{r.department}</span>
                       <div className="ml-auto flex items-center gap-1.5">
                         {r.batch && (
                           <span className="text-[8px] font-black text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-100">Đợt {r.batch}</span>
