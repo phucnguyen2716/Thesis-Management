@@ -312,7 +312,8 @@ const LookupPage = () => {
             desc: t.description || 'Chưa có mô tả chi tiết cho đề tài này.',
             tags: t.major ? [`#${t.major}`] : ['#research'],
             pdfUrl: t.filePath || '/Document%20Detail.pdf',
-            submissions: t.submissions || []
+            submissions: t.submissions || [],
+            batch: t.batch || 1
           }));
           setDbTheses(mapped);
         }
@@ -338,7 +339,8 @@ const LookupPage = () => {
       similarityLevel: thesis.similarityLevel || "safe",
       description: thesis.description || thesis.desc || "Chưa có mô tả chi tiết.",
       tags: thesis.tags || ["#research"],
-      submissions: thesis.submissions || []
+      submissions: thesis.submissions || [],
+      batch: thesis.batch || 1
     });
     setShowPreviewModal(true);
   };
@@ -346,6 +348,7 @@ const LookupPage = () => {
   const thesisType  = searchParams.get('type');
   const activeFilter = searchParams.get('filter');
   const activeSubject = searchParams.get('subject');
+  const activeBatch = searchParams.get('batch');
   const tc = thesisType ? TYPE_CONFIG[thesisType] : null;
 
   const setFilter = (value) => {
@@ -361,9 +364,27 @@ const LookupPage = () => {
     setSearchParams(p);
   };
 
+  const setBatch = (value) => {
+    const p = new URLSearchParams(searchParams);
+    if (value) p.set('batch', value); else p.delete('batch');
+    setSearchParams(p);
+  };
+
   const clearType = () => setSearchParams({});
 
   const combinedResults = [...dbTheses, ...ALL_RESULTS];
+
+  // Dynamically compute unique batches for the current category
+  const uniqueBatches = Array.from(
+    new Set(
+      dbTheses
+        .filter(item => !thesisType || item.type === thesisType)
+        .map(item => item.batch)
+        .filter(Boolean)
+    )
+  ).sort((a, b) => a - b);
+  const displayBatches = uniqueBatches.length > 0 ? uniqueBatches : [1];
+
   const filteredResults = combinedResults.filter(item => {
     // 1. Filter by thesisType
     if (thesisType && item.type !== thesisType) {
@@ -372,6 +393,12 @@ const LookupPage = () => {
     // 2. Filter by major (activeFilter)
     if (activeFilter) {
       if (item.major !== activeFilter) {
+        return false;
+      }
+    }
+    // 2.5 Filter by batch (activeBatch)
+    if (activeBatch) {
+      if (item.batch?.toString() !== activeBatch) {
         return false;
       }
     }
@@ -537,6 +564,54 @@ const LookupPage = () => {
             </div>
           </div>
         )}
+
+        {/* ── Batch filter chips row (horizontal scroll, mobile-friendly) ── */}
+        <div className="mb-7">
+          {/* Section label */}
+          <div className="flex items-center gap-2 mb-3 px-1">
+            <div className={`w-1 h-4 rounded-full ${tc ? tc.divider : 'bg-primary/20'}`} />
+            <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-60 flex items-center gap-1.5">
+              <span className="material-symbols-outlined text-xs">calendar_today</span>
+              Lọc theo Đợt
+            </span>
+          </div>
+
+          {/* Scrollable batch chip row */}
+          <div
+            className="flex gap-2 overflow-x-auto pb-2 px-1"
+            style={{ WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          >
+            <button
+              onClick={() => setBatch(null)}
+              className={`flex items-center gap-1.5 px-3 py-2 md:px-4 md:py-2.5 rounded-full text-[11px] md:text-xs font-black whitespace-nowrap transition-all duration-200 shrink-0 ${
+                !activeBatch 
+                  ? (tc ? tc.chipActive : 'bg-primary text-white shadow-md') 
+                  : (tc ? tc.chipIdle : 'bg-white text-primary border border-primary/10 hover:bg-primary/5')
+              }`}
+            >
+              <span className="material-symbols-outlined text-[13px] md:text-[15px]">all_inclusive</span>
+              <span>Tất cả các đợt</span>
+            </button>
+
+            {displayBatches.map((b) => {
+              const isActive = activeBatch === b.toString();
+              return (
+                <button
+                  key={b}
+                  onClick={() => setBatch(b.toString())}
+                  className={`flex items-center gap-1.5 px-3 py-2 md:px-4 md:py-2.5 rounded-full text-[11px] md:text-xs font-black whitespace-nowrap transition-all duration-200 shrink-0 ${
+                    isActive 
+                      ? (tc ? tc.chipActive : 'bg-primary text-white shadow-md') 
+                      : (tc ? tc.chipIdle : 'bg-white text-primary border border-primary/10 hover:bg-primary/5')
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-[13px] md:text-[15px]">event</span>
+                  <span>Đợt {b}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
         {/* ── Subject chips row (Only for Đồ Án and when a major is selected) ── */}
         {thesisType === 'do-an' && activeFilter && DO_AN_MAJORS[activeFilter] && (
@@ -753,9 +828,14 @@ const LookupPage = () => {
                     <div className="flex items-center gap-2 mb-4">
                       <span className="px-2 py-1 bg-surface-container-high text-on-surface-variant text-[8px] font-black uppercase tracking-widest rounded-md">#{r.id}</span>
                       <span className={`text-[8px] font-black uppercase tracking-widest ${tc ? tc.accentText : 'text-primary'}`}>{r.department}</span>
-                      {r.subjectCode && (
-                        <span className="ml-auto text-[8px] font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">{r.subjectCode}</span>
-                      )}
+                      <div className="ml-auto flex items-center gap-1.5">
+                        {r.batch && (
+                          <span className="text-[8px] font-black text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-100">Đợt {r.batch}</span>
+                        )}
+                        {r.subjectCode && (
+                          <span className="text-[8px] font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">{r.subjectCode}</span>
+                        )}
+                      </div>
                     </div>
 
                     <h2

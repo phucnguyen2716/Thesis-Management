@@ -263,6 +263,14 @@ public class DriveController : ControllerBase
                 var workDir = Path.Combine(Directory.GetCurrentDirectory(), "temporary_pdf", $"local_{safeName}");
                 Directory.CreateDirectory(workDir);
 
+                // Check if the converted PDF already exists to avoid re-converting
+                var expectedPdfPath = Path.Combine(workDir, Path.GetFileNameWithoutExtension(absolutePath) + ".pdf");
+                if (System.IO.File.Exists(expectedPdfPath) && new System.IO.FileInfo(expectedPdfPath).Length > 0)
+                {
+                    var relativePdfPath = $"/temporary_pdf/local_{safeName}/{Path.GetFileName(expectedPdfPath)}";
+                    return Ok(new { success = true, localPath = relativePdfPath });
+                }
+
                 var convertedPdfPath = await _pdfConverter.ConvertToPdfAsync(absolutePath, workDir);
                 if (convertedPdfPath != null && System.IO.File.Exists(convertedPdfPath))
                 {
@@ -306,7 +314,22 @@ public class DriveController : ControllerBase
 
         if (!string.IsNullOrEmpty(record.LocalPdfPath) && record.LocalPdfPath.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
         {
-            return Ok(new { success = true, localPath = record.LocalPdfPath });
+            // Verify if the local PDF actually exists on disk to avoid returning a dead reference
+            var subPath = record.LocalPdfPath.StartsWith("/temporary_pdf/") 
+                ? record.LocalPdfPath.Substring("/temporary_pdf/".Length) 
+                : record.LocalPdfPath.TrimStart('/');
+            var tempPdfRoot = _configuration["GoogleDrive:TemporaryPdfLocalPath"] ?? "temporary_pdf";
+            var fullPath = Path.Combine(Directory.GetCurrentDirectory(), tempPdfRoot, subPath.Replace('/', Path.DirectorySeparatorChar));
+            
+            if (System.IO.File.Exists(fullPath) && new System.IO.FileInfo(fullPath).Length > 0)
+            {
+                return Ok(new { success = true, localPath = record.LocalPdfPath });
+            }
+            
+            // If the local file is missing, clear the path so we force re-conversion below
+            record.LocalPdfPath = "";
+            _db.Entry(record).State = EntityState.Modified;
+            await _db.SaveChangesAsync();
         }
 
         // Perform conversion on-demand
