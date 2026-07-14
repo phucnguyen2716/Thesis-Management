@@ -349,7 +349,27 @@ const LookupPage = () => {
   const activeFilter = searchParams.get('filter');
   const activeSubject = searchParams.get('subject');
   const activeBatch = searchParams.get('batch');
+  const activeYear = searchParams.get('year');
   const tc = thesisType ? TYPE_CONFIG[thesisType] : null;
+
+  const [tempFilter, setTempFilter] = useState(activeFilter || '');
+  const [tempBatch, setTempBatch] = useState(activeBatch || '');
+  const [tempYear, setTempYear] = useState(activeYear || '');
+
+  useEffect(() => {
+    setTempFilter(activeFilter || '');
+    setTempBatch(activeBatch || '');
+    setTempYear(activeYear || '');
+  }, [activeFilter, activeBatch, activeYear]);
+
+  const handleApplyFilters = () => {
+    const p = new URLSearchParams(searchParams);
+    if (tempFilter) p.set('filter', tempFilter); else p.delete('filter');
+    if (tempBatch) p.set('batch', tempBatch); else p.delete('batch');
+    if (tempYear) p.set('year', tempYear); else p.delete('year');
+    p.delete('subject'); // Reset subject when major changes
+    setSearchParams(p);
+  };
 
   const setFilter = (value) => {
     const p = new URLSearchParams(searchParams);
@@ -373,6 +393,11 @@ const LookupPage = () => {
   const clearType = () => setSearchParams({});
 
   const combinedResults = [...dbTheses, ...ALL_RESULTS];
+
+  const availableYears = useMemo(() => {
+    const yearsSet = new Set(combinedResults.map(item => item.year).filter(Boolean));
+    return Array.from(yearsSet).sort((a, b) => b.localeCompare(a));
+  }, [combinedResults]);
 
   // We have 2 batches to divide/reorganize
   const displayBatches = [1, 2];
@@ -408,6 +433,12 @@ const LookupPage = () => {
     // 2.5 Filter by batch (activeBatch)
     if (activeBatch) {
       if (item.batch?.toString() !== activeBatch) {
+        return false;
+      }
+    }
+    // 2.6 Filter by publication year (activeYear)
+    if (activeYear) {
+      if (item.year?.toString() !== activeYear) {
         return false;
       }
     }
@@ -574,53 +605,7 @@ const LookupPage = () => {
           </div>
         )}
 
-        {/* ── Batch filter chips row (horizontal scroll, mobile-friendly) ── */}
-        <div className="mb-7">
-          {/* Section label */}
-          <div className="flex items-center gap-2 mb-3 px-1">
-            <div className={`w-1 h-4 rounded-full ${tc ? tc.divider : 'bg-primary/20'}`} />
-            <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-60 flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-xs">calendar_today</span>
-              Lọc theo Đợt
-            </span>
-          </div>
 
-          {/* Scrollable batch chip row */}
-          <div
-            className="flex gap-2 overflow-x-auto pb-2 px-1"
-            style={{ WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-          >
-            <button
-              onClick={() => setBatch(null)}
-              className={`flex items-center gap-1.5 px-3 py-2 md:px-4 md:py-2.5 rounded-full text-[11px] md:text-xs font-black whitespace-nowrap transition-all duration-200 shrink-0 ${
-                !activeBatch 
-                  ? (tc ? tc.chipActive : 'bg-primary text-white shadow-md') 
-                  : (tc ? tc.chipIdle : 'bg-white text-primary border border-primary/10 hover:bg-primary/5')
-              }`}
-            >
-              <span className="material-symbols-outlined text-[13px] md:text-[15px]">all_inclusive</span>
-              <span>Tất cả các đợt</span>
-            </button>
-
-            {displayBatches.map((b) => {
-              const isActive = activeBatch === b.toString();
-              return (
-                <button
-                  key={b}
-                  onClick={() => setBatch(b.toString())}
-                  className={`flex items-center gap-1.5 px-3 py-2 md:px-4 md:py-2.5 rounded-full text-[11px] md:text-xs font-black whitespace-nowrap transition-all duration-200 shrink-0 ${
-                    isActive 
-                      ? (tc ? tc.chipActive : 'bg-primary text-white shadow-md') 
-                      : (tc ? tc.chipIdle : 'bg-white text-primary border border-primary/10 hover:bg-primary/5')
-                  }`}
-                >
-                  <span className="material-symbols-outlined text-[13px] md:text-[15px]">event</span>
-                  <span>Đợt {b}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
 
         {/* ── Subject chips row (Only for Đồ Án and when a major is selected) ── */}
         {thesisType === 'do-an' && activeFilter && DO_AN_MAJORS[activeFilter] && (
@@ -752,8 +737,8 @@ const LookupPage = () => {
             </label>
             <div className="relative">
               <select 
-                value={activeFilter || ''}
-                onChange={(e) => setFilter(e.target.value || null)}
+                value={tempFilter}
+                onChange={(e) => setTempFilter(e.target.value)}
                 className="w-full px-4 md:px-6 py-3 md:py-3.5 bg-surface-container-lowest rounded-xl md:rounded-2xl outline-none border border-outline-variant focus:border-primary transition-all font-bold text-xs appearance-none cursor-pointer"
               >
                 {specOptions.map((opt) => (
@@ -765,18 +750,48 @@ const LookupPage = () => {
               <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant/40 pointer-events-none text-sm">expand_more</span>
             </div>
           </div>
+
           <div className="flex-1 min-w-[160px] flex flex-col gap-2">
             <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1 flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-xs">event</span> Năm học
+              <span className="material-symbols-outlined text-xs">calendar_today</span> Đợt
             </label>
-            <div className="flex items-center gap-2">
-              <input type="text" placeholder="Từ" className="w-full px-4 py-3 bg-surface-container-lowest rounded-xl outline-none border border-outline-variant focus:border-primary transition-all font-bold text-xs" />
-              <input type="text" placeholder="Đến" className="w-full px-4 py-3 bg-surface-container-lowest rounded-xl outline-none border border-outline-variant focus:border-primary transition-all font-bold text-xs" />
+            <div className="relative">
+              <select 
+                value={tempBatch}
+                onChange={(e) => setTempBatch(e.target.value)}
+                className="w-full px-4 md:px-6 py-3 md:py-3.5 bg-surface-container-lowest rounded-xl md:rounded-2xl outline-none border border-outline-variant focus:border-primary transition-all font-bold text-xs appearance-none cursor-pointer"
+              >
+                <option value="">Tất cả các đợt</option>
+                <option value="1">Đợt 1</option>
+                <option value="2">Đợt 2</option>
+              </select>
+              <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant/40 pointer-events-none text-sm">expand_more</span>
             </div>
           </div>
 
+          <div className="flex-1 min-w-[160px] flex flex-col gap-2">
+            <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1 flex items-center gap-1.5">
+              <span className="material-symbols-outlined text-xs">event</span> Năm xuất bản
+            </label>
+            <div className="relative">
+              <select 
+                value={tempYear}
+                onChange={(e) => setTempYear(e.target.value)}
+                className="w-full px-4 md:px-6 py-3 md:py-3.5 bg-surface-container-lowest rounded-xl md:rounded-2xl outline-none border border-outline-variant focus:border-primary transition-all font-bold text-xs appearance-none cursor-pointer"
+              >
+                <option value="">Tất cả các năm</option>
+                {availableYears.map(yr => (
+                  <option key={yr} value={yr}>Năm {yr}</option>
+                ))}
+              </select>
+              <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant/40 pointer-events-none text-sm">expand_more</span>
+            </div>
+          </div>
 
-          <button className="px-6 md:px-8 py-3 md:py-3.5 bg-on-surface text-white rounded-xl md:rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-primary transition-all shadow-lg active:scale-95 whitespace-nowrap">
+          <button 
+            onClick={handleApplyFilters}
+            className="px-6 md:px-8 py-3 md:py-3.5 bg-on-surface text-white rounded-xl md:rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-primary transition-all shadow-lg active:scale-95 whitespace-nowrap"
+          >
             LỌC KẾT QUẢ
           </button>
         </div>
