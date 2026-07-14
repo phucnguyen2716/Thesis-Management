@@ -566,44 +566,7 @@ const LookupPage = () => {
           </div>
         )}
 
-        {/* ── Filter chips row (horizontal scroll, mobile-friendly) ── */}
-        {tc && thesisType !== 'khoa-luan' && thesisType !== 'chuyen-de' && (
-          <div className="mb-7">
-            {/* Section label */}
-            <div className="flex items-center gap-2 mb-3 px-1">
-              <div className={`w-1 h-4 rounded-full ${tc.divider}`} />
-              <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-60 flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-xs">{tc.filterIcon}</span>
-                {tc.filterLabel}
-              </span>
-            </div>
 
-            {/* Scrollable chip row — works on mobile + desktop */}
-            <div
-              className="flex gap-2 overflow-x-auto pb-2 px-1"
-              style={{ WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-            >
-              {tc.filters.map((f) => {
-                const isActive = (f.value === null && !activeFilter) || f.value === activeFilter;
-                return (
-                  <button
-                    key={f.value ?? 'all'}
-                    onClick={() => setFilter(f.value)}
-                    className={`flex items-center gap-1.5 px-3 py-2 md:px-4 md:py-2.5 rounded-full text-[11px] md:text-xs font-black whitespace-nowrap transition-all duration-200 shrink-0 ${
-                      isActive ? tc.chipActive : tc.chipIdle
-                    }`}
-                  >
-                    <span className="material-symbols-outlined text-[13px] md:text-[15px]">{f.icon}</span>
-                    <span>{f.label}</span>
-                    {f.sub && !isActive && (
-                      <span className="opacity-50 text-[9px]">({f.sub})</span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
 
 
 
