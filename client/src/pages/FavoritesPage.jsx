@@ -269,6 +269,14 @@ const FavoritesPage = () => {
     const allKeys = Array.from(new Set([...Object.keys(majors), ...defaultList]));
     
     return allKeys
+      .filter(key => {
+        const lowerKey = key.toLowerCase().trim();
+        return lowerKey !== 'công nghệ thông tin' && 
+               lowerKey !== 'cong nghe thong tin' && 
+               lowerKey !== 'cntt' && 
+               lowerKey !== 'it' && 
+               lowerKey !== 'information technology';
+      })
       .map(key => ({
         key,
         label: MAJOR_LABELS[key] || key.toUpperCase(),
