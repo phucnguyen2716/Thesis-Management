@@ -13,6 +13,7 @@ using PlatformAdmin.Entities;
 using Hangfire;
 using Hangfire.PostgreSql;
 
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 var builder = WebApplication.CreateBuilder(args);
 
 // Load local secrets if present

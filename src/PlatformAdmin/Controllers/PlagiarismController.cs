@@ -119,26 +119,60 @@ namespace PlatformAdmin.Controllers
         [ApiResponse(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetStatus(int thesisId)
         {
-            var thesis = await _db.Theses.FirstOrDefaultAsync(t => t.Id == thesisId);
-            if (thesis == null) return NotFound(new { message = "Thesis not found" });
-
-            var latestReport = await _db.PlagiarismReports
-                .Where(r => r.ThesisId == thesisId)
-                .OrderByDescending(r => r.CheckedAt)
-                .FirstOrDefaultAsync();
-
-            if (latestReport != null)
+            try
             {
-                var report = JsonSerializer.Deserialize<PlagiarismReport>(latestReport.ReportJson);
-                return Ok(new { status = "Completed", report = report });
-            }
+                var thesis = await _db.Theses.FirstOrDefaultAsync(t => t.Id == thesisId);
+                if (thesis == null) return NotFound(new { message = "Thesis not found" });
 
-            if (thesis.Status == "UnderReview")
+                var latestReport = await _db.PlagiarismReports
+                    .Where(r => r.ThesisId == thesisId)
+                    .OrderByDescending(r => r.CheckedAt)
+                    .FirstOrDefaultAsync();
+
+                if (latestReport != null)
+                {
+                    PlagiarismReport? report = null;
+                    if (!string.IsNullOrWhiteSpace(latestReport.ReportJson))
+                    {
+                        try
+                        {
+                            report = JsonSerializer.Deserialize<PlagiarismReport>(latestReport.ReportJson, new JsonSerializerOptions
+                            {
+                                PropertyNameCaseInsensitive = true
+                            });
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"Error deserializing plagiarism report JSON: {ex.Message}");
+                        }
+                    }
+
+                    if (report == null)
+                    {
+                        report = new PlagiarismReport
+                        {
+                            SimilarityPercentage = latestReport.SimilarityPercentage,
+                            Sources = new List<PlagiarismSourceDetail>(),
+                            Matches = new List<PlagiarismMatchDetail>(),
+                            BM25Files = new List<PlagiarismBM25Result>()
+                        };
+                    }
+
+                    return Ok(new { status = "Completed", report = report });
+                }
+
+                if (thesis.Status == "UnderReview")
+                {
+                    return Ok(new { status = "Pending" });
+                }
+
+                return Ok(new { status = "NotStarted" });
+            }
+            catch (Exception ex)
             {
-                return Ok(new { status = "Pending" });
+                Console.WriteLine($"Error in GetStatus: {ex.Message}\n{ex.StackTrace}");
+                return StatusCode(StatusCodes.Status500InternalServerError, new { error = ex.Message });
             }
-
-            return Ok(new { status = "NotStarted" });
         }
 
         private async Task SeedMockIndicesAsync()
