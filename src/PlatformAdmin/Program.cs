@@ -442,12 +442,33 @@ app.UseHangfireDashboard("/hangfire", new DashboardOptions
     Authorization = new[] { new HangfireAdminAuthorizationFilter(app.Configuration) }
 });
 
-// Register recurring job: sync Drive files every 1 minute
-RecurringJob.AddOrUpdate<DriveSyncJob>(
-    "drive-sync-all",
-    job => job.SyncAllAsync(),
-    "*/1 * * * *"
-);
+// Register recurring job: sync Drive files every 1 minute in a background task to prevent startup crashes from lock timeouts
+_ = Task.Run(async () =>
+{
+    int retries = 6;
+    while (retries > 0)
+    {
+        try
+        {
+            RecurringJob.AddOrUpdate<DriveSyncJob>(
+                "drive-sync-all",
+                job => job.SyncAllAsync(),
+                "*/1 * * * *"
+            );
+            Console.WriteLine("Successfully registered recurring job 'drive-sync-all'.");
+            break;
+        }
+        catch (Exception ex)
+        {
+            retries--;
+            Console.WriteLine($"Warning: Failed to register recurring job 'drive-sync-all' (retries left: {retries}): {ex.Message}");
+            if (retries > 0)
+            {
+                await Task.Delay(10000); // Wait 10 seconds before retrying
+            }
+        }
+    }
+});
 
 // Auto-seed default major images to Cloudinary
 _ = Task.Run(async () =>
