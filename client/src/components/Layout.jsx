@@ -454,7 +454,7 @@ const Layout = () => {
           </button>
           <div 
             onClick={() => navigate('/')} 
-            className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-xl shadow-md border border-white/10 h-10 md:h-12 shrink-0 cursor-pointer hover:scale-[1.03] active:scale-95 transition-all duration-300"
+            className="flex items-center gap-1.5 bg-white px-2 py-1 sm:px-3 sm:py-1.5 rounded-xl shadow-md border border-white/10 h-8 sm:h-10 md:h-12 shrink cursor-pointer hover:scale-[1.03] active:scale-95 transition-all duration-300"
             title="UEF Thesis Portal"
           >
             <img 
@@ -550,14 +550,14 @@ const Layout = () => {
         </div>
 
         {/* Mobile Header Icons */}
-        <div className="lg:hidden flex items-center gap-1.5">
+        <div className="lg:hidden flex items-center gap-1 sm:gap-1.5">
           <button
             onClick={toggleLanguage}
             className="flex items-center gap-0.5 px-2 py-1 bg-white/10 hover:bg-white/20 text-on-primary rounded-lg border border-white/10 transition-all font-black text-[9px] uppercase tracking-widest shadow-sm active:scale-95"
             title={lang === 'vi' ? 'Switch to English' : 'Chuyển sang Tiếng Việt'}
           >
             <span className="material-symbols-outlined text-xs">translate</span>
-            <span>{lang === 'vi' ? 'VI' : 'EN'}</span>
+            <span className="hidden sm:inline ml-0.5">{lang === 'vi' ? 'VI' : 'EN'}</span>
           </button>
           <button 
             onClick={() => navigate('/analysis')}
@@ -597,7 +597,7 @@ const Layout = () => {
           </div>
           <button
             onClick={() => navigate('/profile')}
-            className="flex items-center gap-2 py-1 pl-1 pr-3 bg-white/10 hover:bg-white/20 rounded-full border border-white/10 active:scale-95 transition-all"
+            className="flex items-center gap-1 sm:gap-2 py-1 pl-1 pr-1 sm:pr-3 bg-white/10 hover:bg-white/20 rounded-full border border-white/10 active:scale-95 transition-all"
           >
             <div className="w-8 h-8 rounded-full overflow-hidden border border-white/20 shrink-0">
               <img
@@ -606,7 +606,7 @@ const Layout = () => {
                 src={user.avatarUrl?.trim() || DEFAULT_AVATAR}
               />
             </div>
-            <div className="flex flex-col items-start min-w-0">
+            <div className="hidden sm:flex flex-col items-start min-w-0">
               <span className="text-[11px] font-bold text-on-primary leading-none truncate max-w-[90px]">
                 {user.fullName || 'Sinh viên'}
               </span>
