@@ -519,52 +519,21 @@ const LookupPage = () => {
       <div className="relative z-10 py-2 md:py-4 max-w-[1400px] mx-auto px-4 md:px-8">
 
         {/* ── Page Header ──────────────────────────────────────── */}
-        <header className="text-center mb-4 md:mb-6">
-          {/* Top badge */}
-          <div className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full font-black text-[9px] uppercase tracking-widest mb-3 border transition-all duration-500 ${tc ? tc.badgeBg : 'bg-primary/5 border-primary/10 text-primary'}`}>
-            <span className={`material-symbols-outlined text-sm ${tc ? tc.badgeIcon : 'text-primary'}`}>
-              {tc ? tc.icon : 'database'}
-            </span>
-            {tc ? tc.label : 'Kho lưu trữ học thuật UEF'}
-          </div>
-
+        <header className="text-center mb-6 md:mb-8 mt-2 md:mt-4">
           {/* H1 */}
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-on-surface mb-2 tracking-tighter leading-none">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-on-surface mb-3 tracking-tighter leading-none">
             {tc ? (
               <>Tra Cứu <span className={`transition-colors duration-500 ${tc.accentText}`}>{tc.label}</span></>
             ) : (
               <>Tra Cứu <span className="text-primary/70">Đề Tài</span></>
             )}
           </h1>
-          <p className="text-on-surface-variant font-medium opacity-60 max-w-2xl mx-auto leading-relaxed text-xs md:text-sm">
+          <p className="text-on-surface-variant font-medium opacity-65 max-w-2xl mx-auto leading-relaxed text-xs md:text-sm">
             {tc
               ? tc.desc + ' — Tìm kiếm và khám phá các đề tài xuất sắc của sinh viên UEF.'
               : 'Khám phá hàng nghìn đề tài nghiên cứu, đồ án, khóa luận và chuyên đề xuất sắc từ sinh viên và giảng viên qua các thế hệ.'}
           </p>
         </header>
-
-        {/* ── Type banner (soft card, no gradient) ─────────────── */}
-        {tc && (
-          <div className={`${tc.bannerCard} rounded-2xl p-4 md:p-5 mb-5 flex items-center gap-3`}>
-            {/* Colored icon */}
-            <div className={`w-9 h-9 md:w-10 md:h-10 ${tc.bannerIconBg} rounded-xl flex items-center justify-center shrink-0`}>
-              <span className="material-symbols-outlined text-white text-lg">{tc.icon}</span>
-            </div>
-            {/* Text */}
-            <div className="flex-1 min-w-0">
-              <p className={`${tc.bannerLabel} font-black text-xs uppercase tracking-widest leading-none`}>{tc.label}</p>
-              <p className={`${tc.bannerDesc} text-[10px] font-medium mt-1 opacity-80`}>{tc.desc}</p>
-            </div>
-            {/* Close */}
-            <button
-              onClick={clearType}
-              title="Xem tất cả"
-              className="shrink-0 w-8 h-8 rounded-full bg-black/5 hover:bg-black/10 flex items-center justify-center transition-all"
-            >
-              <span className="material-symbols-outlined text-sm text-on-surface-variant">close</span>
-            </button>
-          </div>
-        )}
 
 
 
