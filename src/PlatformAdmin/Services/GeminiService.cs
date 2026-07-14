@@ -953,10 +953,12 @@ namespace PlatformAdmin.Services
             }
             else if (lower.Contains("search") || lower.Contains("find") || lower.Contains("thesis") || lower.Contains("đề tài") || 
                      lower.Contains("khóa luận") || lower.Contains("đồ án") || lower.Contains("chọn") || lower.Contains("kiếm") || 
-                     lower.Contains("tìm"))
+                     lower.Contains("tìm") || lower.Contains("xem") || lower.Contains("báo cáo") || lower.Contains("bài báo") ||
+                     lower.Contains("tài liệu") || lower.Contains("nghiên cứu"))
             {
                 var query = prompt;
-                var prefixes = new[] { "chọn thesis", "chọn đề tài", "chọn khoa luận", "chọn đồ án", "tìm kiếm đề tài", "tìm kiếm", "tìm đề tài", "tìm", "kiếm", "search for", "search", "find" };
+                var prefixes = new[] { "chọn thesis", "chọn đề tài", "chọn khoa luận", "chọn đồ án", "tìm kiếm đề tài", "tìm kiếm", "tìm đề tài", "tìm", "kiếm", "search for", "search", "find", "xem bài báo về", "xem tài liệu về", "xem đề tài về", "xem báo cáo về", "xem", "bài báo", "báo cáo", "tài liệu", "nghiên cứu" };
+
                 foreach (var prefix in prefixes)
                 {
                     var idx = lower.IndexOf(prefix);
