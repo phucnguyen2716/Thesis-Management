@@ -282,7 +282,7 @@ public class DriveController : ControllerBase
                         var pdfBytes = await System.IO.File.ReadAllBytesAsync(convertedPdfPath);
                         await _driveService.UploadFileToFolderAsync("Temporary_PDF", Path.GetFileName(convertedPdfPath), pdfBytes, "application/pdf", AcademicCategory.Project);
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
                         // Ignore upload failures (e.g. if credentials are dummy or missing) and proceed
                     }

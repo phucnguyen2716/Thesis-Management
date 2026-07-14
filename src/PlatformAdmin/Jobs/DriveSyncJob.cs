@@ -303,18 +303,18 @@ public class DriveSyncJob
             // Check if the converted PDF already exists to avoid repeated download & conversion
             if (File.Exists(pdfPath) && new System.IO.FileInfo(pdfPath).Length > 0)
             {
-                var pdfName = Path.GetFileName(pdfPath);
-                record.LocalPdfPath = $"/temporary_pdf/{uid}_{safeName}/{pdfName}";
+                var existingPdfName = Path.GetFileName(pdfPath);
+                record.LocalPdfPath = $"/temporary_pdf/{uid}_{safeName}/{existingPdfName}";
                 record.LastCheckedAt = DateTime.UtcNow;
 
                 try
                 {
                     var pdfBytes = await File.ReadAllBytesAsync(pdfPath);
-                    await _driveService.UploadFileToFolderAsync("Temporary_PDF", pdfName, pdfBytes, "application/pdf", cat);
+                    await _driveService.UploadFileToFolderAsync("Temporary_PDF", existingPdfName, pdfBytes, "application/pdf", cat);
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogWarning(ex, "Could not upload existing PDF '{PdfName}' to Temporary_PDF folder", pdfName);
+                    _logger.LogWarning(ex, "Could not upload existing PDF '{PdfName}' to Temporary_PDF folder", existingPdfName);
                 }
 
                 _logger.LogInformation("📄 [DriveSyncJob] Converted PDF already exists, skipped conversion: {File} → {Pdf}", record.FileName, record.LocalPdfPath);
