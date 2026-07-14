@@ -374,16 +374,25 @@ const LookupPage = () => {
 
   const combinedResults = [...dbTheses, ...ALL_RESULTS];
 
-  // Dynamically compute unique batches for the current category
-  const uniqueBatches = Array.from(
-    new Set(
-      dbTheses
-        .filter(item => !thesisType || item.type === thesisType)
-        .map(item => item.batch)
-        .filter(Boolean)
-    )
-  ).sort((a, b) => a - b);
-  const displayBatches = uniqueBatches.length > 0 ? uniqueBatches : [1];
+  // We have 2 batches to divide/reorganize
+  const displayBatches = [1, 2];
+
+  const allSpecializations = [
+    { label: 'Tất cả chuyên ngành', value: '' },
+    { label: 'Công nghệ phần mềm', value: 'software-engineering' },
+    { label: 'Mạng máy tính', value: 'networking' },
+    { label: 'An toàn không gian mạng', value: 'security' },
+    { label: 'Trí tuệ nhân tạo', value: 'ai' },
+    { label: 'Hệ thống thông tin', value: 'is' },
+    { label: 'Kỹ thuật lập trình', value: 'programming' }
+  ];
+
+  const specOptions = tc
+    ? [
+        { label: 'Tất cả chuyên ngành', value: '' },
+        ...tc.filters.filter(f => f.value !== null).map(f => ({ label: f.label, value: f.value }))
+      ]
+    : allSpecializations;
 
   const filteredResults = combinedResults.filter(item => {
     // 1. Filter by thesisType
@@ -739,16 +748,23 @@ const LookupPage = () => {
         <div className="bg-white p-5 md:p-8 rounded-[2rem] md:rounded-[3rem] border border-outline-variant shadow-sm mb-8 md:mb-12 flex flex-wrap items-end gap-4 md:gap-6">
           <div className="flex-1 min-w-[160px] flex flex-col gap-2">
             <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1 flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-xs">account_balance</span> Khoa / Viện
+              <span className="material-symbols-outlined text-xs">account_tree</span> Chuyên ngành
             </label>
             <div className="relative">
-              <select className="w-full px-4 md:px-6 py-3 md:py-3.5 bg-surface-container-lowest rounded-xl md:rounded-2xl outline-none border border-outline-variant focus:border-primary transition-all font-bold text-xs appearance-none cursor-pointer">
-                <option>Khoa Công nghệ thông tin</option>
+              <select 
+                value={activeFilter || ''}
+                onChange={(e) => setFilter(e.target.value || null)}
+                className="w-full px-4 md:px-6 py-3 md:py-3.5 bg-surface-container-lowest rounded-xl md:rounded-2xl outline-none border border-outline-variant focus:border-primary transition-all font-bold text-xs appearance-none cursor-pointer"
+              >
+                {specOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
               </select>
               <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant/40 pointer-events-none text-sm">expand_more</span>
             </div>
           </div>
-
           <div className="flex-1 min-w-[160px] flex flex-col gap-2">
             <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50 ml-1 flex items-center gap-1.5">
               <span className="material-symbols-outlined text-xs">event</span> Năm học
