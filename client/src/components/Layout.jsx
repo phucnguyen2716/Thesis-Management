@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { chatbotService, NOTIFICATION_URL } from '../services/api';
+import api, { chatbotService, NOTIFICATION_URL } from '../services/api';
 import useLanguage from '../hooks/useLanguage';
 import { HubConnectionBuilder } from '@microsoft/signalr';
 
@@ -16,12 +16,8 @@ const Layout = () => {
     } catch { return { role: 'Student', fullName: 'Người dùng Demo' }; }
   };
   const [user, setUser] = useState(loadUser);
-  const [notifications, setNotifications] = useState([
-    { title: 'Đề tài mới', desc: 'Nguyễn Văn A vừa nộp đề tài AI Chatbot', time: '10 phút trước', icon: 'description', color: 'text-blue-600', bg: 'bg-blue-50' },
-    { title: 'Lịch bảo trì', desc: 'Bảo trì máy chủ UEF Portal lúc 00:00.', time: '2 giờ trước', icon: 'settings', color: 'text-orange-600', bg: 'bg-orange-50' },
-    { title: 'Đánh giá hoàn tất', desc: 'Đồ án của bạn đã được Giảng viên chấm điểm.', time: '1 ngày trước', icon: 'fact_check', color: 'text-emerald-600', bg: 'bg-emerald-50' },
-  ]);
-  const [unreadCount, setUnreadCount] = useState(3);
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isAllNotifModalOpen, setIsAllNotifModalOpen] = useState(false);
@@ -29,11 +25,26 @@ const Layout = () => {
   useEffect(() => {
     if (isNotifOpen) {
       setUnreadCount(0);
+      api.post('/notifications/mark-read').catch(err => {
+        console.warn('Failed to mark notifications as read:', err.message);
+      });
     }
   }, [isNotifOpen]);
 
   useEffect(() => {
     if (!user || !user.email) return;
+
+    const fetchNotifications = async () => {
+      try {
+        const response = await api.get('/notifications');
+        const list = response.data || [];
+        setNotifications(list);
+        setUnreadCount(list.filter(n => !n.isRead).length);
+      } catch (err) {
+        console.warn('Failed to fetch notifications:', err.message);
+      }
+    };
+    fetchNotifications();
 
     console.log(`[Layout] Connecting to SignalR NotificationHub at ${NOTIFICATION_URL}/notificationHub...`);
     const connection = new HubConnectionBuilder()

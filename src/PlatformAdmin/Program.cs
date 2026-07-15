@@ -438,11 +438,27 @@ app.MapControllers();
 app.MapHub<NotificationHub>("/notificationHub").RequireCors("AllowSignalR");
 
 // REST Endpoint to publish notifications (to be called by other microservices or testers)
-app.MapPost("/api/notifications", async (NotificationHubRequest request, Microsoft.AspNetCore.SignalR.IHubContext<NotificationHub> hubContext) =>
+app.MapPost("/api/notifications", async (NotificationHubRequest request, Microsoft.AspNetCore.SignalR.IHubContext<NotificationHub> hubContext, PlatformAdmin.Data.AppDbContext db) =>
 {
     if (string.IsNullOrEmpty(request.RecipientEmail))
     {
         return Results.BadRequest(new { message = "RecipientEmail is required." });
+    }
+
+    // Try to find the user in DB to save notification persistently
+    var user = await db.Users.FirstOrDefaultAsync(u => u.Email == request.RecipientEmail);
+    if (user != null)
+    {
+        var notif = new PlatformAdmin.Entities.Notification
+        {
+            UserId = user.Id,
+            Title = request.Title,
+            Message = request.Desc,
+            IsRead = false,
+            CreatedAt = DateTime.UtcNow
+        };
+        db.Notifications.Add(notif);
+        await db.SaveChangesAsync();
     }
 
     // Push the notification object to the specific user's group
