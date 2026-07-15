@@ -436,6 +436,28 @@ app.MapControllers();
 // Map SignalR NotificationHub using explicit CORS policy
 app.MapHub<NotificationHub>("/notificationHub").RequireCors("AllowSignalR");
 
+// REST Endpoint to publish notifications (to be called by other microservices or testers)
+app.MapPost("/api/notifications", async (NotificationHubRequest request, Microsoft.AspNetCore.SignalR.IHubContext<NotificationHub> hubContext) =>
+{
+    if (string.IsNullOrEmpty(request.RecipientEmail))
+    {
+        return Results.BadRequest(new { message = "RecipientEmail is required." });
+    }
+
+    // Push the notification object to the specific user's group
+    await hubContext.Clients.Group(request.RecipientEmail).SendAsync("ReceiveNotification", new
+    {
+        title = request.Title,
+        desc = request.Desc,
+        time = "Vừa xong",
+        icon = request.Icon ?? "info",
+        color = request.Color ?? "text-blue-600",
+        bg = request.Bg ?? "bg-blue-50"
+    });
+
+    return Results.Ok(new { message = "Notification sent successfully." });
+}).RequireCors("AllowSignalR");
+
 // Custom middleware to intercept /hangfire (without trailing slash) and preserve token query parameters on redirect to /hangfire/
 app.Use((context, next) =>
 {
@@ -885,4 +907,29 @@ public class NotificationHub : Microsoft.AspNetCore.SignalR.Hub
             System.Console.WriteLine($"[NotificationHub] User with connection {Context.ConnectionId} left group: {email}");
         }
     }
+}
+
+// Request DTO definition for hub notifications
+public class NotificationHubRequest
+{
+    [System.Text.Json.Serialization.JsonPropertyName("recipientEmail")]
+    public string RecipientEmail { get; set; } = string.Empty;
+
+    [System.Text.Json.Serialization.JsonPropertyName("title")]
+    public string Title { get; set; } = string.Empty;
+
+    [System.Text.Json.Serialization.JsonPropertyName("desc")]
+    public string Desc { get; set; } = string.Empty;
+
+    [System.Text.Json.Serialization.JsonPropertyName("type")]
+    public string Type { get; set; } = string.Empty;
+
+    [System.Text.Json.Serialization.JsonPropertyName("icon")]
+    public string Icon { get; set; } = "info";
+
+    [System.Text.Json.Serialization.JsonPropertyName("color")]
+    public string Color { get; set; } = "text-blue-600";
+
+    [System.Text.Json.Serialization.JsonPropertyName("bg")]
+    public string Bg { get; set; } = "bg-blue-50";
 }
