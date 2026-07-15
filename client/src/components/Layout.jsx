@@ -523,18 +523,33 @@ const Layout = () => {
                     <span className="text-[10px] font-black bg-white/20 px-2 py-0.5 rounded-full backdrop-blur-md">{unreadCount} chưa đọc</span>
                   </div>
                   <div className="max-h-[320px] overflow-y-auto">
-                    {notifications.map((n, i) => (
-                      <div key={i} className="flex items-start gap-4 p-4 border-b border-black/5 hover:bg-black/[0.02] transition-colors cursor-pointer group">
-                        <div className={`w-11 h-11 rounded-full ${n.bg} flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300 shadow-sm border border-black/5`}>
-                          <span className={`material-symbols-outlined text-xl ${n.color}`}>{n.icon}</span>
+                    {notifications.map((n, i) => {
+                      const linkMatch = n.desc ? n.desc.match(/\[link:(.+?)\]/) : null;
+                      const link = linkMatch ? linkMatch[1] : null;
+                      const cleanDesc = linkMatch ? n.desc.replace(/\[link:(.+?)\]/, '').trim() : n.desc;
+
+                      return (
+                        <div 
+                          key={i} 
+                          onClick={() => {
+                            if (link) {
+                              navigate(link);
+                              setIsNotifOpen(false);
+                            }
+                          }}
+                          className={`flex items-start gap-4 p-4 border-b border-black/5 hover:bg-black/[0.02] transition-colors ${link ? 'cursor-pointer' : 'cursor-default'} group`}
+                        >
+                          <div className={`w-11 h-11 rounded-full ${n.bg} flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300 shadow-sm border border-black/5`}>
+                            <span className={`material-symbols-outlined text-xl ${n.color}`}>{n.icon}</span>
+                          </div>
+                          <div className="flex-1 pt-1">
+                            <p className="text-sm font-bold text-gray-800 leading-tight group-hover:text-primary transition-colors">{n.title}</p>
+                            <p className="text-[12px] font-medium text-gray-500 mt-1 leading-snug line-clamp-2">{cleanDesc}</p>
+                            <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mt-2">{n.time}</p>
+                          </div>
                         </div>
-                        <div className="flex-1 pt-1">
-                          <p className="text-sm font-bold text-gray-800 leading-tight group-hover:text-primary transition-colors">{n.title}</p>
-                          <p className="text-[12px] font-medium text-gray-500 mt-1 leading-snug line-clamp-2">{n.desc}</p>
-                          <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mt-2">{n.time}</p>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                   <div 
                     onClick={() => {
@@ -1024,21 +1039,36 @@ const Layout = () => {
                   <p className="text-xs">Không có thông báo nào.</p>
                 </div>
               ) : (
-                notifications.map((n, i) => (
-                  <div key={i} className="flex items-start gap-4 pt-3.5 first:pt-0 group">
-                    <div className={`w-11 h-11 rounded-full ${n.bg} flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-sm border border-black/5`}>
-                      <span className={`material-symbols-outlined text-xl ${n.color}`}>{n.icon}</span>
+                notifications.map((n, i) => {
+                  const linkMatch = n.desc ? n.desc.match(/\[link:(.+?)\]/) : null;
+                  const link = linkMatch ? linkMatch[1] : null;
+                  const cleanDesc = linkMatch ? n.desc.replace(/\[link:(.+?)\]/, '').trim() : n.desc;
+
+                  return (
+                    <div 
+                      key={i} 
+                      onClick={() => {
+                        if (link) {
+                          navigate(link);
+                          setIsAllNotifModalOpen(false);
+                        }
+                      }}
+                      className={`flex items-start gap-4 pt-3.5 first:pt-0 ${link ? 'cursor-pointer' : 'cursor-default'} group`}
+                    >
+                      <div className={`w-11 h-11 rounded-full ${n.bg} flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-sm border border-black/5`}>
+                        <span className={`material-symbols-outlined text-xl ${n.color}`}>{n.icon}</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-white group-hover:text-primary transition-colors leading-tight">{n.title}</p>
+                        <p className="text-xs text-slate-400 mt-1 leading-relaxed break-words">{cleanDesc}</p>
+                        <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mt-2.5 flex items-center gap-1">
+                          <span className="material-symbols-outlined text-[10px]">schedule</span>
+                          {n.time}
+                        </p>
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-white group-hover:text-primary transition-colors leading-tight">{n.title}</p>
-                      <p className="text-xs text-slate-400 mt-1 leading-relaxed break-words">{n.desc}</p>
-                      <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mt-2.5 flex items-center gap-1">
-                        <span className="material-symbols-outlined text-[10px]">schedule</span>
-                        {n.time}
-                      </p>
-                    </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
 
