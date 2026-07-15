@@ -310,15 +310,15 @@ const AdminDashboard = () => {
                 {data.plagiarism.topSimilarDocuments.map((doc, idx) => (
                   <div key={idx} className="flex justify-between items-center bg-slate-950/40 p-3 rounded-lg border border-slate-800/80">
                     <div className="min-w-0 flex-1 pr-3">
-                      <p className="text-xs font-bold text-white truncate">{doc.DocumentName}</p>
-                      <p className="text-[10px] text-slate-500 mt-0.5">ID tài liệu: #{doc.ThesisId}</p>
+                      <p className="text-xs font-bold text-white truncate">{doc.documentName}</p>
+                      <p className="text-[10px] text-slate-500 mt-0.5">ID tài liệu: #{doc.thesisId}</p>
                     </div>
                     <span className={`px-2.5 py-1 rounded-full text-xs font-black shrink-0 ${
-                      doc.SimilarityPercentage > 60 
+                      doc.similarityPercentage > 60 
                         ? 'bg-rose-950/40 text-rose-400 border border-rose-900/50' 
                         : 'bg-amber-950/40 text-amber-400 border border-amber-900/50'
                     }`}>
-                      {doc.SimilarityPercentage}%
+                      {doc.similarityPercentage}%
                     </span>
                   </div>
                 ))}
@@ -329,8 +329,8 @@ const AdminDashboard = () => {
           {/* Recent Plagiarism checks table */}
           <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
             <h3 className="text-xs font-bold text-amber-400 uppercase tracking-wider mb-4 flex items-center gap-1.5">
-              <i className="bi bi-clock-history text-sm"></i>
-              📋 Tài liệu kiểm tra tương đồng gần đây
+              <i className="bi bi-clipboard-data-fill text-sm"></i>
+              Tài liệu kiểm tra tương đồng gần đây
             </h3>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
@@ -345,21 +345,21 @@ const AdminDashboard = () => {
                 <tbody className="divide-y divide-slate-850">
                   {data.plagiarism.recentChecks.map((check, idx) => (
                     <tr key={idx} className="hover:bg-slate-850/30 transition-colors">
-                      <td className="py-3 px-3 font-bold text-slate-200 max-w-xs truncate">{check.DocumentName}</td>
-                      <td className="py-3 px-3 text-slate-400">{check.StudentName}</td>
+                      <td className="py-3 px-3 font-bold text-slate-200 max-w-xs truncate">{check.documentName}</td>
+                      <td className="py-3 px-3 text-slate-400">{check.studentName}</td>
                       <td className="py-3 px-3 text-center">
                         <span className={`px-2 py-0.5 rounded text-[10px] font-black ${
-                          check.SimilarityPercentage > 60
+                          check.similarityPercentage > 60
                             ? 'bg-red-500/10 text-red-400 border border-red-500/20'
-                            : check.SimilarityPercentage > 20
+                            : check.similarityPercentage > 20
                             ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
                             : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
                         }`}>
-                          {check.SimilarityPercentage}%
+                          {check.similarityPercentage}%
                         </span>
                       </td>
                       <td className="py-3 px-3 text-right text-slate-500">
-                        {new Date(check.CheckedAt).toLocaleString('vi-VN', {
+                        {new Date(check.checkedAt).toLocaleString('vi-VN', {
                           hour: '2-digit',
                           minute: '2-digit',
                           day: '2-digit',
@@ -382,8 +382,8 @@ const AdminDashboard = () => {
             {/* Top Search keywords list */}
             <div className="rounded-xl border border-slate-800 bg-slate-900 p-4 lg:col-span-2">
               <h3 className="text-xs font-bold text-amber-400 uppercase tracking-wider mb-4 flex items-center gap-1.5">
-                <i className="bi bi-search text-sm"></i>
-                📈 Top từ khóa được tìm kiếm nhiều nhất
+                <i className="bi bi-graph-up-arrow text-sm"></i>
+                Top từ khóa được tìm kiếm nhiều nhất
               </h3>
               <div className="space-y-3">
                 {data.search.topKeywords.map((k, idx) => (
@@ -392,10 +392,10 @@ const AdminDashboard = () => {
                       <span className="w-5 h-5 rounded-full bg-slate-800 flex items-center justify-center text-[10px] font-black text-amber-500">
                         {idx + 1}
                       </span>
-                      <span className="text-xs font-bold text-slate-200">{k.Keyword}</span>
+                      <span className="text-xs font-bold text-slate-200">{k.keyword}</span>
                     </div>
                     <div className="flex items-center gap-1 text-[11px] font-bold text-slate-400">
-                      <span>{k.Count}</span>
+                      <span>{k.count}</span>
                       <span className="text-[9px] font-normal text-slate-500">lượt tìm</span>
                     </div>
                   </div>
@@ -407,21 +407,21 @@ const AdminDashboard = () => {
             <div className="rounded-xl border border-slate-800 bg-slate-900 p-4 flex flex-col justify-between">
               <div>
                 <h3 className="text-xs font-bold text-amber-400 uppercase tracking-wider mb-4 flex items-center gap-1.5">
-                  <i className="bi bi-sliders text-sm"></i>
-                  📊 Số lượt tìm kiếm học thuật
+                  <i className="bi bi-bar-chart-line-fill text-sm"></i>
+                  Số lượt tìm kiếm học thuật
                 </h3>
                 <div className="space-y-4">
                   <div className="bg-slate-950/40 p-3.5 rounded-lg border border-slate-800/80 flex items-center justify-between">
                     <span className="text-xs text-slate-400 font-bold">Hôm nay</span>
-                    <span className="text-lg font-black text-sky-400">{data.search.searchCounts.Today}</span>
+                    <span className="text-lg font-black text-sky-400">{data.search.searchCounts.today}</span>
                   </div>
                   <div className="bg-slate-950/40 p-3.5 rounded-lg border border-slate-800/80 flex items-center justify-between">
                     <span className="text-xs text-slate-400 font-bold">Tuần này</span>
-                    <span className="text-lg font-black text-amber-400">{data.search.searchCounts.ThisWeek}</span>
+                    <span className="text-lg font-black text-amber-400">{data.search.searchCounts.thisWeek}</span>
                   </div>
                   <div className="bg-slate-950/40 p-3.5 rounded-lg border border-slate-800/80 flex items-center justify-between">
                     <span className="text-xs text-slate-400 font-bold">Tháng này</span>
-                    <span className="text-lg font-black text-emerald-400">{data.search.searchCounts.ThisMonth}</span>
+                    <span className="text-lg font-black text-emerald-400">{data.search.searchCounts.thisMonth}</span>
                   </div>
                 </div>
               </div>
@@ -440,14 +440,14 @@ const AdminDashboard = () => {
             {/* System Status online/offline */}
             <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
               <h3 className="text-xs font-bold text-amber-400 uppercase tracking-wider mb-4 flex items-center gap-1.5">
-                <i className="bi bi-server text-sm"></i>
-                🟢 Trạng thái các dịch vụ hệ thống (Dockerized)
+                <i className="bi bi-hdd-network-fill text-sm"></i>
+                Trạng thái các dịch vụ hệ thống (Dockerized)
               </h3>
               <div className="space-y-3.5">
                 {[
-                  { name: 'PostgreSQL Database Server', status: data.systemStatus.Postgres, desc: 'Dữ liệu hệ thống chính' },
-                  { name: 'Elasticsearch Index Server', status: data.systemStatus.Elasticsearch, desc: 'Tìm kiếm học thuật thông minh' },
-                  { name: 'RabbitMQ Message Queue', status: data.systemStatus.RabbitMQ, desc: 'Hàng đợi xử lý tiến trình ngầm' },
+                  { name: 'PostgreSQL Database Server', status: data.systemStatus.postgres, desc: 'Dữ liệu hệ thống chính' },
+                  { name: 'Elasticsearch Index Server', status: data.systemStatus.elasticsearch, desc: 'Tìm kiếm học thuật thông minh' },
+                  { name: 'RabbitMQ Message Queue', status: data.systemStatus.rabbitMQ || data.systemStatus.rabbitmq, desc: 'Hàng đợi xử lý tiến trình ngầm' },
                 ].map((s, idx) => (
                   <div key={idx} className="flex justify-between items-center bg-slate-950/30 p-3 rounded-lg border border-slate-800/80">
                     <div>
@@ -468,8 +468,8 @@ const AdminDashboard = () => {
             {/* Queues and background processing */}
             <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
               <h3 className="text-xs font-bold text-amber-400 uppercase tracking-wider mb-4 flex items-center gap-1.5">
-                <i className="bi bi-hourglass-bottom text-sm"></i>
-                📋 Hàng đợi xử lý nền (RabbitMQ Worker)
+                <i className="bi bi-hourglass-split text-sm"></i>
+                Hàng đợi xử lý nền (RabbitMQ Worker)
               </h3>
               <div className="space-y-3.5">
                 <div className="flex justify-between items-center border-b border-slate-850 pb-3">
@@ -478,11 +478,11 @@ const AdminDashboard = () => {
                     <p className="text-[10px] text-slate-500 mt-0.5">Trích xuất bố cục tự động</p>
                   </div>
                   <span className={`px-2 py-0.5 rounded text-[10px] font-black ${
-                    data.systemStatus.ProcessingQueue.Analyzing > 0
+                    (data.systemStatus.processingQueue?.analyzing || 0) > 0
                       ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20 animate-pulse'
                       : 'bg-slate-800 text-slate-400'
                   }`}>
-                    {data.systemStatus.ProcessingQueue.Analyzing} đang chạy
+                    {data.systemStatus.processingQueue?.analyzing || 0} đang chạy
                   </span>
                 </div>
 
@@ -492,11 +492,11 @@ const AdminDashboard = () => {
                     <p className="text-[10px] text-slate-500 mt-0.5">Đồng bộ tìm kiếm toàn văn</p>
                   </div>
                   <span className={`px-2 py-0.5 rounded text-[10px] font-black ${
-                    data.systemStatus.ProcessingQueue.Indexing > 0
+                    (data.systemStatus.processingQueue?.indexing || 0) > 0
                       ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
                       : 'bg-slate-800 text-slate-400'
                   }`}>
-                    {data.systemStatus.ProcessingQueue.Indexing} hàng đợi
+                    {data.systemStatus.processingQueue?.indexing || 0} hàng đợi
                   </span>
                 </div>
 
@@ -506,11 +506,11 @@ const AdminDashboard = () => {
                     <p className="text-[10px] text-slate-500 mt-0.5">Quét qua API Gemini Pro</p>
                   </div>
                   <span className={`px-2 py-0.5 rounded text-[10px] font-black ${
-                    data.systemStatus.ProcessingQueue.PlagiarismChecking > 0
+                    (data.systemStatus.processingQueue?.plagiarismChecking || 0) > 0
                       ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20 animate-pulse'
                       : 'bg-slate-800 text-slate-400'
                   }`}>
-                    {data.systemStatus.ProcessingQueue.PlagiarismChecking} đang quét
+                    {data.systemStatus.processingQueue?.plagiarismChecking || 0} đang quét
                   </span>
                 </div>
               </div>
