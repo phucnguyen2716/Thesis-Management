@@ -2,6 +2,7 @@ using PlatformAdmin.DTOs.Thesis;
 using PlatformAdmin.Interfaces;
 using PlatformAdmin.Entities;
 using PlatformAdmin.Data;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Hangfire;
 using PlatformAdmin.Jobs;
