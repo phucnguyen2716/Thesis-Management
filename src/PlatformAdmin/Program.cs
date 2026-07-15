@@ -131,6 +131,9 @@ builder.Services.AddHttpClient<IGeminiService, GeminiService>();
 builder.Services.AddHostedService<PlagiarismQueueConsumer>();
 builder.Services.AddHostedService<DriveSyncSchedulerService>();
 
+// SignalR service
+builder.Services.AddSignalR();
+
 // CORS
 builder.Services.AddCors(options =>
 {
@@ -139,6 +142,13 @@ builder.Services.AddCors(options =>
         policy.AllowAnyOrigin()
               .AllowAnyMethod()
               .AllowAnyHeader();
+    });
+    options.AddPolicy("AllowSignalR", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173", "https://ethesis-frontend-portal.onrender.com")
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
     });
 });
 
@@ -422,6 +432,9 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.MapControllers();
+
+// Map SignalR NotificationHub using explicit CORS policy
+app.MapHub<NotificationHub>("/notificationHub").RequireCors("AllowSignalR");
 
 // Custom middleware to intercept /hangfire (without trailing slash) and preserve token query parameters on redirect to /hangfire/
 app.Use((context, next) =>
@@ -848,6 +861,28 @@ public partial class Program
         if (changed)
         {
             db.SaveChanges();
+        }
+    }
+}
+
+// SignalR Hub definition
+public class NotificationHub : Microsoft.AspNetCore.SignalR.Hub
+{
+    public async System.Threading.Tasks.Task JoinUserGroup(string email)
+    {
+        if (!string.IsNullOrEmpty(email))
+        {
+            await Groups.AddToGroupAsync(Context.ConnectionId, email);
+            System.Console.WriteLine($"[NotificationHub] User with connection {Context.ConnectionId} joined group: {email}");
+        }
+    }
+
+    public async System.Threading.Tasks.Task LeaveUserGroup(string email)
+    {
+        if (!string.IsNullOrEmpty(email))
+        {
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, email);
+            System.Console.WriteLine($"[NotificationHub] User with connection {Context.ConnectionId} left group: {email}");
         }
     }
 }

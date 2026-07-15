@@ -6,9 +6,9 @@ if (window.location.hostname === 'ethesis-frontend-portal.onrender.com') {
 }
 export const API_URL = resolvedApiUrl;
 
-let resolvedNotificationUrl = import.meta.env.VITE_NOTIFICATION_URL || 'http://localhost:5020';
+let resolvedNotificationUrl = import.meta.env.VITE_NOTIFICATION_URL || 'http://localhost:5145';
 if (window.location.hostname === 'ethesis-frontend-portal.onrender.com') {
-  resolvedNotificationUrl = 'https://ethesis-notification-api.onrender.com';
+  resolvedNotificationUrl = 'https://ethesis-backend-api.onrender.com';
 }
 export const NOTIFICATION_URL = resolvedNotificationUrl;
 export const resolveFileUrl = (url) => {
