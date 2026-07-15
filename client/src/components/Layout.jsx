@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { chatbotService } from '../services/api';
+import { chatbotService, NOTIFICATION_URL } from '../services/api';
 import useLanguage from '../hooks/useLanguage';
 import { HubConnectionBuilder } from '@microsoft/signalr';
 
@@ -34,9 +34,9 @@ const Layout = () => {
   useEffect(() => {
     if (!user || !user.email) return;
 
-    console.log('[Layout] Connecting to SignalR NotificationHub at http://localhost:5020...');
+    console.log(`[Layout] Connecting to SignalR NotificationHub at ${NOTIFICATION_URL}/notificationHub...`);
     const connection = new HubConnectionBuilder()
-      .withUrl('http://localhost:5020/notificationHub')
+      .withUrl(`${NOTIFICATION_URL}/notificationHub`)
       .withAutomaticReconnect()
       .build();
 
