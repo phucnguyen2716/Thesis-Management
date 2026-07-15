@@ -1,10 +1,16 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
 using PlatformAdmin.Interfaces;
 using PlatformAdmin.Attributes;
+using PlatformAdmin.Data;
+using PlatformAdmin.Entities;
 using PlatformAdmin.DTOs.Social;
 
 namespace PlatformAdmin.Controllers
@@ -14,10 +20,17 @@ namespace PlatformAdmin.Controllers
     public class SocialController : ControllerBase
     {
         private readonly ISocialService _socialService;
+        private readonly IHubContext<NotificationHub> _hubContext;
+        private readonly AppDbContext _db;
 
-        public SocialController(ISocialService socialService)
+        public SocialController(
+            ISocialService socialService,
+            IHubContext<NotificationHub> hubContext,
+            AppDbContext db)
         {
             _socialService = socialService;
+            _hubContext = hubContext;
+            _db = db;
         }
 
         [HttpGet("posts")]
@@ -37,6 +50,40 @@ namespace PlatformAdmin.Controllers
         public async Task<ActionResult<SocialPostDto>> CreatePost([FromBody] CreateSocialPostRequest request)
         {
             var post = await _socialService.CreatePostAsync(request);
+
+            try
+            {
+                // Find all active users to write notifications to the database
+                var activeUsers = await _db.Users.Where(u => u.IsActive).ToListAsync();
+                foreach (var user in activeUsers)
+                {
+                    _db.Notifications.Add(new Notification
+                    {
+                        UserId = user.Id,
+                        Title = "Bài báo mới đăng",
+                        Message = $"{post.Title} [link:/news/{post.Id}]",
+                        IsRead = false,
+                        CreatedAt = DateTime.UtcNow
+                    });
+                }
+                await _db.SaveChangesAsync();
+
+                // Broadcast SignalR notification to all online clients
+                await _hubContext.Clients.All.SendAsync("ReceiveNotification", new
+                {
+                    title = "Bài báo mới đăng",
+                    desc = $"{post.Title} [link:/news/{post.Id}]",
+                    time = "Vừa xong",
+                    icon = "description",
+                    color = "text-blue-600",
+                    bg = "bg-blue-50"
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[SocialController] Failed to dispatch notifications: {ex.Message}");
+            }
+
             return CreatedAtAction(nameof(GetPosts), new SocialPostDto
             {
                 Id = post.Id,
