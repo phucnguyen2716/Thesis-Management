@@ -13,11 +13,13 @@ public class ThesisService : IThesisService
     private readonly AppDbContext _db;
     private readonly string _uploadPath;
     private readonly IGoogleDriveStorageService _driveService;
+    private readonly Microsoft.AspNetCore.SignalR.IHubContext<NotificationHub> _hubContext;
 
-    public ThesisService(AppDbContext db, IGoogleDriveStorageService driveService)
+    public ThesisService(AppDbContext db, IGoogleDriveStorageService driveService, Microsoft.AspNetCore.SignalR.IHubContext<NotificationHub> hubContext)
     {
         _db = db;
         _driveService = driveService;
+        _hubContext = hubContext;
         _uploadPath = Path.Combine(Directory.GetCurrentDirectory(), "uploads");
         Directory.CreateDirectory(_uploadPath);
     }
@@ -105,6 +107,14 @@ public class ThesisService : IThesisService
             BackgroundJob.Enqueue<DriveSyncJob>(x => x.SyncThesisToDriveAsync(thesis.Id));
         }
 
+        // Notify Advisor if assigned
+        if (thesis.AdvisorId.HasValue && thesis.AdvisorId.Value > 0)
+        {
+            var student = await _db.Users.FindAsync(studentId);
+            var studentName = student?.FullName ?? "Sinh viên";
+            await DispatchNotificationAsync(thesis.AdvisorId.Value, "Đề tài mới được đăng ký", $"Sinh viên {studentName} đã đăng ký hướng dẫn đề tài: {thesis.Title} [link:/lecturer/controller/{thesis.Id}]");
+        }
+
         return Map(await BaseQuery().FirstAsync(t => t.Id == thesis.Id));
     }
 
@@ -183,6 +193,13 @@ public class ThesisService : IThesisService
         thesis.Status = "InProgress";
         thesis.UpdatedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
+
+        // Notify Advisor
+        await DispatchNotificationAsync(request.AdvisorId, "Phân công hướng dẫn đề tài", $"Bạn đã được phân công hướng dẫn đề tài: {thesis.Title} [link:/lecturer/controller/{thesis.Id}]");
+
+        // Notify Student
+        await DispatchNotificationAsync(thesis.StudentId, "Phân công giảng viên hướng dẫn", $"Đề tài {thesis.Title} của bạn đã được phân công cho giảng viên hướng dẫn. [link:/theses/{thesis.Id}]");
+
         return Map(await BaseQuery().FirstAsync(t => t.Id == id));
     }
 
@@ -193,6 +210,10 @@ public class ThesisService : IThesisService
         thesis.ApprovedAt = DateTime.UtcNow;
         thesis.UpdatedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
+
+        // Notify Student
+        await DispatchNotificationAsync(thesis.StudentId, "Đề tài đã được phê duyệt", $"Đề tài {thesis.Title} của bạn đã được duyệt thành công. [link:/theses/{thesis.Id}]");
+
         return Map(await BaseQuery().FirstAsync(t => t.Id == id));
     }
 
@@ -203,6 +224,10 @@ public class ThesisService : IThesisService
         thesis.RejectReason = reason;
         thesis.UpdatedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
+
+        // Notify Student
+        await DispatchNotificationAsync(thesis.StudentId, "Đề tài bị từ chối", $"Đề tài {thesis.Title} của bạn đã bị từ chối. Lý do: {reason}. [link:/theses/{thesis.Id}]");
+
         return Map(await BaseQuery().FirstAsync(t => t.Id == id));
     }
 
@@ -212,6 +237,10 @@ public class ThesisService : IThesisService
         thesis.Status = "Revision";
         thesis.UpdatedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
+
+        // Notify Student
+        await DispatchNotificationAsync(thesis.StudentId, "Yêu cầu chỉnh sửa đề tài", $"Đề tài {thesis.Title} của bạn có yêu cầu chỉnh sửa từ giảng viên. [link:/theses/{thesis.Id}]");
+
         return Map(await BaseQuery().FirstAsync(t => t.Id == id));
     }
 
@@ -376,6 +405,75 @@ public class ThesisService : IThesisService
                     subject.Code
                 );
             }
+        }
+    }
+
+    private async Task DispatchNotificationAsync(int recipientUserId, string title, string message)
+    {
+        try
+        {
+            var user = await _db.Users.FindAsync(recipientUserId);
+            if (user == null) return;
+
+            // Save to Database
+            var notif = new Notification
+            {
+                UserId = user.Id,
+                Title = title,
+                Message = message,
+                IsRead = false,
+                CreatedAt = DateTime.UtcNow
+            };
+            _db.Notifications.Add(notif);
+            await _db.SaveChangesAsync();
+
+            // Push via SignalR
+            if (!string.IsNullOrEmpty(user.Email))
+            {
+                string icon = "info";
+                string color = "text-primary";
+                string bg = "bg-slate-50";
+
+                var t = title.ToLower();
+                if (t.Contains("phê duyệt") || t.Contains("duyệt") || t.Contains("thành công"))
+                {
+                    icon = "check_circle";
+                    color = "text-emerald-600";
+                    bg = "bg-emerald-50";
+                }
+                else if (t.Contains("từ chối") || t.Contains("hủy"))
+                {
+                    icon = "cancel";
+                    color = "text-red-600";
+                    bg = "bg-red-50";
+                }
+                else if (t.Contains("chỉnh sửa") || t.Contains("yêu cầu"))
+                {
+                    icon = "edit";
+                    color = "text-orange-600";
+                    bg = "bg-orange-50";
+                }
+                else if (t.Contains("đăng ký") || t.Contains("mới") || t.Contains("phân công"))
+                {
+                    icon = "description";
+                    color = "text-blue-600";
+                    bg = "bg-blue-50";
+                }
+
+                await _hubContext.Clients.Group(user.Email).SendAsync("ReceiveNotification", new
+                {
+                    title = title,
+                    desc = message,
+                    time = "Vừa xong",
+                    icon = icon,
+                    color = color,
+                    bg = bg
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[ThesisService] Error sending notification: {ex.Message}");
         }
     }
 
