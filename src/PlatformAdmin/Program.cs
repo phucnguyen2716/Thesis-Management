@@ -1,4 +1,5 @@
 using System.Text;
+using Microsoft.AspNetCore.SignalR;
 using PlatformAdmin.Interfaces;
 using PlatformAdmin.Data;
 using PlatformAdmin.Services;

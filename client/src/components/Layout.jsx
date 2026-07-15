@@ -885,7 +885,7 @@ const Layout = () => {
 
       <button
         onClick={() => setIsChatOpen(!isChatOpen)}
-        className="fixed bottom-20 md:bottom-8 right-4 md:right-8 w-11 h-11 md:w-13 md:h-13 bg-[#f5f5f5] text-slate-700 rounded-full shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-slate-200 flex items-center justify-center z-[100] hover:scale-105 active:scale-95 transition-all group overflow-hidden"
+        className="fixed bottom-20 md:bottom-8 right-4 md:right-8 w-11 h-11 md:w-13 md:h-13 bg-white text-slate-700 rounded-full shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-slate-100 flex items-center justify-center z-[100] hover:scale-105 active:scale-95 transition-all group overflow-hidden"
       >
         {isChatOpen ? (
           <span className="material-symbols-outlined text-lg md:text-xl group-hover:rotate-90 transition-transform text-slate-700">
