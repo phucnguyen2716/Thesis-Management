@@ -170,7 +170,7 @@ const AdminUsersPage = ({ fixedRole }) => {
           </select>
         </label>
         <label className="text-[10px] font-bold text-slate-500 uppercase">
-          Khoa / Đơn vị
+          {isAdvisor ? 'Chức vụ / Chuyên môn' : 'Khoa / Đơn vị'}
           <select
             value={deptFilter}
             onChange={e => setDeptFilter(e.target.value)}
@@ -178,7 +178,7 @@ const AdminUsersPage = ({ fixedRole }) => {
           >
             {departments.map(d => (
               <option key={d} value={d}>
-                {d === 'all' ? 'Tất cả khoa' : d}
+                {d === 'all' ? (isAdvisor ? 'Tất cả chức vụ' : 'Tất cả khoa') : d}
               </option>
             ))}
           </select>
@@ -205,7 +205,7 @@ const AdminUsersPage = ({ fixedRole }) => {
               <th className="text-left p-3">Họ tên</th>
               <th className="text-left p-3">Email</th>
               {isStudent && <th className="text-left p-3">Mã SV</th>}
-              <th className="text-left p-3">Khoa</th>
+              <th className="text-left p-3">{isAdvisor ? 'Chức vụ / Chuyên môn' : 'Khoa'}</th>
               <th className="text-left p-3">SĐT</th>
               <th className="text-left p-3">TT</th>
               <th className="text-right p-3">Thao tác</th>
@@ -296,7 +296,7 @@ const AdminUsersPage = ({ fixedRole }) => {
               </label>
             )}
             <label className="block text-xs font-semibold text-slate-400">
-              Khoa / Đơn vị
+              {isAdvisor ? 'Chức vụ / Chuyên môn' : 'Khoa / Đơn vị'}
               <input
                 value={form.department}
                 onChange={e => set('department', e.target.value)}

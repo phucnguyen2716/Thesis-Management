@@ -66,8 +66,20 @@ public class AppDbContext : DbContext
         // Seed roles
         modelBuilder.Entity<User>().HasData(
             new User { Id = 1, FullName = "Admin User", Email = "admin@ethesis.edu.vn", PasswordHash = BCrypt("123"), Role = "Admin", IsActive = true, CreatedAt = DateTime.UtcNow },
-            new User { Id = 2, FullName = "Dr. Nguyen Van A", Email = "advisor@ethesis.edu.vn", PasswordHash = BCrypt("123"), Role = "Advisor", Department = "Computer Science", IsActive = true, CreatedAt = DateTime.UtcNow },
-            new User { Id = 3, FullName = "Tran Thi B", Email = "student@ethesis.edu.vn", PasswordHash = BCrypt("123"), Role = "Student", StudentId = "SV001", Department = "Computer Science", IsActive = true, CreatedAt = DateTime.UtcNow }
+            new User { Id = 2, FullName = "Nguyễn Hà Giang", Email = "advisor@ethesis.edu.vn", PasswordHash = BCrypt("123"), Role = "Advisor", Department = "Trưởng khoa", IsActive = true, CreatedAt = DateTime.UtcNow },
+            new User { Id = 3, FullName = "Tran Thi B", Email = "student@ethesis.edu.vn", PasswordHash = BCrypt("123"), Role = "Student", StudentId = "SV001", Department = "Computer Science", IsActive = true, CreatedAt = DateTime.UtcNow },
+            
+            new User { Id = 10, FullName = "Văn Thị Thiên Trang", Email = "trang.van@ethesis.edu.vn", PasswordHash = BCrypt("123"), Role = "Advisor", Department = "Phó Trưởng khoa", IsActive = true, CreatedAt = DateTime.UtcNow },
+            new User { Id = 11, FullName = "Nguyễn Minh Tuấn", Email = "tuan.nguyen@ethesis.edu.vn", PasswordHash = BCrypt("123"), Role = "Advisor", Department = "Phó Trưởng khoa", IsActive = true, CreatedAt = DateTime.UtcNow },
+            new User { Id = 12, FullName = "Hoàng Văn Hiếu", Email = "hieu.hoang@ethesis.edu.vn", PasswordHash = BCrypt("123"), Role = "Advisor", Department = "Trưởng ngành CNTT", IsActive = true, CreatedAt = DateTime.UtcNow },
+            new User { Id = 13, FullName = "Nguyễn Thị Hoài Linh", Email = "linh.nguyen@ethesis.edu.vn", PasswordHash = BCrypt("123"), Role = "Advisor", Department = "Trưởng ngành Khoa học dữ liệu", IsActive = true, CreatedAt = DateTime.UtcNow },
+            new User { Id = 14, FullName = "Trần Thành Công", Email = "cong.tran@ethesis.edu.vn", PasswordHash = BCrypt("123"), Role = "Advisor", Department = "Trưởng ngành TMĐT", IsActive = true, CreatedAt = DateTime.UtcNow },
+            new User { Id = 15, FullName = "Ngô Văn Công Bằng", Email = "bang.ngo@ethesis.edu.vn", PasswordHash = BCrypt("123"), Role = "Advisor", Department = "Trưởng bộ môn", IsActive = true, CreatedAt = DateTime.UtcNow },
+            new User { Id = 16, FullName = "Nguyễn Quang Minh", Email = "minh.nguyen@ethesis.edu.vn", PasswordHash = BCrypt("123"), Role = "Advisor", Department = "Giảng viên", IsActive = true, CreatedAt = DateTime.UtcNow },
+            new User { Id = 17, FullName = "Nguyễn Minh Thắng", Email = "thang.nguyen@ethesis.edu.vn", PasswordHash = BCrypt("123"), Role = "Advisor", Department = "Giảng viên", IsActive = true, CreatedAt = DateTime.UtcNow },
+            new User { Id = 18, FullName = "Huỳnh Đệ Thủ", Email = "thu.huynh@ethesis.edu.vn", PasswordHash = BCrypt("123"), Role = "Advisor", Department = "Giảng viên", IsActive = true, CreatedAt = DateTime.UtcNow },
+            new User { Id = 19, FullName = "Võ Đình Ngà", Email = "nga.vo@ethesis.edu.vn", PasswordHash = BCrypt("123"), Role = "Advisor", Department = "Giảng viên", IsActive = true, CreatedAt = DateTime.UtcNow },
+            new User { Id = 20, FullName = "Hoàng Minh", Email = "minh.hoang@ethesis.edu.vn", PasswordHash = BCrypt("123"), Role = "Advisor", Department = "Giảng viên", IsActive = true, CreatedAt = DateTime.UtcNow }
         );
 
 

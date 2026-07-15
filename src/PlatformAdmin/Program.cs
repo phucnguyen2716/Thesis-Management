@@ -749,17 +749,53 @@ public partial class Program
         {
             advisorUser = new User
             {
-                FullName = "Dr. Nguyen Van A",
+                FullName = "Nguyễn Hà Giang",
                 Email = "advisor@ethesis.edu.vn",
                 PasswordHash = global::BCrypt.Net.BCrypt.HashPassword("123"),
                 Role = "Advisor",
-                Department = "Công nghệ thông tin",
+                Department = "Trưởng khoa",
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow
             };
             db.Users.Add(advisorUser);
             dbChanged = true;
             Console.WriteLine("🔑 Seeded 'advisor@ethesis.edu.vn' user in database.");
+        }
+        else if (advisorUser.FullName == "Dr. Nguyen Van A")
+        {
+            advisorUser.FullName = "Nguyễn Hà Giang";
+            advisorUser.Department = "Trưởng khoa";
+            db.Users.Update(advisorUser);
+            dbChanged = true;
+            Console.WriteLine("🔑 Updated 'advisor@ethesis.edu.vn' name to 'Nguyễn Hà Giang' and department to 'Trưởng khoa'.");
+        }
+
+        // Seed other 11 lecturers
+        var lecturersSeed = new List<User>
+        {
+            new User { FullName = "Văn Thị Thiên Trang", Email = "trang.van@ethesis.edu.vn", Role = "Advisor", Department = "Phó Trưởng khoa", IsActive = true, CreatedAt = DateTime.UtcNow },
+            new User { FullName = "Nguyễn Minh Tuấn", Email = "tuan.nguyen@ethesis.edu.vn", Role = "Advisor", Department = "Phó Trưởng khoa", IsActive = true, CreatedAt = DateTime.UtcNow },
+            new User { FullName = "Hoàng Văn Hiếu", Email = "hieu.hoang@ethesis.edu.vn", Role = "Advisor", Department = "Trưởng ngành CNTT", IsActive = true, CreatedAt = DateTime.UtcNow },
+            new User { FullName = "Nguyễn Thị Hoài Linh", Email = "linh.nguyen@ethesis.edu.vn", Role = "Advisor", Department = "Trưởng ngành Khoa học dữ liệu", IsActive = true, CreatedAt = DateTime.UtcNow },
+            new User { FullName = "Trần Thành Công", Email = "cong.tran@ethesis.edu.vn", Role = "Advisor", Department = "Trưởng ngành TMĐT", IsActive = true, CreatedAt = DateTime.UtcNow },
+            new User { FullName = "Ngô Văn Công Bằng", Email = "bang.ngo@ethesis.edu.vn", Role = "Advisor", Department = "Trưởng bộ môn", IsActive = true, CreatedAt = DateTime.UtcNow },
+            new User { FullName = "Nguyễn Quang Minh", Email = "minh.nguyen@ethesis.edu.vn", Role = "Advisor", Department = "Giảng viên", IsActive = true, CreatedAt = DateTime.UtcNow },
+            new User { FullName = "Nguyễn Minh Thắng", Email = "thang.nguyen@ethesis.edu.vn", Role = "Advisor", Department = "Giảng viên", IsActive = true, CreatedAt = DateTime.UtcNow },
+            new User { FullName = "Huỳnh Đệ Thủ", Email = "thu.huynh@ethesis.edu.vn", Role = "Advisor", Department = "Giảng viên", IsActive = true, CreatedAt = DateTime.UtcNow },
+            new User { FullName = "Võ Đình Ngà", Email = "nga.vo@ethesis.edu.vn", Role = "Advisor", Department = "Giảng viên", IsActive = true, CreatedAt = DateTime.UtcNow },
+            new User { FullName = "Hoàng Minh", Email = "minh.hoang@ethesis.edu.vn", Role = "Advisor", Department = "Giảng viên", IsActive = true, CreatedAt = DateTime.UtcNow }
+        };
+
+        foreach (var lec in lecturersSeed)
+        {
+            var existing = db.Users.FirstOrDefault(u => u.Email == lec.Email);
+            if (existing == null)
+            {
+                lec.PasswordHash = global::BCrypt.Net.BCrypt.HashPassword("123");
+                db.Users.Add(lec);
+                dbChanged = true;
+                Console.WriteLine($"🔑 Seeded lecturer '{lec.FullName}' in database.");
+            }
         }
 
         var studentUser = db.Users.FirstOrDefault(u => u.Email == "student@ethesis.edu.vn");
