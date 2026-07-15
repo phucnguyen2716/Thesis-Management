@@ -31,6 +31,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors("AllowClient");
 
+// Root endpoint to verify service status
+app.MapGet("/", () => Results.Ok(new { message = "Notification Service is running!" }));
+
 // SignalR Hub mapping
 app.MapHub<NotificationHub>("/notificationHub");
 
