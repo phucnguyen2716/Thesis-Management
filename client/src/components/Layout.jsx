@@ -24,6 +24,7 @@ const Layout = () => {
   const [unreadCount, setUnreadCount] = useState(3);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isAllNotifModalOpen, setIsAllNotifModalOpen] = useState(false);
 
   useEffect(() => {
     if (isNotifOpen) {
@@ -524,7 +525,13 @@ const Layout = () => {
                       </div>
                     ))}
                   </div>
-                  <div className="p-3 text-center bg-gray-50/80 hover:bg-gray-100 transition-colors cursor-pointer border-t border-black/5 backdrop-blur-md">
+                  <div 
+                    onClick={() => {
+                      setIsNotifOpen(false);
+                      setIsAllNotifModalOpen(true);
+                    }}
+                    className="p-3 text-center bg-gray-50/80 hover:bg-gray-100 transition-colors cursor-pointer border-t border-black/5 backdrop-blur-md"
+                  >
                     <span className="text-[11px] font-black uppercase tracking-widest text-primary">Xem tất cả thông báo</span>
                   </div>
                 </div>
@@ -979,6 +986,61 @@ const Layout = () => {
               <span className="material-symbols-outlined text-xs md:text-sm">send</span>
             </button>
           </form>
+        </div>
+      )}
+      {isAllNotifModalOpen && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-300">
+          <div className="bg-slate-900 border border-slate-800 text-slate-100 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[80vh] animate-in zoom-in-95 duration-300">
+            {/* Modal Header */}
+            <div className="p-4 md:p-5 bg-gradient-to-r from-primary to-[#8C000E] text-on-primary flex items-center justify-between shadow-md">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-lg">notifications_active</span>
+                <h3 className="font-black text-xs uppercase tracking-widest">Tất cả thông báo hệ thống</h3>
+              </div>
+              <button 
+                onClick={() => setIsAllNotifModalOpen(false)} 
+                className="material-symbols-outlined hover:opacity-80 transition-opacity text-base bg-white/20 p-1.5 rounded-full"
+              >
+                close
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-3.5 divide-y divide-slate-800/60">
+              {notifications.length === 0 ? (
+                <div className="text-center py-12 text-slate-500">
+                  <span className="material-symbols-outlined text-4xl mb-2 opacity-40">notifications_off</span>
+                  <p className="text-xs">Không có thông báo nào.</p>
+                </div>
+              ) : (
+                notifications.map((n, i) => (
+                  <div key={i} className="flex items-start gap-4 pt-3.5 first:pt-0 group">
+                    <div className={`w-11 h-11 rounded-full ${n.bg} flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-sm border border-black/5`}>
+                      <span className={`material-symbols-outlined text-xl ${n.color}`}>{n.icon}</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-white group-hover:text-primary transition-colors leading-tight">{n.title}</p>
+                      <p className="text-xs text-slate-400 mt-1 leading-relaxed break-words">{n.desc}</p>
+                      <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mt-2.5 flex items-center gap-1">
+                        <span className="material-symbols-outlined text-[10px]">schedule</span>
+                        {n.time}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 bg-slate-950/40 border-t border-slate-800 flex justify-end">
+              <button 
+                onClick={() => setIsAllNotifModalOpen(false)}
+                className="px-5 py-2 rounded-xl bg-primary text-white font-bold text-[10px] uppercase tracking-wider hover:bg-primary/95 transition-all shadow-md active:scale-95"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
