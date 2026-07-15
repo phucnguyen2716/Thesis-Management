@@ -761,7 +761,7 @@ const LookupPage = () => {
 
           {/* Cards grid / Empty state */}
           {filteredResults.length === 0 ? (
-            <div className="text-center py-20 bg-white rounded-[2rem] md:rounded-[2.5rem] border border-outline-variant shadow-sm flex flex-col items-center justify-center gap-4">
+            <div className="text-center py-20 bg-white rounded-2xl border border-outline-variant shadow-sm flex flex-col items-center justify-center gap-4">
               <span className="material-symbols-outlined text-5xl text-on-surface-variant/40 animate-bounce">search_off</span>
               <h3 className="text-lg font-black text-on-surface">Không tìm thấy đề tài nào</h3>
               <p className="text-xs text-on-surface-variant max-w-sm">Thử thay đổi từ khóa tìm kiếm hoặc chọn bộ lọc chuyên ngành/môn học khác.</p>
@@ -771,7 +771,7 @@ const LookupPage = () => {
               {displayedResults.map((r, idx) => (
                 <div
                   key={r.id}
-                  className="bg-white rounded-[2rem] md:rounded-[2.5rem] border border-outline-variant shadow-sm hover:shadow-[0_20px_50px_rgba(0,0,0,0.07)] transition-all duration-500 group relative flex flex-col h-full overflow-hidden"
+                  className="bg-white rounded-2xl border border-outline-variant shadow-sm hover:shadow-[0_20px_50px_rgba(0,0,0,0.07)] transition-all duration-500 group relative flex flex-col h-full overflow-hidden"
                   style={{ animationDelay: `${idx * 100}ms` }}
                 >
                   {/* Top accent line — type-coloured */}
