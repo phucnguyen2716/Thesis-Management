@@ -151,6 +151,10 @@ const FlipbookPage = () => {
           ...baseData,
           pdfUrl: pdfUrl
         });
+        const lowercaseUrl = pdfUrl.toLowerCase();
+        if (lowercaseUrl.endsWith(".docx") || lowercaseUrl.endsWith(".doc") || lowercaseUrl.endsWith(".xlsx") || lowercaseUrl.endsWith(".xls") || lowercaseUrl.endsWith(".pptx") || lowercaseUrl.endsWith(".ppt")) {
+          setViewMode('pdf');
+        }
         setLoading(false);
       }
       return;
@@ -170,6 +174,10 @@ const FlipbookPage = () => {
               ...baseData,
               pdfUrl: pdfUrl
             });
+            const lowercaseUrl = pdfUrl.toLowerCase();
+            if (lowercaseUrl.endsWith(".docx") || lowercaseUrl.endsWith(".doc") || lowercaseUrl.endsWith(".xlsx") || lowercaseUrl.endsWith(".xls") || lowercaseUrl.endsWith(".pptx") || lowercaseUrl.endsWith(".ppt")) {
+              setViewMode('pdf');
+            }
           }
         } else {
           const mock = combinedMocks.find(m => m.id.toString() === id.toString());
@@ -258,6 +266,18 @@ const FlipbookPage = () => {
         return `https://drive.google.com/file/d/${match[1]}/preview`;
       }
     }
+    
+    // Fallback embed via Microsoft Office Online Viewer for Office files
+    const lowercaseUrl = resolved.toLowerCase();
+    if (lowercaseUrl.endsWith(".docx") || 
+        lowercaseUrl.endsWith(".doc") || 
+        lowercaseUrl.endsWith(".xlsx") || 
+        lowercaseUrl.endsWith(".xls") || 
+        lowercaseUrl.endsWith(".pptx") || 
+        lowercaseUrl.endsWith(".ppt")) {
+      return `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(resolved)}`;
+    }
+    
     return resolved;
   };
 
@@ -310,7 +330,7 @@ const FlipbookPage = () => {
         </div>
 
         {/* View Mode Switcher Toggle */}
-        {thesis?.pdfUrl && (
+        {thesis?.pdfUrl && (thesis.pdfUrl.toLowerCase().endsWith('.pdf') || thesis.pdfUrl.toLowerCase().includes('/temporary_pdf/')) && (
           <div className="flex bg-white/5 rounded-xl p-1 border border-white/10 shrink-0 mr-4">
             <button
               onClick={() => handleSwitchMode('3d')}

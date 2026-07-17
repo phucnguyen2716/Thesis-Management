@@ -117,9 +117,9 @@ public class DriveController : ControllerBase
         {
             if (mockDriveExists)
             {
-                sourceDocxPath = Directory.GetFiles(mockDriveRoot, "225050646_NguyenHoangPhuc.docx", SearchOption.AllDirectories).FirstOrDefault() ?? "";
-                sourceDocxPathNew = Directory.GetFiles(mockDriveRoot, "225050646_NguyenHoangPhuc (2).docx", SearchOption.AllDirectories).FirstOrDefault() ?? "";
-                sourceDocxPathNew2 = Directory.GetFiles(mockDriveRoot, "225050646_NguyenHoangPhuc (1).docx", SearchOption.AllDirectories).FirstOrDefault() ?? "";
+                sourceDocxPath = FindFileSafe(mockDriveRoot, "225050646_NguyenHoangPhuc.docx");
+                sourceDocxPathNew = FindFileSafe(mockDriveRoot, "225050646_NguyenHoangPhuc (2).docx");
+                sourceDocxPathNew2 = FindFileSafe(mockDriveRoot, "225050646_NguyenHoangPhuc (1).docx");
             }
         }
         catch (Exception ex)
@@ -604,5 +604,33 @@ public class DriveController : ControllerBase
 
         [System.Text.Json.Serialization.JsonPropertyName("name")]
         public string Name { get; set; } = string.Empty;
+    }
+
+    private static string FindFileSafe(string rootPath, string fileName)
+    {
+        if (string.IsNullOrEmpty(rootPath) || !Directory.Exists(rootPath)) return "";
+        try
+        {
+            var files = Directory.GetFiles(rootPath, fileName);
+            if (files.Length > 0) return files[0];
+        }
+        catch
+        {
+            // Ignore
+        }
+
+        try
+        {
+            foreach (var dir in Directory.GetDirectories(rootPath))
+            {
+                var found = FindFileSafe(dir, fileName);
+                if (!string.IsNullOrEmpty(found)) return found;
+            }
+        }
+        catch
+        {
+            // Ignore
+        }
+        return "";
     }
 }
