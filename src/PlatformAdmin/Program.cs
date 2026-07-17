@@ -228,49 +228,92 @@ using (var scope = app.Services.CreateScope())
             var provider = builder.Configuration["Database:Provider"]?.Trim().ToLowerInvariant();
             if (provider == "postgresql" || provider == "postgres")
             {
-                context.Database.ExecuteSqlRaw("ALTER TABLE \"ChatHistory\" ADD COLUMN IF NOT EXISTS \"UserId\" INTEGER;");
-                context.Database.ExecuteSqlRaw("ALTER TABLE \"Theses\" ADD COLUMN IF NOT EXISTS \"Major\" VARCHAR(500);");
-                context.Database.ExecuteSqlRaw("ALTER TABLE \"Theses\" ADD COLUMN IF NOT EXISTS \"Subject\" VARCHAR(500);");
-                context.Database.ExecuteSqlRaw("ALTER TABLE \"Theses\" ADD COLUMN IF NOT EXISTS \"SubjectCode\" VARCHAR(100);");
-                context.Database.ExecuteSqlRaw("ALTER TABLE \"Theses\" ADD COLUMN IF NOT EXISTS \"Category\" VARCHAR(50) DEFAULT 'Project';");
-                context.Database.ExecuteSqlRaw("ALTER TABLE \"Theses\" ADD COLUMN IF NOT EXISTS \"Batch\" INTEGER DEFAULT 1;");
-                context.Database.ExecuteSqlRaw(@"UPDATE ""Theses"" SET ""Category"" = 'Project', ""Major"" = 'ai', ""Subject"" = 'Phát triển ứng dụng trí tuệ nhân tạo', ""SubjectCode"" = 'ITE1174E' WHERE ""Id"" = 2 AND (""Major"" IS NULL OR ""Major"" = '');");
-                context.Database.ExecuteSqlRaw(@"UPDATE ""Theses"" SET ""Category"" = 'Thesis', ""Major"" = 'ai' WHERE ""Id"" = 1 AND (""Major"" IS NULL OR ""Major"" = '');");
-                context.Database.ExecuteSqlRaw(@"UPDATE ""Theses"" SET ""Category"" = 'Topic', ""Major"" = 'networking' WHERE ""Id"" = 3 AND (""Major"" IS NULL OR ""Major"" = '');");
-                context.Database.ExecuteSqlRaw(@"
-                    CREATE TABLE IF NOT EXISTS ""PlagiarismReports"" (
-                        ""Id"" SERIAL PRIMARY KEY,
-                        ""ThesisId"" INTEGER NOT NULL REFERENCES ""Theses""(""Id"") ON DELETE CASCADE,
-                        ""SimilarityPercentage"" DOUBLE PRECISION NOT NULL,
-                        ""ReportJson"" TEXT NOT NULL,
-                        ""CheckedAt"" TIMESTAMP WITHOUT TIME ZONE NOT NULL
-                    );");
-                context.Database.ExecuteSqlRaw(@"
-                    CREATE TABLE IF NOT EXISTS ""DriveFileRecords"" (
-                        ""Id"" SERIAL PRIMARY KEY,
-                        ""DriveFileId"" VARCHAR(500) NOT NULL,
-                        ""FileName"" VARCHAR(1000) NOT NULL,
-                        ""MimeType"" VARCHAR(200) NOT NULL DEFAULT '',
-                        ""FileSize"" BIGINT,
-                        ""WebViewLink"" VARCHAR(2000) NOT NULL DEFAULT '',
-                        ""WebContentLink"" VARCHAR(2000) NOT NULL DEFAULT '',
-                        ""SourceFolder"" VARCHAR(500) NOT NULL DEFAULT '',
-                        ""Category"" VARCHAR(50) NOT NULL DEFAULT 'Project',
-                        ""DriveCreatedAt"" TIMESTAMP WITHOUT TIME ZONE,
-                        ""DriveModifiedAt"" TIMESTAMP WITHOUT TIME ZONE,
-                        ""SyncedAt"" TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW(),
-                        ""LastCheckedAt"" TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW(),
-                        ""IsActive"" BOOLEAN NOT NULL DEFAULT TRUE
-                    );");
-                context.Database.ExecuteSqlRaw(@"ALTER TABLE ""DriveFileRecords"" ADD COLUMN IF NOT EXISTS ""RelativePath"" VARCHAR(2000) NOT NULL DEFAULT '';");
-                context.Database.ExecuteSqlRaw(@"ALTER TABLE ""DriveFileRecords"" ADD COLUMN IF NOT EXISTS ""Major"" VARCHAR(500) NOT NULL DEFAULT '';");
-                context.Database.ExecuteSqlRaw(@"ALTER TABLE ""DriveFileRecords"" ADD COLUMN IF NOT EXISTS ""MajorKey"" VARCHAR(100) NOT NULL DEFAULT '';");
-                context.Database.ExecuteSqlRaw(@"ALTER TABLE ""DriveFileRecords"" ADD COLUMN IF NOT EXISTS ""Subject"" VARCHAR(500) NOT NULL DEFAULT '';");
-                context.Database.ExecuteSqlRaw(@"ALTER TABLE ""DriveFileRecords"" ADD COLUMN IF NOT EXISTS ""SubjectCode"" VARCHAR(100) NOT NULL DEFAULT '';");
-                context.Database.ExecuteSqlRaw(@"ALTER TABLE ""DriveFileRecords"" ADD COLUMN IF NOT EXISTS ""StudentUid"" VARCHAR(100) NOT NULL DEFAULT '';");
-                context.Database.ExecuteSqlRaw(@"ALTER TABLE ""DriveFileRecords"" ADD COLUMN IF NOT EXISTS ""ProjectName"" VARCHAR(1000) NOT NULL DEFAULT '';");
-                context.Database.ExecuteSqlRaw(@"ALTER TABLE ""DriveFileRecords"" ADD COLUMN IF NOT EXISTS ""LocalPdfPath"" VARCHAR(2000) NOT NULL DEFAULT '';");
-                context.Database.ExecuteSqlRaw(@"ALTER TABLE ""SocialPosts"" ADD COLUMN IF NOT EXISTS ""CloudinaryStatus"" VARCHAR(50) DEFAULT 'None';");
+                try { context.Database.ExecuteSqlRaw("ALTER TABLE \"ChatHistory\" ADD COLUMN IF NOT EXISTS \"UserId\" INTEGER;"); } catch (Exception ex) { Console.WriteLine($"Migration warning: {ex.Message}"); }
+                try { context.Database.ExecuteSqlRaw("ALTER TABLE \"Theses\" ADD COLUMN IF NOT EXISTS \"Major\" VARCHAR(500);"); } catch (Exception ex) { Console.WriteLine($"Migration warning: {ex.Message}"); }
+                try { context.Database.ExecuteSqlRaw("ALTER TABLE \"Theses\" ADD COLUMN IF NOT EXISTS \"Subject\" VARCHAR(500);"); } catch (Exception ex) { Console.WriteLine($"Migration warning: {ex.Message}"); }
+                try { context.Database.ExecuteSqlRaw("ALTER TABLE \"Theses\" ADD COLUMN IF NOT EXISTS \"SubjectCode\" VARCHAR(100);"); } catch (Exception ex) { Console.WriteLine($"Migration warning: {ex.Message}"); }
+                try { context.Database.ExecuteSqlRaw("ALTER TABLE \"Theses\" ADD COLUMN IF NOT EXISTS \"Category\" VARCHAR(50) DEFAULT 'Project';"); } catch (Exception ex) { Console.WriteLine($"Migration warning: {ex.Message}"); }
+                try { context.Database.ExecuteSqlRaw("ALTER TABLE \"Theses\" ADD COLUMN IF NOT EXISTS \"Batch\" INTEGER DEFAULT 1;"); } catch (Exception ex) { Console.WriteLine($"Migration warning: {ex.Message}"); }
+                
+                try { context.Database.ExecuteSqlRaw(@"UPDATE ""Theses"" SET ""Category"" = 'Project', ""Major"" = 'ai', ""Subject"" = 'Phát triển ứng dụng trí tuệ nhân tạo', ""SubjectCode"" = 'ITE1174E' WHERE ""Id"" = 2 AND (""Major"" IS NULL OR ""Major"" = '');"); } catch (Exception ex) { Console.WriteLine($"Migration warning: {ex.Message}"); }
+                try { context.Database.ExecuteSqlRaw(@"UPDATE ""Theses"" SET ""Category"" = 'Thesis', ""Major"" = 'ai' WHERE ""Id"" = 1 AND (""Major"" IS NULL OR ""Major"" = '');"); } catch (Exception ex) { Console.WriteLine($"Migration warning: {ex.Message}"); }
+                try { context.Database.ExecuteSqlRaw(@"UPDATE ""Theses"" SET ""Category"" = 'Topic', ""Major"" = 'networking' WHERE ""Id"" = 3 AND (""Major"" IS NULL OR ""Major"" = '');"); } catch (Exception ex) { Console.WriteLine($"Migration warning: {ex.Message}"); }
+                
+                try 
+                { 
+                    context.Database.ExecuteSqlRaw(@"
+                        CREATE TABLE IF NOT EXISTS ""PlagiarismReports"" (
+                            ""Id"" SERIAL PRIMARY KEY,
+                            ""ThesisId"" INTEGER NOT NULL REFERENCES ""Theses""(""Id"") ON DELETE CASCADE,
+                            ""SimilarityPercentage"" DOUBLE PRECISION NOT NULL,
+                            ""ReportJson"" TEXT NOT NULL,
+                            ""CheckedAt"" TIMESTAMP WITHOUT TIME ZONE NOT NULL
+                        );"); 
+                } 
+                catch (Exception ex) { Console.WriteLine($"Migration error: {ex.Message}"); }
+
+                try
+                {
+                    context.Database.ExecuteSqlRaw(@"
+                        CREATE TABLE IF NOT EXISTS ""ThesisSubmissions"" (
+                            ""Id"" SERIAL PRIMARY KEY,
+                            ""ThesisId"" INTEGER NOT NULL REFERENCES ""Theses""(""Id"") ON DELETE CASCADE,
+                            ""FilePath"" VARCHAR(2000) NOT NULL,
+                            ""FileName"" VARCHAR(1000) NOT NULL,
+                            ""FileSize"" BIGINT NOT NULL,
+                            ""Version"" INTEGER NOT NULL DEFAULT 1,
+                            ""Notes"" TEXT,
+                            ""SubmittedAt"" TIMESTAMP WITHOUT TIME ZONE NOT NULL
+                        );");
+                }
+                catch (Exception ex) { Console.WriteLine($"Migration error: {ex.Message}"); }
+
+                try
+                {
+                    context.Database.ExecuteSqlRaw(@"
+                        CREATE TABLE IF NOT EXISTS ""ThesisReviews"" (
+                            ""Id"" SERIAL PRIMARY KEY,
+                            ""ThesisId"" INTEGER NOT NULL REFERENCES ""Theses""(""Id"") ON DELETE CASCADE,
+                            ""ReviewerId"" INTEGER NOT NULL REFERENCES ""Users""(""Id"") ON DELETE RESTRICT,
+                            ""Comments"" TEXT,
+                            ""Score"" NUMERIC,
+                            ""Decision"" VARCHAR(100) NOT NULL DEFAULT 'Pending',
+                            ""ReviewedAt"" TIMESTAMP WITHOUT TIME ZONE NOT NULL
+                        );");
+                }
+                catch (Exception ex) { Console.WriteLine($"Migration error: {ex.Message}"); }
+
+                try
+                {
+                    context.Database.ExecuteSqlRaw(@"
+                        CREATE TABLE IF NOT EXISTS ""DriveFileRecords"" (
+                            ""Id"" SERIAL PRIMARY KEY,
+                            ""DriveFileId"" VARCHAR(500) NOT NULL,
+                            ""FileName"" VARCHAR(1000) NOT NULL,
+                            ""MimeType"" VARCHAR(200) NOT NULL DEFAULT '',
+                            ""FileSize"" BIGINT,
+                            ""WebViewLink"" VARCHAR(2000) NOT NULL DEFAULT '',
+                            ""WebContentLink"" VARCHAR(2000) NOT NULL DEFAULT '',
+                            ""SourceFolder"" VARCHAR(500) NOT NULL DEFAULT '',
+                            ""Category"" VARCHAR(50) NOT NULL DEFAULT 'Project',
+                            ""DriveCreatedAt"" TIMESTAMP WITHOUT TIME ZONE,
+                            ""DriveModifiedAt"" TIMESTAMP WITHOUT TIME ZONE,
+                            ""SyncedAt"" TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW(),
+                            ""LastCheckedAt"" TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW(),
+                            ""IsActive"" BOOLEAN NOT NULL DEFAULT TRUE
+                        );");
+                }
+                catch (Exception ex) { Console.WriteLine($"Migration error: {ex.Message}"); }
+
+                try { context.Database.ExecuteSqlRaw(@"ALTER TABLE ""DriveFileRecords"" ADD COLUMN IF NOT EXISTS ""RelativePath"" VARCHAR(2000) NOT NULL DEFAULT '';"); } catch (Exception ex) { Console.WriteLine($"Migration warning: {ex.Message}"); }
+                try { context.Database.ExecuteSqlRaw(@"ALTER TABLE ""DriveFileRecords"" ADD COLUMN IF NOT EXISTS ""Major"" VARCHAR(500) NOT NULL DEFAULT '';"); } catch (Exception ex) { Console.WriteLine($"Migration warning: {ex.Message}"); }
+                try { context.Database.ExecuteSqlRaw(@"ALTER TABLE ""DriveFileRecords"" ADD COLUMN IF NOT EXISTS ""MajorKey"" VARCHAR(100) NOT NULL DEFAULT '';"); } catch (Exception ex) { Console.WriteLine($"Migration warning: {ex.Message}"); }
+                try { context.Database.ExecuteSqlRaw(@"ALTER TABLE ""DriveFileRecords"" ADD COLUMN IF NOT EXISTS ""Subject"" VARCHAR(500) NOT NULL DEFAULT '';"); } catch (Exception ex) { Console.WriteLine($"Migration warning: {ex.Message}"); }
+                try { context.Database.ExecuteSqlRaw(@"ALTER TABLE ""DriveFileRecords"" ADD COLUMN IF NOT EXISTS ""SubjectCode"" VARCHAR(100) NOT NULL DEFAULT '';"); } catch (Exception ex) { Console.WriteLine($"Migration warning: {ex.Message}"); }
+                try { context.Database.ExecuteSqlRaw(@"ALTER TABLE ""DriveFileRecords"" ADD COLUMN IF NOT EXISTS ""StudentUid"" VARCHAR(100) NOT NULL DEFAULT '';"); } catch (Exception ex) { Console.WriteLine($"Migration warning: {ex.Message}"); }
+                try { context.Database.ExecuteSqlRaw(@"ALTER TABLE ""DriveFileRecords"" ADD COLUMN IF NOT EXISTS ""ProjectName"" VARCHAR(1000) NOT NULL DEFAULT '';"); } catch (Exception ex) { Console.WriteLine($"Migration warning: {ex.Message}"); }
+                try { context.Database.ExecuteSqlRaw(@"ALTER TABLE ""DriveFileRecords"" ADD COLUMN IF NOT EXISTS ""LocalPdfPath"" VARCHAR(2000) NOT NULL DEFAULT '';"); } catch (Exception ex) { Console.WriteLine($"Migration warning: {ex.Message}"); }
+                try { context.Database.ExecuteSqlRaw(@"ALTER TABLE ""SocialPosts"" ADD COLUMN IF NOT EXISTS ""CloudinaryStatus"" VARCHAR(50) DEFAULT 'None';"); } catch (Exception ex) { Console.WriteLine($"Migration warning: {ex.Message}"); }
             }
             else
             {
