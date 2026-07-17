@@ -10,6 +10,8 @@ using Hangfire;
 using Hangfire.Storage;
 using Xunit;
 
+using Microsoft.AspNetCore.SignalR;
+
 namespace PlatformAdmin.Tests.UnitTests.Services;
 
 public class ThesisServiceTests : IDisposable
@@ -19,9 +21,16 @@ public class ThesisServiceTests : IDisposable
     private readonly Mock<IGoogleDriveStorageService> _mockDriveService;
     private readonly Mock<JobStorage> _mockJobStorage;
     private readonly Mock<IStorageConnection> _mockStorageConnection;
+    private readonly Mock<IHubContext<NotificationHub>> _mockHubContext;
 
     public ThesisServiceTests()
     {
+        _mockHubContext = new Mock<IHubContext<NotificationHub>>();
+        var mockClients = new Mock<IHubClients>();
+        var mockClientProxy = new Mock<IClientProxy>();
+        mockClients.Setup(c => c.Group(It.IsAny<string>())).Returns(mockClientProxy.Object);
+        _mockHubContext.Setup(h => h.Clients).Returns(mockClients.Object);
+
         _connection = new SqliteConnection("DataSource=:memory:");
         _connection.Open();
 
@@ -76,7 +85,7 @@ public class ThesisServiceTests : IDisposable
             Status: "Pending"
         );
 
-        var service = new ThesisService(context, _mockDriveService.Object);
+        var service = new ThesisService(context, _mockDriveService.Object, _mockHubContext.Object);
         var result = await service.CreateAsync(student.Id, request);
 
         Assert.NotNull(result);
@@ -109,7 +118,7 @@ public class ThesisServiceTests : IDisposable
             Status: "Pending"
         );
 
-        var service = new ThesisService(context, _mockDriveService.Object);
+        var service = new ThesisService(context, _mockDriveService.Object, _mockHubContext.Object);
         var result = await service.CreateAsync(student.Id, request);
 
         Assert.NotNull(result);
@@ -137,7 +146,7 @@ public class ThesisServiceTests : IDisposable
         context.Theses.Add(thesis);
         await context.SaveChangesAsync();
 
-        var service = new ThesisService(context, _mockDriveService.Object);
+        var service = new ThesisService(context, _mockDriveService.Object, _mockHubContext.Object);
         var result = await service.GetByIdAsync(100);
 
         Assert.NotNull(result);
@@ -149,7 +158,7 @@ public class ThesisServiceTests : IDisposable
     public async Task GetByIdAsync_NonExistentThesis_ReturnsNull()
     {
         using var context = CreateContext();
-        var service = new ThesisService(context, _mockDriveService.Object);
+        var service = new ThesisService(context, _mockDriveService.Object, _mockHubContext.Object);
         var result = await service.GetByIdAsync(999);
 
         Assert.Null(result);
@@ -177,7 +186,7 @@ public class ThesisServiceTests : IDisposable
         context.Theses.Add(thesis);
         await context.SaveChangesAsync();
 
-        var service = new ThesisService(context, _mockDriveService.Object);
+        var service = new ThesisService(context, _mockDriveService.Object, _mockHubContext.Object);
         await service.DeleteAsync(200);
 
         var dbThesis = await context.Theses.FindAsync(200);
@@ -188,7 +197,7 @@ public class ThesisServiceTests : IDisposable
     public async Task DeleteAsync_NonExistentThesis_ThrowsKeyNotFoundException()
     {
         using var context = CreateContext();
-        var service = new ThesisService(context, _mockDriveService.Object);
+        var service = new ThesisService(context, _mockDriveService.Object, _mockHubContext.Object);
         await Assert.ThrowsAsync<KeyNotFoundException>(async () => await service.DeleteAsync(9999));
     }
 
@@ -226,7 +235,7 @@ public class ThesisServiceTests : IDisposable
             Batch: 2
         );
 
-        var service = new ThesisService(context, _mockDriveService.Object);
+        var service = new ThesisService(context, _mockDriveService.Object, _mockHubContext.Object);
         var result = await service.UpdateAsync(300, updateRequest);
 
         Assert.Equal("New Title", result.Title);
@@ -239,7 +248,7 @@ public class ThesisServiceTests : IDisposable
     {
         using var context = CreateContext();
         var updateRequest = new UpdateThesisRequest(Title: "Title", Description: "Desc");
-        var service = new ThesisService(context, _mockDriveService.Object);
+        var service = new ThesisService(context, _mockDriveService.Object, _mockHubContext.Object);
         await Assert.ThrowsAsync<KeyNotFoundException>(async () => await service.UpdateAsync(9999, updateRequest));
     }
 
@@ -253,7 +262,7 @@ public class ThesisServiceTests : IDisposable
         context.Theses.Add(thesis);
         await context.SaveChangesAsync();
 
-        var service = new ThesisService(context, _mockDriveService.Object);
+        var service = new ThesisService(context, _mockDriveService.Object, _mockHubContext.Object);
         var result = await service.SubmitAsync(400);
 
         Assert.Equal("Submitted", result.Status);
@@ -271,7 +280,7 @@ public class ThesisServiceTests : IDisposable
         context.Theses.Add(thesis);
         await context.SaveChangesAsync();
 
-        var service = new ThesisService(context, _mockDriveService.Object);
+        var service = new ThesisService(context, _mockDriveService.Object, _mockHubContext.Object);
         var result = await service.AssignAdvisorAsync(500, new AssignAdvisorRequest(advisor.Id));
 
         Assert.Equal(advisor.Id, result.AdvisorId);
@@ -287,7 +296,7 @@ public class ThesisServiceTests : IDisposable
         context.Theses.Add(thesis);
         await context.SaveChangesAsync();
 
-        var service = new ThesisService(context, _mockDriveService.Object);
+        var service = new ThesisService(context, _mockDriveService.Object, _mockHubContext.Object);
         var result = await service.ApproveAsync(600);
 
         Assert.Equal("Approved", result.Status);
@@ -304,7 +313,7 @@ public class ThesisServiceTests : IDisposable
         context.Theses.Add(thesis);
         await context.SaveChangesAsync();
 
-        var service = new ThesisService(context, _mockDriveService.Object);
+        var service = new ThesisService(context, _mockDriveService.Object, _mockHubContext.Object);
         var result = await service.RejectAsync(700, "Needs more detail");
 
         Assert.Equal("Rejected", result.Status);
@@ -320,7 +329,7 @@ public class ThesisServiceTests : IDisposable
         context.Theses.Add(thesis);
         await context.SaveChangesAsync();
 
-        var service = new ThesisService(context, _mockDriveService.Object);
+        var service = new ThesisService(context, _mockDriveService.Object, _mockHubContext.Object);
         var result = await service.SetRevisionAsync(800);
 
         Assert.Equal("RevisionRequired", result.Status);
@@ -341,7 +350,7 @@ public class ThesisServiceTests : IDisposable
         );
         await context.SaveChangesAsync();
 
-        var service = new ThesisService(context, _mockDriveService.Object);
+        var service = new ThesisService(context, _mockDriveService.Object, _mockHubContext.Object);
         var stats = await service.GetStatsAsync();
 
         Assert.Equal(1, stats.Pending);
@@ -376,7 +385,7 @@ public class ThesisServiceTests : IDisposable
         );
         await context.SaveChangesAsync();
 
-        var service = new ThesisService(context, _mockDriveService.Object);
+        var service = new ThesisService(context, _mockDriveService.Object, _mockHubContext.Object);
         var result = await service.GetAllAsync(1, 10, status, search, studentId, advisorId, category);
 
         Assert.NotNull(result);

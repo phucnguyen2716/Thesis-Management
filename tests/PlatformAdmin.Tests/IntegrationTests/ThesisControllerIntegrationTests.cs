@@ -21,7 +21,7 @@ public class ThesisControllerIntegrationTests : IClassFixture<TestWebApplication
 
     private async Task SeedDataAsync(AppDbContext db)
     {
-        db.ThesisComments.RemoveRange(db.ThesisComments);
+        // db.ThesisComments.RemoveRange(db.ThesisComments);
         db.ThesisReviews.RemoveRange(db.ThesisReviews);
         db.Theses.RemoveRange(db.Theses);
         db.Users.RemoveRange(db.Users.Where(u => u.Id > 3));

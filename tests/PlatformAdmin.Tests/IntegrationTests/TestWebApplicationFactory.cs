@@ -148,7 +148,7 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
         using var scope = Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         
-        db.ThesisComments.RemoveRange(db.ThesisComments);
+        // db.ThesisComments.RemoveRange(db.ThesisComments);
         db.ThesisReviews.RemoveRange(db.ThesisReviews);
         db.Theses.RemoveRange(db.Theses);
         db.Users.RemoveRange(db.Users.Where(u => u.Id > 3));

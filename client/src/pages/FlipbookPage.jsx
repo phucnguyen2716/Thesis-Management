@@ -308,8 +308,8 @@ const FlipbookPage = () => {
           </div>
         </div>
 
-        {/* View Mode Switcher Toggle / Open in Drive Button */}
-        {thesis?.pdfUrl && !thesis.pdfUrl.includes("drive.google.com") && !thesis.pdfUrl.includes("docs.google.com") ? (
+        {/* View Mode Switcher Toggle */}
+        {thesis?.pdfUrl && (
           <div className="flex bg-white/5 rounded-xl p-1 border border-white/10 shrink-0 mr-4">
             <button
               onClick={() => handleSwitchMode('3d')}
@@ -331,26 +331,14 @@ const FlipbookPage = () => {
               }`}
             >
               <span className="material-symbols-outlined text-xs">picture_as_pdf</span>
-              PDF Preview
+              PDF Review
             </button>
           </div>
-        ) : (
-          thesis?.pdfUrl && (
-            <a
-              href={thesis.pdfUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-amber-500 hover:bg-amber-400 active:scale-95 transition-all text-xs font-bold uppercase tracking-wider text-[#111115] cursor-pointer shrink-0 mr-4 border-none"
-            >
-              <span className="material-symbols-outlined text-sm">open_in_new</span>
-              Mở trên Google Drive
-            </a>
-          )
         )}
 
         <div className="hidden sm:flex items-center gap-2 shrink-0">
           <span className="px-2.5 py-1 bg-primary/20 text-primary border border-primary/20 text-[9px] font-black uppercase tracking-widest rounded-md hidden md:inline-block">
-            {thesis?.pdfUrl && (thesis.pdfUrl.includes("drive.google.com") || thesis.pdfUrl.includes("docs.google.com")) ? "Google Drive Mode" : "3D Flipbook Reader"}
+            3D Flipbook Reader
           </span>
           <span className="px-2.5 py-1 bg-white/5 text-gray-400 border border-white/5 text-[9px] font-black uppercase tracking-widest rounded-md">
             UEF Academic

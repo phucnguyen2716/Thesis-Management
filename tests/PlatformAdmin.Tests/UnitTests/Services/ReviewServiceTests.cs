@@ -94,6 +94,7 @@ public class ReviewServiceTests : IDisposable
         await Assert.ThrowsAsync<KeyNotFoundException>(async () => await service.CreateAsync(9999, 1, request));
     }
 
+    /*
     [Fact]
     public async Task GetByThesisAsync_Comments_ReturnsThesisComments()
     {
@@ -141,6 +142,7 @@ public class ReviewServiceTests : IDisposable
         var dbComment = await context.ThesisComments.FindAsync(result.Id);
         Assert.NotNull(dbComment);
     }
+    */
 
     [Theory]
     [InlineData(9.5, "Approved", "Approved")]

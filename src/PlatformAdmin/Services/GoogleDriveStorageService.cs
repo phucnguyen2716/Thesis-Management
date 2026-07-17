@@ -781,7 +781,7 @@ namespace PlatformAdmin.Services
             if (_useMockConfig || string.IsNullOrEmpty(activeDriveKey))
             {
                 // In mock mode, we retrieve the file from mock_google_drive
-                var files = await ListCourseProjectFilesRecursiveAsync();
+                var files = await ListAcademicFilesRecursiveAsync(category);
                 var fileInfo = files.FirstOrDefault(f => f.Id == fileId);
                 if (fileInfo != null)
                 {
