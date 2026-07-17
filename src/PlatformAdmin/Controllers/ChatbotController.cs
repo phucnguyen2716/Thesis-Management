@@ -130,6 +130,7 @@ namespace PlatformAdmin.Controllers
                             // Fetch all candidates from PostgreSQL
                             var dbTheses = await dbContext.Theses
                                 .Include(t => t.Student)
+                                .Include(t => t.Advisor)
                                 .ToListAsync();
 
                             var candidates = dbTheses.Select(t => new BM25Candidate
@@ -137,15 +138,18 @@ namespace PlatformAdmin.Controllers
                                 Id = t.Id,
                                 Title = t.Title,
                                 StudentName = t.Student?.FullName ?? "Sinh viên",
-                                Description = t.Description
+                                AdvisorName = t.Advisor?.FullName ?? "",
+                                Description = t.Description,
+                                Major = t.Major,
+                                Subject = t.Subject
                             }).ToList();
 
                             // Add mock theses as fallback candidates
                             var mockTheses = new[]
                             {
-                                new BM25Candidate { Id = 1, Title = "Impact of Blockchain on Supply Chain Transparency in Emerging Markets", StudentName = "Trần Ngọc Bảo Hân", Description = "Explores Hyperledger Fabric implementation in agricultural tracking across Southeast Asia." },
-                                new BM25Candidate { Id = 2, Title = "Economic Shifts in Post-Pandemic Retail: A Comparative Study", StudentName = "Lê Quốc Anh", Description = "Omnichannel transitions in garment retail during 2020-2022." },
-                                new BM25Candidate { Id = 3, Title = "Artificial Intelligence in Modern Portfolio Management", StudentName = "Phạm Minh Tú", Description = "RNN-based deep learning models to predict stock volatility." }
+                                new BM25Candidate { Id = 1, Title = "Impact of Blockchain on Supply Chain Transparency in Emerging Markets", StudentName = "Trần Ngọc Bảo Hân", AdvisorName = "advisor@ethesis.edu.vn", Major = "Information Security", Subject = "Khóa luận tốt nghiệp", Description = "Explores Hyperledger Fabric implementation in agricultural tracking across Southeast Asia." },
+                                new BM25Candidate { Id = 2, Title = "Economic Shifts in Post-Pandemic Retail: A Comparative Study", StudentName = "Lê Quốc Anh", AdvisorName = "advisor@ethesis.edu.vn", Major = "Software Engineering", Subject = "Khóa luận tốt nghiệp", Description = "Omnichannel transitions in garment retail during 2020-2022." },
+                                new BM25Candidate { Id = 3, Title = "Artificial Intelligence in Modern Portfolio Management", StudentName = "Phạm Minh Tú", AdvisorName = "advisor@ethesis.edu.vn", Major = "Artificial Intelligence", Subject = "Đồ án chuyên ngành", Description = "RNN-based deep learning models to predict stock volatility." }
                             };
                             candidates.AddRange(mockTheses);
 
@@ -401,6 +405,9 @@ namespace PlatformAdmin.Controllers
             public string Title { get; set; } = string.Empty;
             public string StudentName { get; set; } = string.Empty;
             public string? Description { get; set; }
+            public string AdvisorName { get; set; } = string.Empty;
+            public string? Major { get; set; }
+            public string? Subject { get; set; }
             public double Score { get; set; }
         }
 
@@ -443,6 +450,7 @@ namespace PlatformAdmin.Controllers
                 int docLen = titleTokens.Count;
                 double score = 0.0;
 
+                // 1. BM25 Title Match
                 foreach (var token in queryTokens)
                 {
                     int freq = titleTokens.Count(t => t == token);
@@ -455,6 +463,7 @@ namespace PlatformAdmin.Controllers
                     }
                 }
 
+                // 2. BM25 Description Match (smaller weight)
                 if (!string.IsNullOrEmpty(c.Description))
                 {
                     var descTokens = Tokenize(c.Description);
@@ -462,6 +471,50 @@ namespace PlatformAdmin.Controllers
                     if (descMatchCount > 0)
                     {
                         score += 0.2 * descMatchCount;
+                    }
+                }
+
+                // 3. Student Name Match (Boost)
+                if (!string.IsNullOrEmpty(c.StudentName))
+                {
+                    var studentTokens = Tokenize(c.StudentName);
+                    int studentMatchCount = queryTokens.Count(token => studentTokens.Contains(token));
+                    if (studentMatchCount > 0)
+                    {
+                        score += 1.0 * studentMatchCount;
+                    }
+                }
+
+                // 4. Advisor Name Match (Boost)
+                if (!string.IsNullOrEmpty(c.AdvisorName))
+                {
+                    var advisorTokens = Tokenize(c.AdvisorName);
+                    int advisorMatchCount = queryTokens.Count(token => advisorTokens.Contains(token));
+                    if (advisorMatchCount > 0)
+                    {
+                        score += 1.2 * advisorMatchCount;
+                    }
+                }
+
+                // 5. Major/Specialization Match (Boost)
+                if (!string.IsNullOrEmpty(c.Major))
+                {
+                    var majorTokens = Tokenize(c.Major);
+                    int majorMatchCount = queryTokens.Count(token => majorTokens.Contains(token));
+                    if (majorMatchCount > 0)
+                    {
+                        score += 0.8 * majorMatchCount;
+                    }
+                }
+
+                // 6. Subject Match (Boost)
+                if (!string.IsNullOrEmpty(c.Subject))
+                {
+                    var subjectTokens = Tokenize(c.Subject);
+                    int subjectMatchCount = queryTokens.Count(token => subjectTokens.Contains(token));
+                    if (subjectMatchCount > 0)
+                    {
+                        score += 0.8 * subjectMatchCount;
                     }
                 }
 
