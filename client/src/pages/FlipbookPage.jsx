@@ -131,6 +131,7 @@ const FlipbookPage = () => {
       const lowercaseUrl = url.toLowerCase();
       return lowercaseUrl.includes("drive.google.com") || 
              lowercaseUrl.includes("docs.google.com") || 
+             lowercaseUrl.includes("/temporary_pdf/") || 
              lowercaseUrl.endsWith(".docx") || 
              lowercaseUrl.endsWith(".doc") || 
              lowercaseUrl.endsWith(".xlsx") || 

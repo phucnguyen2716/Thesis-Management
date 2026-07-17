@@ -246,10 +246,15 @@ public class DriveController : ControllerBase
             filePath = "/temporary_pdf/" + filePath.Split("/temporary_pdf/")[1];
         }
 
-        // If it is already a local PDF path, return it directly
+        // If it is already a local PDF path, return it directly if it exists on disk
         if (filePath.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase) && (filePath.StartsWith("/temporary_pdf") || filePath.StartsWith("/uploads")))
         {
-            return Ok(new { success = true, localPath = filePath });
+            var relativePath = filePath.TrimStart('/');
+            var absolutePath = Path.Combine(Directory.GetCurrentDirectory(), relativePath);
+            if (System.IO.File.Exists(absolutePath) && new System.IO.FileInfo(absolutePath).Length > 0)
+            {
+                return Ok(new { success = true, localPath = filePath });
+            }
         }
 
         // Check if it is a local non-PDF file in /uploads or /temporary_pdf that needs conversion
