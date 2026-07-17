@@ -363,6 +363,17 @@ public class DriveSampleDataSeeder : IDriveSampleDataSeeder
                 };
                 db.Theses.Add(thesis);
                 await db.SaveChangesAsync();
+
+                var submission = new ThesisSubmission
+                {
+                    ThesisId = thesis.Id,
+                    FilePath = thesis.FilePath,
+                    FileName = Path.GetFileName(thesis.FilePath),
+                    FileSize = File.Exists(targetDocxPath) ? new FileInfo(targetDocxPath).Length : 0,
+                    SubmittedAt = DateTime.UtcNow
+                };
+                db.ThesisSubmissions.Add(submission);
+                await db.SaveChangesAsync();
             }
             else
             {
@@ -372,6 +383,21 @@ public class DriveSampleDataSeeder : IDriveSampleDataSeeder
                 {
                     existingThesis.FilePath = "/uploads/225050646_NguyenHoangPhuc.docx";
                     await db.SaveChangesAsync();
+
+                    var hasSub = await db.ThesisSubmissions.AnyAsync(s => s.ThesisId == existingThesis.Id);
+                    if (!hasSub)
+                    {
+                        var submission = new ThesisSubmission
+                        {
+                            ThesisId = existingThesis.Id,
+                            FilePath = existingThesis.FilePath,
+                            FileName = Path.GetFileName(existingThesis.FilePath),
+                            FileSize = File.Exists(targetDocxPath) ? new FileInfo(targetDocxPath).Length : 0,
+                            SubmittedAt = DateTime.UtcNow
+                        };
+                        db.ThesisSubmissions.Add(submission);
+                        await db.SaveChangesAsync();
+                    }
                 }
             }
 
@@ -397,6 +423,17 @@ public class DriveSampleDataSeeder : IDriveSampleDataSeeder
                 };
                 db.Theses.Add(thesis);
                 await db.SaveChangesAsync();
+
+                var submission = new ThesisSubmission
+                {
+                    ThesisId = thesis.Id,
+                    FilePath = thesis.FilePath,
+                    FileName = Path.GetFileName(thesis.FilePath),
+                    FileSize = File.Exists(targetDocxPathNew) ? new FileInfo(targetDocxPathNew).Length : 0,
+                    SubmittedAt = DateTime.UtcNow
+                };
+                db.ThesisSubmissions.Add(submission);
+                await db.SaveChangesAsync();
             }
             else
             {
@@ -405,6 +442,21 @@ public class DriveSampleDataSeeder : IDriveSampleDataSeeder
                 {
                     existingThesis.FilePath = "/uploads/225050646_NguyenHoangPhuc_New.docx";
                     await db.SaveChangesAsync();
+
+                    var hasSub = await db.ThesisSubmissions.AnyAsync(s => s.ThesisId == existingThesis.Id);
+                    if (!hasSub)
+                    {
+                        var submission = new ThesisSubmission
+                        {
+                            ThesisId = existingThesis.Id,
+                            FilePath = existingThesis.FilePath,
+                            FileName = Path.GetFileName(existingThesis.FilePath),
+                            FileSize = File.Exists(targetDocxPathNew) ? new FileInfo(targetDocxPathNew).Length : 0,
+                            SubmittedAt = DateTime.UtcNow
+                        };
+                        db.ThesisSubmissions.Add(submission);
+                        await db.SaveChangesAsync();
+                    }
                 }
             }
 
@@ -430,6 +482,17 @@ public class DriveSampleDataSeeder : IDriveSampleDataSeeder
                 };
                 db.Theses.Add(thesis);
                 await db.SaveChangesAsync();
+
+                var submission = new ThesisSubmission
+                {
+                    ThesisId = thesis.Id,
+                    FilePath = thesis.FilePath,
+                    FileName = Path.GetFileName(thesis.FilePath),
+                    FileSize = File.Exists(targetDocxPathNew2) ? new FileInfo(targetDocxPathNew2).Length : 0,
+                    SubmittedAt = DateTime.UtcNow
+                };
+                db.ThesisSubmissions.Add(submission);
+                await db.SaveChangesAsync();
             }
             else
             {
@@ -438,6 +501,21 @@ public class DriveSampleDataSeeder : IDriveSampleDataSeeder
                 {
                     existingThesis.FilePath = "/uploads/225050646_NguyenHoangPhuc_New2.docx";
                     await db.SaveChangesAsync();
+
+                    var hasSub = await db.ThesisSubmissions.AnyAsync(s => s.ThesisId == existingThesis.Id);
+                    if (!hasSub)
+                    {
+                        var submission = new ThesisSubmission
+                        {
+                            ThesisId = existingThesis.Id,
+                            FilePath = existingThesis.FilePath,
+                            FileName = Path.GetFileName(existingThesis.FilePath),
+                            FileSize = File.Exists(targetDocxPathNew2) ? new FileInfo(targetDocxPathNew2).Length : 0,
+                            SubmittedAt = DateTime.UtcNow
+                        };
+                        db.ThesisSubmissions.Add(submission);
+                        await db.SaveChangesAsync();
+                    }
                 }
             }
 

@@ -64,7 +64,7 @@ public static class DrivePathParser
             string lastPart = parts[^1];
             string nameWithoutExtension = Path.GetFileNameWithoutExtension(lastPart);
             
-            var uidMatchInFile = Regex.Match(nameWithoutExtension, @"(?i)sv\d+");
+            var uidMatchInFile = Regex.Match(nameWithoutExtension, @"(?i)(sv\d+|\d{9})");
             if (uidMatchInFile.Success)
             {
                 studentUid = uidMatchInFile.Value.ToUpperInvariant();
@@ -80,7 +80,7 @@ public static class DrivePathParser
             {
                 // Fallback: Check the folder name (parts[3]) if the filename doesn't contain a student ID
                 var folderName = parts[3];
-                var uidMatchInFolder = Regex.Match(folderName, @"(?i)sv\d+");
+                var uidMatchInFolder = Regex.Match(folderName, @"(?i)(sv\d+|\d{9})");
                 if (uidMatchInFolder.Success)
                 {
                     studentUid = uidMatchInFolder.Value.ToUpperInvariant();
@@ -117,7 +117,7 @@ public static class DrivePathParser
             string lastPart = parts[^1];
             string nameWithoutExtension = Path.GetFileNameWithoutExtension(lastPart);
             
-            var uidMatch = Regex.Match(nameWithoutExtension, @"(?i)sv\d+");
+            var uidMatch = Regex.Match(nameWithoutExtension, @"(?i)(sv\d+|\d{9})");
             if (uidMatch.Success)
             {
                 studentUid = uidMatch.Value.ToUpperInvariant();
