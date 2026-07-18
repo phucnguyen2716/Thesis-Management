@@ -133,6 +133,18 @@ const AISummaryCard = ({ selected, isScanning }) => {
   const [summaryData, setSummaryData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [fromCache, setFromCache] = useState(false);
+  const [retryTrigger, setRetryTrigger] = useState(0);
+
+  const handleRetry = () => {
+    if (selected && selected.id) {
+      const match = String(selected.id).match(/\d+/);
+      if (match) {
+        const cleanId = parseInt(match[0], 10);
+        sessionStorage.removeItem(SUMMARY_CACHE_KEY(cleanId));
+      }
+    }
+    setRetryTrigger(prev => prev + 1);
+  };
 
   useEffect(() => {
     if (isScanning) {
@@ -172,8 +184,10 @@ const AISummaryCard = ({ selected, isScanning }) => {
 
           const { data } = await thesisService.getAiSummary(cleanId);
           if (active) {
-            // Save to sessionStorage for reuse
-            try { sessionStorage.setItem(cacheKey, JSON.stringify(data)); } catch { /* storage full */ }
+            // Save to sessionStorage for reuse (only if NOT an error)
+            if (data && !data.isError && !data.IsError) {
+              try { sessionStorage.setItem(cacheKey, JSON.stringify(data)); } catch { /* storage full */ }
+            }
             setSummaryData(data);
             setFromCache(false);
             setLoading(false);
@@ -197,7 +211,7 @@ const AISummaryCard = ({ selected, isScanning }) => {
 
     fetchSummary();
     return () => { active = false; };
-  }, [selected, isScanning]);
+  }, [selected, isScanning, retryTrigger]);
 
 
   if (loading || !summaryData) {
@@ -225,6 +239,54 @@ const AISummaryCard = ({ selected, isScanning }) => {
     );
   }
 
+  // Unified Error View inside the card
+  if (summaryData.isError || summaryData.IsError) {
+    return (
+      <div className="bg-gradient-to-br from-slate-900 via-rose-950 to-slate-950 text-white rounded-2xl border border-rose-900/50 p-6 md:p-8 shadow-xl relative overflow-hidden animate-in fade-in duration-500">
+        <div className="absolute -right-20 -bottom-20 w-80 h-80 bg-rose-500/10 rounded-full blur-[80px] pointer-events-none" />
+        <div className="relative z-10 space-y-6">
+          <div className="flex items-center justify-between gap-4 border-b border-white/10 pb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-rose-900/80 border border-rose-700/50 flex items-center justify-center shadow-lg shadow-rose-950/50">
+                <span className="material-symbols-outlined text-rose-300 text-2xl">auto_awesome</span>
+              </div>
+              <div className="text-left">
+                <h3 className="text-sm font-black uppercase tracking-[0.2em] text-rose-300">Tóm tắt phân tích bằng Gemini AI</h3>
+                <p className="text-[10px] text-white/50 uppercase mt-0.5 tracking-wider">Lỗi xử lý tự động</p>
+              </div>
+            </div>
+            <span className="px-3 py-1 bg-rose-500/10 border border-rose-500/20 text-rose-300 rounded-full text-[10px] font-black tracking-widest uppercase">
+              Tạm ngưng
+            </span>
+          </div>
+
+          <div className="p-5 bg-rose-500/10 border border-rose-500/20 rounded-xl space-y-4">
+            <div className="flex gap-3">
+              <span className="material-symbols-outlined text-rose-400 text-2xl shrink-0 mt-0.5">error</span>
+              <div>
+                <h4 className="text-sm font-bold text-rose-200">Không thể lấy kết quả phân tích từ AI</h4>
+                <p className="text-xs text-rose-300/90 mt-1 leading-relaxed">
+                  {summaryData.errorMessage || summaryData.ErrorMessage || 'Đã xảy ra lỗi không xác định từ máy chủ.'}
+                </p>
+              </div>
+            </div>
+
+            <div className="pt-2 flex justify-start">
+              <button
+                type="button"
+                onClick={handleRetry}
+                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5 shadow-lg shadow-rose-950/50"
+              >
+                <span className="material-symbols-outlined text-sm">refresh</span>
+                Thử lại ngay
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-gradient-to-br from-slate-900 via-teal-950 to-slate-950 text-white rounded-2xl border border-teal-800/50 p-6 md:p-8 shadow-xl relative overflow-hidden animate-in fade-in duration-500">
       {/* Background glowing orb effect */}
@@ -238,6 +300,7 @@ const AISummaryCard = ({ selected, isScanning }) => {
               <span className="material-symbols-outlined text-teal-300 text-2xl animate-pulse">auto_awesome</span>
             </div>
             <div className="text-left">
+
               <h3 className="text-sm font-black uppercase tracking-[0.2em] text-teal-300">Tóm tắt phân tích bằng Gemini AI</h3>
               <p className="text-[10px] text-white/50 uppercase mt-0.5 tracking-wider">Báo cáo tổng hợp chất lượng đồ án tự động</p>
             </div>

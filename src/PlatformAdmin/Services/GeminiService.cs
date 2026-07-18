@@ -874,11 +874,8 @@ namespace PlatformAdmin.Services
                     {
                         return new ThesisAiSummaryResult
                         {
-                            Overview = "⚠️ Gemini API đang bị giới hạn tốc độ (429 Too Many Requests). API Key miễn phí chỉ cho phép một số lượng yêu cầu nhất định mỗi phút. Vui lòng đợi 1-2 phút rồi thử lại.",
-                            Tools = new List<string> { "Vui lòng thử lại sau vài giây" },
-                            Strengths = new List<string> { "API Key đang hoạt động nhưng đã đạt giới hạn tốc độ" },
-                            Weaknesses = new List<string> { "Nâng cấp API Key lên gói trả phí để tăng giới hạn" },
-                            Recommendation = "Thử lại sau 60 giây hoặc sử dụng API Key khác."
+                            IsError = true,
+                            ErrorMessage = "⚠️ Gemini API đang bị giới hạn tốc độ (429 Too Many Requests). API Key miễn phí chỉ cho phép tối đa 15 yêu cầu mỗi phút. Vui lòng đợi 1-2 phút rồi thử lại."
                         };
                     }
 
@@ -886,21 +883,15 @@ namespace PlatformAdmin.Services
                     {
                         return new ThesisAiSummaryResult
                         {
-                            Overview = $"❌ Gemini API từ chối xác thực ({(int)response.StatusCode}). API Key không hợp lệ hoặc chưa được kích hoạt.",
-                            Tools = new List<string> { "Kiểm tra lại API Key tại https://aistudio.google.com/apikey" },
-                            Strengths = new List<string> { },
-                            Weaknesses = new List<string> { "API Key không hợp lệ hoặc đã hết hạn" },
-                            Recommendation = "Vào Render Dashboard → Environment Variables → cập nhật lại Gemini__ApiKey."
+                            IsError = true,
+                            ErrorMessage = $"❌ Gemini API từ chối xác thực ({(int)response.StatusCode}). API Key không hợp lệ hoặc chưa được kích hoạt."
                         };
                     }
 
                     return new ThesisAiSummaryResult
                     {
-                        Overview = $"❌ Lỗi kết nối Gemini API ({(int)response.StatusCode}). Vui lòng thử lại sau.",
-                        Tools = new List<string> { },
-                        Strengths = new List<string> { },
-                        Weaknesses = new List<string> { $"HTTP {(int)response.StatusCode}" },
-                        Recommendation = "Liên hệ quản trị viên nếu lỗi tiếp tục xảy ra."
+                        IsError = true,
+                        ErrorMessage = $"❌ Lỗi kết nối Gemini API ({(int)response.StatusCode}). Vui lòng thử lại sau."
                     };
                 }
 
@@ -927,14 +918,12 @@ namespace PlatformAdmin.Services
                 _logger.LogError(ex, "Failed to call Gemini API for thesis summary.");
                 return new ThesisAiSummaryResult
                 {
-                    Overview = $"❌ Lỗi kết nối Gemini API: {ex.Message}",
-                    Tools = new List<string> { "Không thể kết nối đến Gemini API" },
-                    Strengths = new List<string> { },
-                    Weaknesses = new List<string> { "Kiểm tra kết nối mạng và API Key" },
-                    Recommendation = "Thử lại sau vài giây hoặc kiểm tra cấu hình API Key trên server."
+                    IsError = true,
+                    ErrorMessage = $"❌ Lỗi kết nối Gemini API: {ex.Message}. Vui lòng kiểm tra lại cấu hình API Key trên server."
                 };
             }
         }
+
 
         private static string CleanJsonString(string text)
         {

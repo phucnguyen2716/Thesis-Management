@@ -40,7 +40,10 @@ namespace PlatformAdmin.Services
         public List<string> Strengths { get; set; } = new();
         public List<string> Weaknesses { get; set; } = new();
         public string Recommendation { get; set; } = string.Empty;
+        public bool IsError { get; set; } = false;
+        public string? ErrorMessage { get; set; }
     }
+
 
     public class PreFilterResult
     {
