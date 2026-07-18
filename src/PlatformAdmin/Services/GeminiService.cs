@@ -45,14 +45,27 @@ namespace PlatformAdmin.Services
             }
 
             var defaultKey = _defaultApiKey?.Trim();
-            if (string.IsNullOrWhiteSpace(defaultKey) || defaultKey == "YOUR_GEMINI_API_KEY")
+            if (string.IsNullOrWhiteSpace(defaultKey) || defaultKey == "YOUR_GEMINI_API_KEY" || defaultKey == "AIzaSyB9EM5E5KELcbtOKu2BpNX2jLPU2uNbW9g")
             {
                 defaultKey = Environment.GetEnvironmentVariable("GEMINI_API_KEY")?.Trim();
+            }
+            if (string.IsNullOrWhiteSpace(defaultKey) || defaultKey == "YOUR_GEMINI_API_KEY" || defaultKey == "AIzaSyB9EM5E5KELcbtOKu2BpNX2jLPU2uNbW9g")
+            {
+                defaultKey = Environment.GetEnvironmentVariable("Gemini__ApiKey")?.Trim();
             }
 
             bool isRealKey = !string.IsNullOrEmpty(defaultKey) && 
                              defaultKey != "YOUR_GEMINI_API_KEY" && 
                              defaultKey != "AIzaSyB9EM5E5KELcbtOKu2BpNX2jLPU2uNbW9g";
+
+            if (isRealKey)
+            {
+                _logger.LogInformation("Gemini API Key loaded successfully. Prefix: {Prefix}...", defaultKey!.Substring(0, Math.Min(6, defaultKey.Length)));
+            }
+            else
+            {
+                _logger.LogWarning("Gemini API Key is missing or default dummy key is detected. Operating in simulated mock mode.");
+            }
 
             return (defaultKey, !isRealKey);
         }
@@ -872,8 +885,15 @@ namespace PlatformAdmin.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to call Gemini API for thesis summary. Falling back to local simulator.");
-                return SimulateThesisSummary(title, description);
+                _logger.LogError(ex, "Failed to call Gemini API for thesis summary.");
+                return new ThesisAiSummaryResult
+                {
+                    Overview = $"Lỗi kết nối Gemini API: {ex.Message}. Vui lòng kiểm tra lại cấu hình API Key trên server.",
+                    Tools = new List<string> { "Đã xảy ra lỗi kết nối API" },
+                    Strengths = new List<string> { ex.StackTrace ?? "" },
+                    Weaknesses = new List<string> { "Không thể phân tích dữ liệu" },
+                    Recommendation = "Lỗi xác thực hoặc hết hạn kết nối API."
+                };
             }
         }
 
