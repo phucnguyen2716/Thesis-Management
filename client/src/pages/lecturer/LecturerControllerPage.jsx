@@ -127,11 +127,17 @@ const generateDynamicAISummary = (title, description, faculty) => {
   return { overview, tools, strengths, weaknesses, recommendation };
 };
 
-const AISummaryCard = ({ selected }) => {
+const AISummaryCard = ({ selected, isScanning }) => {
   const [summaryData, setSummaryData] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (isScanning) {
+      setLoading(true);
+      setSummaryData(null);
+      return;
+    }
+
     let active = true;
     setLoading(true);
     setSummaryData(null);
@@ -169,7 +175,7 @@ const AISummaryCard = ({ selected }) => {
 
     fetchSummary();
     return () => { active = false; };
-  }, [selected]);
+  }, [selected, isScanning]);
 
   if (loading || !summaryData) {
     return (
@@ -870,7 +876,7 @@ const LecturerControllerPage = () => {
         </aside>
 
         <div className="flex-1 w-full min-w-0 space-y-4 sm:space-y-6">
-          <AISummaryCard selected={selected} />
+          <AISummaryCard selected={selected} isScanning={scanning} />
           
           <PlagiarismAnalysisBento
             submission={selected}
