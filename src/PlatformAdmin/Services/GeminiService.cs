@@ -861,27 +861,18 @@ namespace PlatformAdmin.Services
 
                     if ((int)response.StatusCode == 429)
                     {
-                        return new ThesisAiSummaryResult
-                        {
-                            IsError = true,
-                            ErrorMessage = "⚠️ Gemini API đang bị giới hạn tốc độ (429 Too Many Requests). API Key miễn phí chỉ cho phép tối đa 15 yêu cầu mỗi phút. Vui lòng đợi 1-2 phút rồi thử lại."
-                        };
+                        _logger.LogWarning("Gemini API returned 429 (Too Many Requests). Falling back to simulated/seed data.");
+                        return SimulateThesisSummary(title, description);
                     }
 
                     if ((int)response.StatusCode == 401 || (int)response.StatusCode == 403)
                     {
-                        return new ThesisAiSummaryResult
-                        {
-                            IsError = true,
-                            ErrorMessage = $"❌ Gemini API từ chối xác thực ({(int)response.StatusCode}). API Key không hợp lệ hoặc chưa được kích hoạt."
-                        };
+                        _logger.LogWarning("Gemini API returned {Status} (Auth error). Falling back to simulated/seed data.", response.StatusCode);
+                        return SimulateThesisSummary(title, description);
                     }
 
-                    return new ThesisAiSummaryResult
-                    {
-                        IsError = true,
-                        ErrorMessage = $"❌ Lỗi kết nối Gemini API ({(int)response.StatusCode}). Vui lòng thử lại sau."
-                    };
+                    _logger.LogWarning("Gemini API returned {Status}. Falling back to simulated/seed data.", response.StatusCode);
+                    return SimulateThesisSummary(title, description);
                 }
 
                 var responseContent = await response.Content.ReadAsStringAsync();
@@ -904,14 +895,11 @@ namespace PlatformAdmin.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to call Gemini API for thesis summary.");
-                return new ThesisAiSummaryResult
-                {
-                    IsError = true,
-                    ErrorMessage = $"❌ Lỗi kết nối Gemini API: {ex.Message}. Vui lòng kiểm tra lại cấu hình API Key trên server."
-                };
+                _logger.LogError(ex, "Failed to call Gemini API for thesis summary. Falling back to simulated/seed data.");
+                return SimulateThesisSummary(title, description);
             }
         }
+
 
 
         private static string CleanJsonString(string text)
