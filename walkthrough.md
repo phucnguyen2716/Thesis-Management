@@ -17,6 +17,9 @@ We have implemented the following sets of changes:
 11. **Graceful Fallbacks for Mock Google Drive Files**:
     - **Intercepting Mock View URLs**: Updated `FlipbookPage.jsx` to intercept mock Google Drive URLs or cases where background conversion fails due to missing access. Instead of rendering a broken iframe showing Google Drive's "not found" page, it automatically loads the local sample document `/Document Detail.pdf` and renders a warning banner informing the user.
     - **Intercepting Mock Download URLs**: Updated the file downloading function in `AdminThesesPage.jsx`, `LookupPage.jsx`, and `ThesisDetail.jsx` to intercept mock Drive links and download the local sample document under the correct file name, avoiding the Google Drive error pages.
+12. **Plagiarism Scans & Lecturer Review Scores Displayed Directly in Admin List**:
+    - **Optimized DTO Extension**: Added a `PlagiarismSimilarity` property to `ThesisDto`. The backend `ThesisService` performs a single, highly efficient grouped query lookup to retrieve the latest plagiarism results for all listed items in one roundtrip.
+    - **Inline Badges**: Added a visual vertical list of metrics directly under the Status column inside the Admin table. Admins can now see at a glance if a plagiarism report is completed (e.g. `Đạo văn: 15%` with color-coded warning backgrounds), currently scanning (`Đang quét...`), or not scanned yet, alongside reviewer scores (e.g. `Điểm: 8.5 (1 GV)`).
 
 ---
 
