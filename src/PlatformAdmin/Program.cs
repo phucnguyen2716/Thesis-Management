@@ -221,6 +221,35 @@ using (var scope = app.Services.CreateScope())
     try
     {
         var context = services.GetRequiredService<AppDbContext>();
+        
+        // Wait and retry for DB connection to handle sleeping DBs or temporary DNS issues on Render
+        int dbRetries = 12;
+        bool dbConnected = false;
+        while (dbRetries > 0 && !dbConnected)
+        {
+            try
+            {
+                if (context.Database.CanConnect())
+                {
+                    dbConnected = true;
+                    Console.WriteLine("Database connection established successfully.");
+                }
+                else
+                {
+                    throw new Exception("CanConnect returned false.");
+                }
+            }
+            catch (Exception ex)
+            {
+                dbRetries--;
+                Console.WriteLine($"⚠️ Database connection attempt failed ({12 - dbRetries}/12): {ex.Message}. Retrying in 3 seconds...");
+                if (dbRetries > 0)
+                {
+                    System.Threading.Thread.Sleep(3000);
+                }
+            }
+        }
+
         context.Database.EnsureCreated();
 
         try
@@ -532,10 +561,18 @@ app.Use((context, next) =>
 });
 
 // Hangfire Dashboard (accessible at /hangfire)
-app.UseHangfireDashboard("/hangfire", new DashboardOptions
+try
 {
-    Authorization = new[] { new HangfireAdminAuthorizationFilter(app.Configuration) }
-});
+    app.UseHangfireDashboard("/hangfire", new DashboardOptions
+    {
+        Authorization = new[] { new HangfireAdminAuthorizationFilter(app.Configuration) }
+    });
+    Console.WriteLine("Hangfire Dashboard initialized successfully.");
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"⚠️ Hangfire Dashboard initialization failed: {ex.Message}");
+}
 
 // Register recurring job: sync Drive files every 1 minute in a background task to prevent startup crashes from lock timeouts
 _ = Task.Run(async () =>

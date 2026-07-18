@@ -184,6 +184,8 @@ const AdminThesesPage = () => {
   const [showProgressModal, setShowProgressModal] = useState(false);
   const [toast, setToast] = useState(null);
   const [confirmModal, setConfirmModal] = useState(null);
+  const [plagiarismRequests, setPlagiarismRequests] = useState([]);
+  const [showRequestsModal, setShowRequestsModal] = useState(false);
 
   const showToastMessage = (type, message) => {
     setToast({ type, message });
@@ -501,9 +503,70 @@ const AdminThesesPage = () => {
     }
   };
 
+  const loadPlagiarismRequests = () => {
+    try {
+      const list = JSON.parse(localStorage.getItem('lecturer_plagiarism_requests') || '[]');
+      setPlagiarismRequests(list.filter(r => !r.isProcessed));
+    } catch (e) {
+      console.error(e);
+      setPlagiarismRequests([]);
+    }
+  };
+
+  const handleProcessRequest = async (request, decision) => {
+    try {
+      const thesis = theses.find(t => t.id === request.submissionId || t.title === request.title);
+      const thesisId = thesis ? thesis.id : request.submissionId;
+
+      if (thesisId) {
+        const payload = {
+          title:       thesis ? thesis.title : request.title,
+          description: thesis ? thesis.description : '',
+          major:       thesis ? thesis.major : 'ai',
+          subject:     thesis ? thesis.subject : '',
+          subjectCode: thesis ? thesis.subjectCode : '',
+          category:    thesis ? thesis.category : catConfig.code,
+          studentId:   thesis ? thesis.studentId : 1,
+          advisorId:   thesis ? thesis.advisorId : null,
+          status:      decision,
+          batch:       thesis ? thesis.batch : 1,
+          filePath:    thesis ? thesis.filePath : '',
+        };
+        await thesisService.update(thesisId, payload);
+      }
+
+      const list = JSON.parse(localStorage.getItem('lecturer_plagiarism_requests') || '[]');
+      const updatedList = list.map(r => r.id === request.id ? { ...r, isProcessed: true } : r);
+      localStorage.setItem('lecturer_plagiarism_requests', JSON.stringify(updatedList));
+      
+      showToastMessage('success', `Đã xử lý yêu cầu đạo văn thành công (Kết quả: ${decision === 'Approved' ? 'Thông qua' : decision === 'Revision' ? 'Sửa đổi' : 'Hủy bỏ'})!`);
+      loadPlagiarismRequests();
+      loadTheses();
+      
+      window.dispatchEvent(new Event('admin-content-updated'));
+    } catch (err) {
+      console.error('Error processing request:', err);
+      showToastMessage('error', 'Lỗi khi xử lý yêu cầu.');
+    }
+  };
+
   useEffect(() => { loadUsers(); }, []);
   useEffect(() => { setPage(1); loadTheses(); }, [category, search, statusFilter, majorFilter, batchFilter]);
   useEffect(() => { loadTheses(); }, [page]);
+
+  useEffect(() => {
+    loadPlagiarismRequests();
+    const handleSync = () => {
+      loadPlagiarismRequests();
+    };
+    window.addEventListener('admin-content-updated', handleSync);
+    window.addEventListener('storage', handleSync);
+    return () => {
+      window.removeEventListener('admin-content-updated', handleSync);
+      window.removeEventListener('storage', handleSync);
+    };
+  }, []);
+
   useEffect(() => {
     if (isProject) {
       loadDriveStatus();
@@ -630,6 +693,16 @@ const AdminThesesPage = () => {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          {plagiarismRequests.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setShowRequestsModal(true)}
+              className="px-4 py-2 rounded-lg bg-orange-650 hover:bg-orange-550 text-white text-xs font-black uppercase transition-all flex items-center gap-1.5 animate-pulse cursor-pointer border-none"
+            >
+              <span className="material-symbols-outlined text-[16px]">notifications_active</span>
+              Yêu cầu Đạo văn ({plagiarismRequests.length})
+            </button>
+          )}
           <button
             type="button"
             onClick={handleOpenCreate}
@@ -1463,6 +1536,113 @@ const AdminThesesPage = () => {
               >
                 Xác nhận
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Plagiarism Requests Modal */}
+      {showRequestsModal && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-950/70 backdrop-blur-sm" onClick={() => setShowRequestsModal(false)} />
+          <div className="relative w-full max-w-2xl bg-[#16161c] border border-slate-800 rounded-3xl overflow-hidden shadow-2xl z-10 animate-in fade-in zoom-in-95 duration-200">
+            {/* Header */}
+            <div className="p-6 border-b border-slate-800/80 bg-gradient-to-r from-orange-950/30 to-slate-900 flex justify-between items-center">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center text-orange-400">
+                  <span className="material-symbols-outlined text-xl">admin_panel_settings</span>
+                </div>
+                <div className="text-left">
+                  <h3 className="text-sm font-black uppercase tracking-widest text-orange-400">Yêu cầu Đạo văn từ Giảng viên</h3>
+                  <p className="text-[10px] text-slate-400 uppercase mt-0.5 tracking-wider">Danh sách yêu cầu phê duyệt đặc cách hoặc đối chiếu sâu</p>
+                </div>
+              </div>
+              <button onClick={() => setShowRequestsModal(false)} className="material-symbols-outlined text-slate-400 hover:text-white transition-colors cursor-pointer border-none bg-transparent">
+                close
+              </button>
+            </div>
+
+            {/* List */}
+            <div className="p-6 max-h-[450px] overflow-y-auto space-y-4">
+              {plagiarismRequests.map((req) => (
+                <div key={req.id} className="p-5 rounded-2xl bg-slate-900/60 border border-slate-850 space-y-4">
+                  {/* Top line info */}
+                  <div className="flex justify-between items-start gap-4">
+                    <div className="text-left">
+                      <h4 className="text-xs font-bold text-white leading-snug">{req.title}</h4>
+                      <p className="text-[10px] text-slate-400 mt-1">
+                        Sinh viên: <span className="text-slate-350 font-bold">{req.student}</span> · Giảng viên gửi: <span className="text-orange-400 font-bold">{req.lecturer}</span>
+                      </p>
+                    </div>
+                    {req.isUrgent && (
+                      <span className="px-2 py-0.5 rounded bg-red-500/15 border border-red-500/20 text-red-400 text-[8px] font-black uppercase tracking-widest animate-pulse shrink-0">
+                        Khẩn cấp
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Stats Grid */}
+                  <div className="grid grid-cols-3 gap-2.5 bg-slate-950/40 p-3 rounded-xl border border-slate-900/60 text-left">
+                    <div>
+                      <span className="text-[9px] text-slate-500 block uppercase font-bold">Trùng lặp</span>
+                      <span className="text-xs font-extrabold text-red-400">{req.similarity}%</span>
+                    </div>
+                    <div>
+                      <span className="text-[9px] text-slate-500 block uppercase font-bold">AI tạo</span>
+                      <span className="text-xs font-extrabold text-sky-400">{req.aiPercent}%</span>
+                    </div>
+                    <div>
+                      <span className="text-[9px] text-slate-500 block uppercase font-bold">Loại yêu cầu</span>
+                      <span className="text-[9.5px] font-extrabold text-amber-400 uppercase tracking-wider truncate block">
+                        {req.caseType === 'ignore' ? 'Đặc cách bỏ qua' : req.caseType === 'deep' ? 'Đối chiếu sâu' : 'Kỷ luật/Hủy'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Comments */}
+                  <div className="bg-slate-950/20 p-3 rounded-xl border border-slate-850/60 text-left">
+                    <span className="text-[9px] text-slate-500 block uppercase font-bold mb-1">Ý kiến / Giải trình của giảng viên</span>
+                    <p className="text-xs text-slate-300 italic font-medium leading-relaxed">
+                      "{req.customNote || 'Không có ghi chú chi tiết.'}"
+                    </p>
+                    <p className="text-[9px] text-slate-500 text-right mt-2 font-bold uppercase">{req.timestamp}</p>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex justify-end gap-2 pt-2 border-t border-slate-850">
+                    <button
+                      type="button"
+                      onClick={() => handleProcessRequest(req, 'Approved')}
+                      className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-slate-950 text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1 cursor-pointer border-none"
+                    >
+                      <span className="material-symbols-outlined text-xs">check_circle</span>
+                      Duyệt thông qua
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleProcessRequest(req, 'Revision')}
+                      className="px-3.5 py-1.5 rounded-lg bg-orange-500 hover:bg-orange-400 text-slate-950 text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1 cursor-pointer border-none"
+                    >
+                      <span className="material-symbols-outlined text-xs">edit_note</span>
+                      Yêu cầu Sửa đổi
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleProcessRequest(req, 'Rejected')}
+                      className="px-3.5 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-450 border border-rose-500/25 hover:border-rose-500/40 text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1 cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-xs">cancel</span>
+                      Từ chối / Hủy
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {plagiarismRequests.length === 0 && (
+                <div className="py-12 text-center text-slate-500">
+                  <span className="material-symbols-outlined text-4xl opacity-30 block mb-2">task_alt</span>
+                  <p className="text-sm font-semibold">Tất cả yêu cầu đã được xử lý xong!</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
