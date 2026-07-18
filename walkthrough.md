@@ -7,6 +7,7 @@ We have implemented the following sets of changes:
 4. Removed the Gemini API Key UI input field from the Admin portal header as requested.
 5. Implemented an **"Ý kiến GV" (Lecturer Reviews)** button and modal in the Admin's Thesis Management list. Admins can now view a detailed review history (Lecturer Name, Score, Comments/Feedback, Decision Status) and download student submission documents.
 6. Added a **direct approval status manager** dropdown in both the new reviews modal and the Edit modal, allowing Admins to review lecturer recommendations and instantly update/approve the thesis status.
+7. **Redesigned and optimized the Admin Thesis Table Layout**: Improved spacing, alignment, and appearance of all columns by introducing user cards for students, profile icons for advisors, status dots in badges, and compact/outline action buttons.
 
 ---
 
@@ -67,6 +68,18 @@ We have implemented the following sets of changes:
 - **Direct Status Approval dropdown**:
   - Added a "Trạng thái đề tài" select dropdown inside the reviews modal and the standard Edit modal.
   - Admins can instantly override or confirm the thesis status (Pending, InProgress, Submitted, Approved, Rejected, Revision) with a single click.
+
+---
+
+## 5. UI Layout & Table Row Redesign
+
+### Frontend (Client)
+
+#### [AdminThesesPage.jsx](file:///c:/Users/nguye/Desktop/Thesis-Management/client/src/pages/admin/AdminThesesPage.jsx)
+- **Compact Icon Buttons**: Replaced the textual "Sửa" and "Xóa" buttons with compact gray/rose icon-only buttons (`edit` and `delete` symbols) to save horizontal space and eliminate wrapping issues.
+- **Vibrant Status Badges**: Added color-coded status indicator dots inside the status pill badges (e.g. green dot for Approved, orange dot for Revision, blue dot for InProgress) for better readability.
+- **Student Profile Cards**: Added a circular student initials avatar next to the name and formatted the Student Code as a clean sub-label.
+- **Advisor Indicators**: Rendered a person profile icon next to the advisor name to distinguish roles visually.
 
 ---
 
