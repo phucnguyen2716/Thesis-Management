@@ -673,16 +673,14 @@ _ = Task.Run(async () =>
 // Auto-seed Google Drive sample data on startup (nếu Drive chưa có file)
 _ = Task.Run(async () =>
 {
-    await Task.Delay(3000);
+    // Wait 30 seconds to ensure Kestrel has successfully bound to port 80 first.
+    await Task.Delay(30000);
     try
     {
         using var scope = app.Services.CreateScope();
         var seeder = scope.ServiceProvider.GetRequiredService<IDriveSampleDataSeeder>();
-        var syncJob = scope.ServiceProvider.GetRequiredService<DriveSyncJob>();
         var result = await seeder.GenerateSampleDataAsync(force: false);
         Console.WriteLine($"📁 Drive auto-seed: {result.Message} (uploaded={result.Uploaded}, failed={result.Failed})");
-        await syncJob.SyncAllAsync();
-        Console.WriteLine("✅ Drive initial sync completed.");
     }
     catch (Exception ex)
     {
