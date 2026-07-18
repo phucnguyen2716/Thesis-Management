@@ -17,6 +17,14 @@ using Hangfire.PostgreSql;
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 var builder = WebApplication.CreateBuilder(args);
 
+// Dynamic port binding for Render/Cloud environments
+var port = Environment.GetEnvironmentVariable("PORT");
+if (!string.IsNullOrEmpty(port))
+{
+    builder.WebHost.UseUrls($"http://*:{port}");
+}
+
+
 // Load local secrets if present
 builder.Configuration.AddJsonFile("appsettings.local.json", optional: true, reloadOnChange: true);
 builder.Configuration.AddJsonFile("appsettings.Secrets.json", optional: true, reloadOnChange: true);
@@ -343,6 +351,11 @@ using (var scope = app.Services.CreateScope())
                 try { context.Database.ExecuteSqlRaw(@"ALTER TABLE ""DriveFileRecords"" ADD COLUMN IF NOT EXISTS ""ProjectName"" VARCHAR(1000) NOT NULL DEFAULT '';"); } catch (Exception ex) { Console.WriteLine($"Migration warning: {ex.Message}"); }
                 try { context.Database.ExecuteSqlRaw(@"ALTER TABLE ""DriveFileRecords"" ADD COLUMN IF NOT EXISTS ""LocalPdfPath"" VARCHAR(2000) NOT NULL DEFAULT '';"); } catch (Exception ex) { Console.WriteLine($"Migration warning: {ex.Message}"); }
                 try { context.Database.ExecuteSqlRaw(@"ALTER TABLE ""SocialPosts"" ADD COLUMN IF NOT EXISTS ""CloudinaryStatus"" VARCHAR(50) DEFAULT 'None';"); } catch (Exception ex) { Console.WriteLine($"Migration warning: {ex.Message}"); }
+                try { context.Database.ExecuteSqlRaw(@"ALTER TABLE ""SocialPosts"" ADD COLUMN IF NOT EXISTS ""AuthorId"" INTEGER DEFAULT 1;"); } catch (Exception ex) { Console.WriteLine($"Migration warning: {ex.Message}"); }
+                try { context.Database.ExecuteSqlRaw(@"ALTER TABLE ""SocialPosts"" ADD COLUMN IF NOT EXISTS ""ViewCount"" INTEGER DEFAULT 0;"); } catch (Exception ex) { Console.WriteLine($"Migration warning: {ex.Message}"); }
+                try { context.Database.ExecuteSqlRaw(@"ALTER TABLE ""SocialPosts"" ADD COLUMN IF NOT EXISTS ""LikesCount"" INTEGER DEFAULT 0;"); } catch (Exception ex) { Console.WriteLine($"Migration warning: {ex.Message}"); }
+                try { context.Database.ExecuteSqlRaw(@"ALTER TABLE ""SocialPosts"" ADD COLUMN IF NOT EXISTS ""UpdatedAt"" TIMESTAMP WITHOUT TIME ZONE;"); } catch (Exception ex) { Console.WriteLine($"Migration warning: {ex.Message}"); }
+                try { context.Database.ExecuteSqlRaw(@"ALTER TABLE ""SocialPosts"" ADD CONSTRAINT ""FK_SocialPosts_Users_AuthorId"" FOREIGN KEY (""AuthorId"") REFERENCES ""Users""(""Id"") ON DELETE RESTRICT;"); } catch { }
             }
             else
             {
@@ -353,6 +366,10 @@ using (var scope = app.Services.CreateScope())
                 try { context.Database.ExecuteSqlRaw("ALTER TABLE Theses ADD Category NVARCHAR(50) DEFAULT 'Project';"); } catch { }
                 try { context.Database.ExecuteSqlRaw("ALTER TABLE Theses ADD Batch INT DEFAULT 1;"); } catch { }
                 try { context.Database.ExecuteSqlRaw("ALTER TABLE SocialPosts ADD CloudinaryStatus NVARCHAR(50) DEFAULT 'None';"); } catch { }
+                try { context.Database.ExecuteSqlRaw("ALTER TABLE SocialPosts ADD AuthorId INT DEFAULT 1;"); } catch { }
+                try { context.Database.ExecuteSqlRaw("ALTER TABLE SocialPosts ADD ViewCount INT DEFAULT 0;"); } catch { }
+                try { context.Database.ExecuteSqlRaw("ALTER TABLE SocialPosts ADD LikesCount INT DEFAULT 0;"); } catch { }
+                try { context.Database.ExecuteSqlRaw("ALTER TABLE SocialPosts ADD UpdatedAt DATETIME;"); } catch { }
             }
         }
         catch (Exception ex)
