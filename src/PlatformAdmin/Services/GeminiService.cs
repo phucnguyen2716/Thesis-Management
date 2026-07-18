@@ -100,7 +100,8 @@ namespace PlatformAdmin.Services
                     return new PreFilterResult { IsViolent = false, RequestFunctionCall = false };
                 }
 
-                var parsed = JsonSerializer.Deserialize<PreFilterResult>(textResult, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                var cleanJson = CleanJsonString(textResult);
+                var parsed = JsonSerializer.Deserialize<PreFilterResult>(cleanJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 return parsed ?? new PreFilterResult { IsViolent = false, RequestFunctionCall = false };
             }
             catch (Exception ex)
@@ -611,7 +612,8 @@ namespace PlatformAdmin.Services
                     return new PostFilterResult { IsViolent = false, FilteredResponse = generatedResponse };
                 }
 
-                var parsed = JsonSerializer.Deserialize<PostFilterResult>(textResult, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                var cleanJson = CleanJsonString(textResult);
+                var parsed = JsonSerializer.Deserialize<PostFilterResult>(cleanJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 return parsed ?? new PostFilterResult { IsViolent = false, FilteredResponse = generatedResponse };
             }
             catch (Exception ex)
@@ -694,7 +696,8 @@ namespace PlatformAdmin.Services
                     return SimulatePracticeEvaluation(content, thesisTitle, chapterId, chapterLabel, requiredSections);
                 }
 
-                var parsed = JsonSerializer.Deserialize<ThesisPracticeEvaluationResult>(textResult, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                var cleanJson = CleanJsonString(textResult);
+                var parsed = JsonSerializer.Deserialize<ThesisPracticeEvaluationResult>(cleanJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 return parsed ?? SimulatePracticeEvaluation(content, thesisTitle, chapterId, chapterLabel, requiredSections);
             }
             catch (Exception ex)
@@ -863,7 +866,8 @@ namespace PlatformAdmin.Services
                     return SimulateThesisSummary(title, description);
                 }
 
-                var parsed = JsonSerializer.Deserialize<ThesisAiSummaryResult>(textResult, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                var cleanJson = CleanJsonString(textResult);
+                var parsed = JsonSerializer.Deserialize<ThesisAiSummaryResult>(cleanJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 return parsed ?? SimulateThesisSummary(title, description);
             }
             catch (Exception ex)
@@ -871,6 +875,22 @@ namespace PlatformAdmin.Services
                 _logger.LogError(ex, "Failed to call Gemini API for thesis summary. Falling back to local simulator.");
                 return SimulateThesisSummary(title, description);
             }
+        }
+
+        private static string CleanJsonString(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text)) return string.Empty;
+            var clean = text.Trim();
+            if (clean.StartsWith("```"))
+            {
+                int startIdx = clean.IndexOf("{");
+                int endIdx = clean.LastIndexOf("}");
+                if (startIdx >= 0 && endIdx >= 0)
+                {
+                    clean = clean.Substring(startIdx, endIdx - startIdx + 1);
+                }
+            }
+            return clean;
         }
 
         private ThesisAiSummaryResult SimulateThesisSummary(string title, string description)
