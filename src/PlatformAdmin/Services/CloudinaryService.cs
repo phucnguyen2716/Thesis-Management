@@ -91,7 +91,8 @@ namespace PlatformAdmin.Services
             if (_useMock || _cloudinaryClient == null)
             {
                 await Task.Delay(400); // Simulate upload latency
-                var secureUrl = $"https://res.cloudinary.com/{_cloudName}/image/upload/v171732/{secureFolder}/{fileName}";
+                // Use a high-quality generic academic placeholder from Unsplash instead of a broken Cloudinary link
+                var secureUrl = "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?q=80&w=800";
                 _logger.LogInformation("PlatformAdmin Cloudinary SUCCESS (Mock): Secure URL: {Url}", secureUrl);
                 
                 return new CloudinaryUploadResult
@@ -103,6 +104,7 @@ namespace PlatformAdmin.Services
                     Bytes = fileBytes.Length
                 };
             }
+
 
             try
             {
@@ -157,6 +159,20 @@ namespace PlatformAdmin.Services
                 return new CloudinaryUploadResult { Success = false, ErrorMessage = "Image URL is empty." };
             }
 
+            if (_useMock)
+            {
+                // In mock mode, simply return the original working URL directly
+                // to prevent broken image links on the UI.
+                _logger.LogInformation("PlatformAdmin Cloudinary (Mock): Returning original URL directly: {Url}", imageUrl);
+                return new CloudinaryUploadResult
+                {
+                    Success = true,
+                    SecureUrl = imageUrl,
+                    PublicId = "mock-cloudinary",
+                    Format = "image"
+                };
+            }
+
             // If it's already a Cloudinary URL, don't re-upload
             if (imageUrl.Contains("res.cloudinary.com"))
             {
@@ -168,6 +184,7 @@ namespace PlatformAdmin.Services
                     Format = "image"
                 };
             }
+
 
             try
             {
