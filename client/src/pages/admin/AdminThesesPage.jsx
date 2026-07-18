@@ -682,21 +682,43 @@ const AdminThesesPage = () => {
               <tbody className="divide-y divide-slate-800/60">
                 {theses.map(t => (
                   <tr key={t.id} className="hover:bg-slate-800/40 transition-colors">
-                    <td className="p-4 max-w-sm">
-                      <div className="font-bold text-white leading-snug flex items-center gap-2">
-                        {t.title}
-                        <span className="shrink-0 text-[9px] font-black px-1.5 py-0.5 rounded bg-slate-800/80 text-amber-400 border border-slate-700/80">
-                          Đợt {t.batch || 1}
-                        </span>
+                    <td className="p-4 max-w-xs md:max-w-sm">
+                      <div className="space-y-1">
+                        <div className="font-bold text-white leading-snug flex items-start gap-2">
+                          <span className="text-slate-100 hover:text-amber-400 transition-colors cursor-pointer">{t.title}</span>
+                          <span className="shrink-0 text-[8px] font-black tracking-wider uppercase px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/25 mt-0.5">
+                            Đợt {t.batch || 1}
+                          </span>
+                        </div>
+                        {t.description ? (
+                          <p className="text-[11px] text-slate-400 line-clamp-2 leading-relaxed" title={t.description}>
+                            {t.description}
+                          </p>
+                        ) : (
+                          <p className="text-[10px] text-slate-600 italic">Không có mô tả chi tiết.</p>
+                        )}
                       </div>
-                      {t.description && <div className="text-xs text-slate-400 mt-1 line-clamp-1">{t.description}</div>}
                     </td>
                     <td className="p-4">
-                      <div className="font-semibold text-slate-200">{t.studentName}</div>
-                      <div className="text-[10px] font-mono text-slate-400 mt-0.5">{t.studentCode || '—'}</div>
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700/80 flex items-center justify-center text-xs font-bold text-slate-300 shrink-0">
+                          {t.studentName ? t.studentName.split(' ').pop().charAt(0) : '?'}
+                        </div>
+                        <div>
+                          <div className="font-semibold text-slate-200 leading-none">{t.studentName}</div>
+                          <div className="text-[9px] font-mono text-slate-500 mt-1 uppercase tracking-wider">{t.studentCode || '—'}</div>
+                        </div>
+                      </div>
                     </td>
                     <td className="p-4">
-                      <div className="font-semibold text-slate-200">{t.advisorName || '—'}</div>
+                      {t.advisorName ? (
+                        <div className="flex items-center gap-2">
+                          <span className="material-symbols-outlined text-[15px] text-slate-400">person</span>
+                          <span className="font-semibold text-slate-200">{t.advisorName}</span>
+                        </div>
+                      ) : (
+                        <span className="text-slate-500 text-xs italic">Chưa chỉ định</span>
+                      )}
                     </td>
                     <td className="p-4">
                       <div className="text-slate-300 font-semibold">{MAJOR_DISPLAY[t.major] || t.major}</div>
@@ -707,26 +729,35 @@ const AdminThesesPage = () => {
                       )}
                     </td>
                     <td className="p-4">
-                      <span className={`text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full ${STATUS_BADGES[t.status] || 'bg-slate-700 text-slate-300'}`}>
+                      <span className={`inline-flex items-center gap-1.5 text-[9px] font-extrabold uppercase px-2.5 py-1 rounded-full ${STATUS_BADGES[t.status] || 'bg-slate-700/20 text-slate-400 border border-slate-700/30'}`}>
+                        <span className={`w-1 h-1 rounded-full ${
+                          t.status === 'Approved' ? 'bg-emerald-400' :
+                          t.status === 'Rejected' ? 'bg-red-400' :
+                          t.status === 'Revision' ? 'bg-orange-400' :
+                          t.status === 'Submitted' ? 'bg-purple-400' :
+                          t.status === 'InProgress' ? 'bg-blue-400' : 'bg-yellow-400'
+                        }`} />
                         {t.status}
                       </span>
                     </td>
-                    <td className="p-4 text-right space-x-1 whitespace-nowrap">
+                    <td className="p-4 text-right space-x-2 whitespace-nowrap">
                       <button type="button" onClick={() => openReviewsModal(t)}
-                        className="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 transition-colors">
+                        className="px-2.5 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/20 hover:border-amber-500/40 transition-all inline-flex items-center gap-1 text-[10px] font-black uppercase cursor-pointer">
+                        <span className="material-symbols-outlined text-[13px]">rate_review</span>
                         Ý kiến GV
                       </button>
                       <button type="button" onClick={() => openPlagiarismModal(t)}
-                        className="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase bg-teal-900/60 hover:bg-teal-800/60 text-teal-300 transition-colors">
+                        className="px-2.5 py-1.5 rounded-lg bg-teal-500/10 hover:bg-teal-500/20 text-teal-400 border border-teal-500/20 hover:border-teal-500/40 transition-all inline-flex items-center gap-1 text-[10px] font-black uppercase cursor-pointer">
+                        <span className="material-symbols-outlined text-[13px]">radar</span>
                         Đạo văn
                       </button>
-                      <button type="button" onClick={() => handleOpenEdit(t)}
-                        className="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase bg-slate-800 hover:bg-slate-700 text-slate-200 transition-colors">
-                        Sửa
+                      <button type="button" onClick={() => handleOpenEdit(t)} title="Chỉnh sửa đề tài"
+                        className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-350 hover:text-white border border-slate-700 hover:border-slate-600 transition-all inline-flex items-center justify-center cursor-pointer">
+                        <span className="material-symbols-outlined text-[15px]">edit</span>
                       </button>
-                      <button type="button" onClick={() => handleDelete(t.id)}
-                        className="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase bg-red-950/40 hover:bg-red-900/30 text-red-400 transition-colors">
-                        Xóa
+                      <button type="button" onClick={() => handleDelete(t.id)} title="Xóa đề tài"
+                        className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/25 text-rose-400 hover:text-rose-300 border border-rose-500/20 hover:border-rose-500/45 transition-all inline-flex items-center justify-center cursor-pointer">
+                        <span className="material-symbols-outlined text-[15px]">delete</span>
                       </button>
                     </td>
                   </tr>
