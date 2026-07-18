@@ -30,7 +30,7 @@ We have implemented the following sets of changes:
     - **Hyphen-to-Space Text Wrapping**: Added a frontend parsing regex rule to the `CustomXAxisTick` inside `AdminDashboard.jsx` that replaces dashes with spaces before splitting, ensuring any unmapped slugs wrap nicely across two lines instead of overflowing and overlapping with adjacent labels.
 15. **Real-time Plagiarism Exemption Badge Sync & Overrides**:
     - **Decision State Storage**: Updated the request processing pipeline to save the exact decision (`Approved`, `Revision`, `Rejected`) inside the request objects saved in local storage.
-    - **Plagiarism Status Override**: Updated `PlagiarismAnalysisBento.jsx` to dynamically override the plagiarism warning badge. If the Admin has confirmed an exemption request (`Approved`), the red `CẢNH BÁO ĐẠO VĂN` status badge is overridden with a green **`ĐÃ ĐẶC CÁCH PHÊ DUYỆT (PUBLISHED)`** badge, and the action button displays **`Yêu cầu đã được Admin phê duyệt (Đặc cách xuất bản)`** in green.
+    - **Plagiarism Status Override**: Updated `PlagiarismAnalysisBento.jsx` to dynamically override the plagiarism warning badge. If the Admin has confirmed an exemption request (`Approved`), the red `CẢ` status badge is overridden with a green **`ĐÃ ĐẶC CÁCH PHÊ DUYỆT (PUBLISHED)`** badge, and the action button displays **`Yêu cầu đã được Admin phê duyệt (Đặc cách xuất bản)`** in green.
     - **Cross-Role Sync Listener**: Configured a React `useEffect` inside `PlagiarismAnalysisBento.jsx` listening to browser storage and content update events to trigger immediate, refresh-free re-renders when the Admin processes a request.
 16. **API PUT Path Resolution / String ID Bug Fix**:
     - **Extracting Numeric ID**: Corrected the `handleProcessRequest` handler in `AdminThesesPage.jsx` to extract the correct numeric database ID (e.g. `219`) from string identifiers like `"sub-219"` or when finding it inside the active list, resolving the HTTP 404 Not Found error during the approval update request.
@@ -45,6 +45,8 @@ We have implemented the following sets of changes:
 20. **Dynamic Re-scan AI Summary Refreshing**:
     - **Scan-State Binding**: Bound the `isScanning` props of `AISummaryCard` to the parent controller's `scanning` state variable.
     - **Automatic Recalculation**: When a user triggers "Quét lại" (re-scan), the summary card immediately displays the pulsing loading skeleton and restarts document analysis, ensuring the new summary reflects the latest uploaded file modifications once the scan completes.
+21. **Specific Fallback Summary Enhancements**:
+    - **eThesis Project Fallback**: Refactored the default fallback templates in both frontend and backend simulators. Now, when a generic title (such as a student name like `"NguyenHoangPhuc"`) is processed without an active Gemini API key, the card output is populated with details mapping the **eThesis Graduation Thesis Portal Management Platform**, detailing its specific user role modules, Hangfire queue managers, and PostgreSQL data store configurations rather than a generic text block.
 
 ---
 
