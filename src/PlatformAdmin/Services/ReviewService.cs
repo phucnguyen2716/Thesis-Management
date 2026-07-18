@@ -14,8 +14,6 @@ public class ReviewService : IReviewService
     public async Task<IEnumerable<ThesisReviewDto>> GetByThesisAsync(int thesisId)
     {
         return await _db.ThesisReviews
-            .Include(r => r.Reviewer)
-            .Include(r => r.Thesis)
             .Where(r => r.ThesisId == thesisId)
             .Select(r => new ThesisReviewDto(r.Id, r.ThesisId, r.Thesis.Title,
                 r.ReviewerId, r.Reviewer.FullName, r.Comments, r.Score, r.Decision, r.ReviewedAt))

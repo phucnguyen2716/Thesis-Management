@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
-import { thesisService, plagiarismService } from '../../services/api';
+import { thesisService, plagiarismService, resolveFileUrl } from '../../services/api';
 import { getAdminUsers } from '../../utils/adminStore';
 import PlagiarismScanResultPanel from '../../components/lecturer/PlagiarismScanResultPanel';
 
@@ -195,13 +195,19 @@ const AdminThesesPage = () => {
   };
 
   const handleDownload = async (filePath, fileName) => {
-    if (filePath.startsWith('http')) {
-      window.open(filePath, '_blank');
+    if (!filePath) {
+      showToastMessage('error', 'Đường dẫn tệp tin không hợp lệ.');
+      return;
+    }
+
+    const fileUrl = resolveFileUrl(filePath);
+    
+    if (fileUrl.startsWith('http') && !fileUrl.includes(window.location.hostname) && !fileUrl.includes('localhost') && !fileUrl.includes('onrender.com')) {
+      window.open(fileUrl, '_blank');
       showToastMessage('success', `Đang mở liên kết: ${fileName}`);
       return;
     }
 
-    const fileUrl = filePath.startsWith('http') ? filePath : `http://localhost:5145${filePath}`;
     showToastMessage('success', `Đang chuẩn bị tải xuống: ${fileName}...`);
 
     try {
