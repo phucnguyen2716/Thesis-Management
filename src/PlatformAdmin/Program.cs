@@ -487,6 +487,51 @@ using (var scope = app.Services.CreateScope())
                 post5.CloudinaryStatus = "None";
             }
 
+            // Repair any broken posts by resetting their image to a random permanent Unsplash URL
+            try
+            {
+                var allPosts = context.SocialPosts.ToList();
+                bool hasRepairs = false;
+                
+                var randomAcademicImages = new[]
+                {
+                    "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=800&q=80",
+                    "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=800&q=80",
+                    "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80",
+                    "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=800&q=80",
+                    "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=800&q=80",
+                    "https://images.unsplash.com/photo-1507146426996-ef05306b995a?w=800&q=80",
+                    "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1000&q=80",
+                    "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&q=80",
+                    "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800&q=80",
+                    "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=800&q=80"
+                };
+
+                var random = new Random();
+
+                foreach (var post in allPosts)
+                {
+                    if (string.IsNullOrEmpty(post.Image) || post.Image.Contains("uef_social_media") || post.CloudinaryStatus == "Failed")
+                    {
+                        var newUnsplashUrl = randomAcademicImages[random.Next(randomAcademicImages.Length)];
+                        post.Image = newUnsplashUrl;
+                        post.CloudinaryStatus = "None";
+                        hasRepairs = true;
+                        Console.WriteLine($"[CloudinaryRepair] Assigned random image to post '{post.Title}': {newUnsplashUrl}");
+                    }
+                }
+                
+                if (hasRepairs)
+                {
+                    context.SaveChanges();
+                    Console.WriteLine("[CloudinaryRepair] Saved repaired posts with random images.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error repairing social post images: {ex.Message}");
+            }
+
             context.SaveChanges();
 
             // Resolve CloudinaryService to retrieve the active CloudName configuration
