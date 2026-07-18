@@ -671,18 +671,18 @@ const AdminThesesPage = () => {
             <table className="w-full text-sm">
               <thead className="bg-slate-900 text-slate-500 text-[10px] uppercase font-bold tracking-wider">
                 <tr>
-                  <th className="text-left p-4">Thông tin đề tài</th>
-                  <th className="text-left p-4">Sinh viên thực hiện</th>
-                  <th className="text-left p-4">GV Hướng dẫn</th>
-                  <th className="text-left p-4">Ngành / Học phần</th>
-                  <th className="text-left p-4">Trạng thái</th>
-                  <th className="text-right p-4">Thao tác</th>
+                  <th className="text-left p-4 w-[32%] min-w-[320px]">Thông tin đề tài</th>
+                  <th className="text-left p-4 w-[18%] min-w-[170px]">Sinh viên thực hiện</th>
+                  <th className="text-left p-4 w-[14%] min-w-[140px]">GV Hướng dẫn</th>
+                  <th className="text-left p-4 w-[17%] min-w-[160px]">Ngành / Học phần</th>
+                  <th className="text-left p-4 w-[10%] min-w-[110px]">Trạng thái</th>
+                  <th className="text-right p-4 w-[9%] min-w-[280px]">Thao tác</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60">
                 {theses.map(t => (
                   <tr key={t.id} className="hover:bg-slate-800/40 transition-colors">
-                    <td className="p-4 max-w-xs md:max-w-sm">
+                    <td className="p-4 w-[32%] min-w-[320px]">
                       <div className="space-y-1">
                         <div className="font-bold text-white leading-snug flex items-start gap-2">
                           <span className="text-slate-100 hover:text-amber-400 transition-colors cursor-pointer">{t.title}</span>
@@ -699,7 +699,7 @@ const AdminThesesPage = () => {
                         )}
                       </div>
                     </td>
-                    <td className="p-4">
+                    <td className="p-4 w-[18%] min-w-[170px]">
                       <div className="flex items-center gap-2.5">
                         <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700/80 flex items-center justify-center text-xs font-bold text-slate-300 shrink-0">
                           {t.studentName ? t.studentName.split(' ').pop().charAt(0) : '?'}
@@ -710,7 +710,7 @@ const AdminThesesPage = () => {
                         </div>
                       </div>
                     </td>
-                    <td className="p-4">
+                    <td className="p-4 w-[14%] min-w-[140px]">
                       {t.advisorName ? (
                         <div className="flex items-center gap-2">
                           <span className="material-symbols-outlined text-[15px] text-slate-400">person</span>
@@ -720,7 +720,7 @@ const AdminThesesPage = () => {
                         <span className="text-slate-500 text-xs italic">Chưa chỉ định</span>
                       )}
                     </td>
-                    <td className="p-4">
+                    <td className="p-4 w-[17%] min-w-[160px]">
                       <div className="text-slate-300 font-semibold">{MAJOR_DISPLAY[t.major] || t.major}</div>
                       {t.subject && (
                         <div className="text-[10px] text-slate-400 mt-0.5">
@@ -728,7 +728,7 @@ const AdminThesesPage = () => {
                         </div>
                       )}
                     </td>
-                    <td className="p-4">
+                    <td className="p-4 w-[10%] min-w-[110px]">
                       <span className={`inline-flex items-center gap-1.5 text-[9px] font-extrabold uppercase px-2.5 py-1 rounded-full ${STATUS_BADGES[t.status] || 'bg-slate-700/20 text-slate-400 border border-slate-700/30'}`}>
                         <span className={`w-1 h-1 rounded-full ${
                           t.status === 'Approved' ? 'bg-emerald-400' :
@@ -740,7 +740,7 @@ const AdminThesesPage = () => {
                         {t.status}
                       </span>
                     </td>
-                    <td className="p-4 text-right space-x-2 whitespace-nowrap">
+                    <td className="p-4 text-right space-x-2 whitespace-nowrap w-[9%] min-w-[280px]">
                       <button type="button" onClick={() => openReviewsModal(t)}
                         className="px-2.5 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/20 hover:border-amber-500/40 transition-all inline-flex items-center gap-1 text-[10px] font-black uppercase cursor-pointer">
                         <span className="material-symbols-outlined text-[13px]">rate_review</span>
