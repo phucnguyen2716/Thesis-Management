@@ -127,9 +127,12 @@ const generateDynamicAISummary = (title, description, faculty) => {
   return { overview, tools, strengths, weaknesses, recommendation };
 };
 
+const SUMMARY_CACHE_KEY = (id) => `gemini_summary_${id}`;
+
 const AISummaryCard = ({ selected, isScanning }) => {
   const [summaryData, setSummaryData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [fromCache, setFromCache] = useState(false);
 
   useEffect(() => {
     if (isScanning) {
@@ -141,6 +144,7 @@ const AISummaryCard = ({ selected, isScanning }) => {
     let active = true;
     setLoading(true);
     setSummaryData(null);
+    setFromCache(false);
 
     const fetchSummary = async () => {
       try {
@@ -151,9 +155,27 @@ const AISummaryCard = ({ selected, isScanning }) => {
         }
 
         if (cleanId) {
+          // Check sessionStorage cache first — avoid re-calling Gemini API
+          const cacheKey = SUMMARY_CACHE_KEY(cleanId);
+          const cached = sessionStorage.getItem(cacheKey);
+          if (cached) {
+            try {
+              const parsed = JSON.parse(cached);
+              if (active) {
+                setSummaryData(parsed);
+                setFromCache(true);
+                setLoading(false);
+              }
+              return;
+            } catch { /* cache corrupted, fetch fresh */ }
+          }
+
           const { data } = await thesisService.getAiSummary(cleanId);
           if (active) {
+            // Save to sessionStorage for reuse
+            try { sessionStorage.setItem(cacheKey, JSON.stringify(data)); } catch { /* storage full */ }
             setSummaryData(data);
+            setFromCache(false);
             setLoading(false);
           }
         } else {
@@ -176,6 +198,7 @@ const AISummaryCard = ({ selected, isScanning }) => {
     fetchSummary();
     return () => { active = false; };
   }, [selected, isScanning]);
+
 
   if (loading || !summaryData) {
     return (
