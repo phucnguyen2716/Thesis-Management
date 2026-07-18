@@ -8,6 +8,7 @@ namespace PlatformAdmin.Services
 {
     public interface ICloudinaryService
     {
+        string CloudName { get; }
         Task<CloudinaryUploadResult> UploadImageAsync(string fileName, byte[] fileBytes, string? folder = null);
         Task<CloudinaryUploadResult> UploadImageFromUrlAsync(string imageUrl, string? folder = null, string? customFileName = null);
     }
@@ -21,6 +22,9 @@ namespace PlatformAdmin.Services
         private bool _useMock;
         private readonly CloudinaryDotNet.Cloudinary? _cloudinaryClient;
         private readonly HttpClient _httpClient;
+
+        public string CloudName => _cloudName;
+
 
         public CloudinaryService(IConfiguration configuration, ILogger<CloudinaryService> logger, HttpClient httpClient)
         {

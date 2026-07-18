@@ -142,10 +142,16 @@ namespace PlatformAdmin.Services
             // If it is already uploaded to Cloudinary, update status to Uploaded
             if (post.Image.Contains("res.cloudinary.com"))
             {
-                post.CloudinaryStatus = "Uploaded";
-                await _db.SaveChangesAsync();
-                return;
+                // Verify if it belongs to the current Cloudinary account. If not (e.g. it is from 'uef_social_media'), re-upload it.
+                var isCurrentCloud = post.Image.Contains($"/{_cloudinaryService.CloudName}/", StringComparison.OrdinalIgnoreCase);
+                if (isCurrentCloud)
+                {
+                    post.CloudinaryStatus = "Uploaded";
+                    await _db.SaveChangesAsync();
+                    return;
+                }
             }
+
 
             try
             {

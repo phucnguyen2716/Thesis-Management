@@ -489,6 +489,27 @@ using (var scope = app.Services.CreateScope())
 
             context.SaveChanges();
 
+            // Resolve CloudinaryService to retrieve the active CloudName configuration
+            var cloudinaryService = services.GetRequiredService<ICloudinaryService>();
+
+            // Detect and reset any posts whose image URLs point to an incorrect/old Cloudinary account
+            // (e.g. they contain 'res.cloudinary.com/uef_social_media' instead of the active cloud name)
+            var wrongCloudPosts = context.SocialPosts
+                .Where(p => !string.IsNullOrEmpty(p.Image) && 
+                            p.Image.Contains("res.cloudinary.com") && 
+                            !p.Image.Contains("/" + cloudinaryService.CloudName + "/"))
+                .ToList();
+
+            if (wrongCloudPosts.Any())
+            {
+                Console.WriteLine($"[CloudinaryMigration] Found {wrongCloudPosts.Count} posts pointing to a different Cloudinary account. Resetting their status for re-upload...");
+                foreach (var p in wrongCloudPosts)
+                {
+                    p.CloudinaryStatus = "None";
+                }
+                context.SaveChanges();
+            }
+
             // Enqueue all Pending / None / Failed posts to Cloudinary
             var socialPosts = context.SocialPosts
                 .Where(p => (p.CloudinaryStatus == "None" || p.CloudinaryStatus == "Failed" || p.CloudinaryStatus == "Pending") && !string.IsNullOrEmpty(p.Image))
