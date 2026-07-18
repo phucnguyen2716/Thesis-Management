@@ -8,6 +8,8 @@ We have implemented the following sets of changes:
 5. Implemented an **"Ý kiến GV" (Lecturer Reviews)** button and modal in the Admin's Thesis Management list. Admins can now view a detailed review history (Lecturer Name, Score, Comments/Feedback, Decision Status) and download student submission documents.
 6. Added a **direct approval status manager** dropdown in both the new reviews modal and the Edit modal, allowing Admins to review lecturer recommendations and instantly update/approve the thesis status.
 7. **Redesigned and optimized the Admin Thesis Table Layout**: Improved spacing, alignment, and appearance of all columns by introducing user cards for students, profile icons for advisors, status dots in badges, and compact/outline action buttons.
+8. **Fixed File Downloads on Production**: Replaced hardcoded `localhost:5145` paths in the download functions with the `resolveFileUrl` helper. This dynamically resolves paths to the active Render backend on production, fixing the download button failures.
+9. **Simplified Review Database Queries**: Removed redundant `.Include()` statements in the review query inside `ReviewService.cs` that can sometimes cause slow query compilation in EF Core with complex projections.
 
 ---
 
