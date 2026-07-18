@@ -163,15 +163,81 @@ namespace PlatformAdmin.Services
                 }
                 else
                 {
-                    post.CloudinaryStatus = "Failed";
+                    // If the download/upload failed (e.g. 404 Not Found because it was a mock URL that doesn't exist)
+                    // and the URL contains "res.cloudinary.com", it means the original image is lost.
+                    // Let's replace it with a beautiful, category-appropriate placeholder from Unsplash!
+                    if (post.Image.Contains("res.cloudinary.com"))
+                    {
+                        var fallbackUrl = GetCategoryPlaceholderUrl(post.Category, post.Title);
+                        var fallbackResult = await _cloudinaryService.UploadImageFromUrlAsync(fallbackUrl);
+                        if (fallbackResult.Success)
+                        {
+                            post.Image = fallbackResult.SecureUrl;
+                            post.CloudinaryStatus = "Uploaded";
+                        }
+                        else
+                        {
+                            post.CloudinaryStatus = "Failed";
+                        }
+                    }
+                    else
+                    {
+                        post.CloudinaryStatus = "Failed";
+                    }
                 }
             }
             catch
             {
-                post.CloudinaryStatus = "Failed";
+                if (post.Image.Contains("res.cloudinary.com"))
+                {
+                    try
+                    {
+                        var fallbackUrl = GetCategoryPlaceholderUrl(post.Category, post.Title);
+                        var fallbackResult = await _cloudinaryService.UploadImageFromUrlAsync(fallbackUrl);
+                        if (fallbackResult.Success)
+                        {
+                            post.Image = fallbackResult.SecureUrl;
+                            post.CloudinaryStatus = "Uploaded";
+                        }
+                        else
+                        {
+                            post.CloudinaryStatus = "Failed";
+                        }
+                    }
+                    catch
+                    {
+                        post.CloudinaryStatus = "Failed";
+                    }
+                }
+                else
+                {
+                    post.CloudinaryStatus = "Failed";
+                }
             }
 
             await _db.SaveChangesAsync();
         }
+
+        private string GetCategoryPlaceholderUrl(string category, string title)
+        {
+            var cat = category?.ToLowerInvariant() ?? "";
+            var t = title?.ToLowerInvariant() ?? "";
+
+            if (cat.Contains("sự kiện") || cat.Contains("event") || t.Contains("hội thảo") || t.Contains("seminar") || t.Contains("workshop"))
+            {
+                return "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&q=80"; // Event / conference hall
+            }
+            if (cat.Contains("hướng dẫn") || cat.Contains("guide") || t.Contains("đề cương") || t.Contains("tài liệu"))
+            {
+                return "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=800&q=80"; // Study / books
+            }
+            if (cat.Contains("tính năng") || t.Contains("ai") || t.Contains("gemini") || t.Contains("phần mềm"))
+            {
+                return "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=800&q=80"; // AI / tech
+            }
+            
+            return "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80"; // General news / university campus
+        }
     }
 }
+
