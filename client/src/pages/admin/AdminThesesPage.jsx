@@ -671,24 +671,33 @@ const AdminThesesPage = () => {
             <table className="w-full text-sm">
               <thead className="bg-slate-900 text-slate-500 text-[10px] uppercase font-bold tracking-wider">
                 <tr>
-                  <th className="text-left p-4 w-[32%] min-w-[320px]">Thông tin đề tài</th>
-                  <th className="text-left p-4 w-[18%] min-w-[170px]">Sinh viên thực hiện</th>
-                  <th className="text-left p-4 w-[14%] min-w-[140px]">GV Hướng dẫn</th>
-                  <th className="text-left p-4 w-[17%] min-w-[160px]">Ngành / Học phần</th>
-                  <th className="text-left p-4 w-[10%] min-w-[110px]">Trạng thái</th>
-                  <th className="text-right p-4 w-[9%] min-w-[280px]">Thao tác</th>
+                  <th className="text-left p-4 w-[45%] min-w-[340px]">Thông tin đề tài</th>
+                  <th className="text-left p-4 w-[18%] min-w-[150px]">Sinh viên thực hiện</th>
+                  <th className="text-left p-4 w-[15%] min-w-[140px]">GV Hướng dẫn</th>
+                  <th className="text-left p-4 w-[12%] min-w-[100px]">Trạng thái</th>
+                  <th className="text-right p-4 w-[10%] min-w-[160px]">Thao tác</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60">
                 {theses.map(t => (
                   <tr key={t.id} className="hover:bg-slate-800/40 transition-colors">
-                    <td className="p-4 w-[32%] min-w-[320px]">
-                      <div className="space-y-1">
+                    <td className="p-4 w-[45%] min-w-[340px]">
+                      <div className="space-y-1.5">
                         <div className="font-bold text-white leading-snug flex items-start gap-2">
                           <span className="text-slate-100 hover:text-amber-400 transition-colors cursor-pointer">{t.title}</span>
                           <span className="shrink-0 text-[8px] font-black tracking-wider uppercase px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/25 mt-0.5">
                             Đợt {t.batch || 1}
                           </span>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-1.5 text-[9px] mt-0.5">
+                          <span className="px-1.5 py-0.5 rounded bg-slate-850 text-slate-350 font-semibold border border-slate-800">
+                            {MAJOR_DISPLAY[t.major] || t.major}
+                          </span>
+                          {t.subject && (
+                            <span className="px-1.5 py-0.5 rounded bg-slate-850/50 text-slate-400 border border-slate-800/30">
+                              {t.subject} {t.subjectCode && `(${t.subjectCode})`}
+                            </span>
+                          )}
                         </div>
                         {t.description ? (
                           <p className="text-[11px] text-slate-400 line-clamp-2 leading-relaxed" title={t.description}>
@@ -699,7 +708,7 @@ const AdminThesesPage = () => {
                         )}
                       </div>
                     </td>
-                    <td className="p-4 w-[18%] min-w-[170px]">
+                    <td className="p-4 w-[18%] min-w-[150px]">
                       <div className="flex items-center gap-2.5">
                         <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700/80 flex items-center justify-center text-xs font-bold text-slate-300 shrink-0">
                           {t.studentName ? t.studentName.split(' ').pop().charAt(0) : '?'}
@@ -710,7 +719,7 @@ const AdminThesesPage = () => {
                         </div>
                       </div>
                     </td>
-                    <td className="p-4 w-[14%] min-w-[140px]">
+                    <td className="p-4 w-[15%] min-w-[140px]">
                       {t.advisorName ? (
                         <div className="flex items-center gap-2">
                           <span className="material-symbols-outlined text-[15px] text-slate-400">person</span>
@@ -720,15 +729,7 @@ const AdminThesesPage = () => {
                         <span className="text-slate-500 text-xs italic">Chưa chỉ định</span>
                       )}
                     </td>
-                    <td className="p-4 w-[17%] min-w-[160px]">
-                      <div className="text-slate-300 font-semibold">{MAJOR_DISPLAY[t.major] || t.major}</div>
-                      {t.subject && (
-                        <div className="text-[10px] text-slate-400 mt-0.5">
-                          {t.subject} {t.subjectCode && `(${t.subjectCode})`}
-                        </div>
-                      )}
-                    </td>
-                    <td className="p-4 w-[10%] min-w-[110px]">
+                    <td className="p-4 w-[12%] min-w-[100px]">
                       <span className={`inline-flex items-center gap-1.5 text-[9px] font-extrabold uppercase px-2.5 py-1 rounded-full ${STATUS_BADGES[t.status] || 'bg-slate-700/20 text-slate-400 border border-slate-700/30'}`}>
                         <span className={`w-1 h-1 rounded-full ${
                           t.status === 'Approved' ? 'bg-emerald-400' :
@@ -740,20 +741,18 @@ const AdminThesesPage = () => {
                         {t.status}
                       </span>
                     </td>
-                    <td className="p-4 text-right space-x-2 whitespace-nowrap w-[9%] min-w-[280px]">
-                      <button type="button" onClick={() => openReviewsModal(t)}
-                        className="px-2.5 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/20 hover:border-amber-500/40 transition-all inline-flex items-center gap-1 text-[10px] font-black uppercase cursor-pointer">
-                        <span className="material-symbols-outlined text-[13px]">rate_review</span>
-                        Ý kiến GV
+                    <td className="p-4 text-right space-x-1.5 whitespace-nowrap w-[10%] min-w-[160px]">
+                      <button type="button" onClick={() => openReviewsModal(t)} title="Ý kiến GV & Phê duyệt"
+                        className="p-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/20 hover:border-amber-500/40 transition-all inline-flex items-center justify-center cursor-pointer">
+                        <span className="material-symbols-outlined text-[16px]">rate_review</span>
                       </button>
-                      <button type="button" onClick={() => openPlagiarismModal(t)}
-                        className="px-2.5 py-1.5 rounded-lg bg-teal-500/10 hover:bg-teal-500/20 text-teal-400 border border-teal-500/20 hover:border-teal-500/40 transition-all inline-flex items-center gap-1 text-[10px] font-black uppercase cursor-pointer">
-                        <span className="material-symbols-outlined text-[13px]">radar</span>
-                        Đạo văn
+                      <button type="button" onClick={() => openPlagiarismModal(t)} title="Kiểm tra Đạo văn"
+                        className="p-2 rounded-xl bg-teal-500/10 hover:bg-teal-500/20 text-teal-400 border border-teal-500/20 hover:border-teal-500/40 transition-all inline-flex items-center justify-center cursor-pointer">
+                        <span className="material-symbols-outlined text-[16px]">radar</span>
                       </button>
                       <button type="button" onClick={() => handleOpenEdit(t)} title="Chỉnh sửa đề tài"
-                        className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-350 hover:text-white border border-slate-700 hover:border-slate-600 transition-all inline-flex items-center justify-center cursor-pointer">
-                        <span className="material-symbols-outlined text-[15px]">edit</span>
+                        className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-350 hover:text-white border border-slate-700 hover:border-slate-600 transition-all inline-flex items-center justify-center cursor-pointer">
+                        <span className="material-symbols-outlined text-[16px]">edit</span>
                       </button>
                       <button type="button" onClick={() => handleDelete(t.id)} title="Xóa đề tài"
                         className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/25 text-rose-400 hover:text-rose-300 border border-rose-500/20 hover:border-rose-500/45 transition-all inline-flex items-center justify-center cursor-pointer">
