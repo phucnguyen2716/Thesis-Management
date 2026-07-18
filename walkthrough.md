@@ -28,6 +28,10 @@ We have implemented the following sets of changes:
 14. **Dashboard Stats Major/Department Mappings & Text Wrapping**:
     - **Translation Mapping**: Added mapping for `information-security`, `cyber-security`, and `cybersecurity` to `"An toàn thông tin"` (in `AdminService.cs`) and `"An toàn không gian mạng"` (in `ThesisService.cs`). This prevents raw English hyphenated keys from leaking into the statistics dashboard.
     - **Hyphen-to-Space Text Wrapping**: Added a frontend parsing regex rule to the `CustomXAxisTick` inside `AdminDashboard.jsx` that replaces dashes with spaces before splitting, ensuring any unmapped slugs wrap nicely across two lines instead of overflowing and overlapping with adjacent labels.
+15. **Real-time Plagiarism Exemption Badge Sync & Overrides**:
+    - **Decision State Storage**: Updated the request processing pipeline to save the exact decision (`Approved`, `Revision`, `Rejected`) inside the request objects saved in local storage.
+    - **Plagiarism Status Override**: Updated `PlagiarismAnalysisBento.jsx` to dynamically override the plagiarism warning badge. If the Admin has confirmed an exemption request (`Approved`), the red `CẢNH BÁO ĐẠO VĂN` status badge is overridden with a green **`ĐÃ ĐẶC CÁCH PHÊ DUYỆT (PUBLISHED)`** badge, and the action button displays **`Yêu cầu đã được Admin phê duyệt (Đặc cách xuất bản)`** in green.
+    - **Cross-Role Sync Listener**: Configured a React `useEffect` inside `PlagiarismAnalysisBento.jsx` listening to browser storage and content update events to trigger immediate, refresh-free re-renders when the Admin processes a request.
 
 ---
 
