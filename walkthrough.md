@@ -42,6 +42,9 @@ We have implemented the following sets of changes:
 19. **Real Gemini API Thesis Summarization (Not Fake)**:
     - **Gemini Summary Endpoint**: Added `[HttpGet("{id}/ai-summary")]` to `ThesisController.cs`. It reads the raw PDF/Word document bytes uploaded by the student and triggers the `gemini-2.0-flash` API pipeline to summarize the project scope, tools, features, strengths, and weaknesses.
     - **Skeleton Loaders**: Integrated asynchronous loaders inside `AISummaryCard` (`LecturerControllerPage.jsx`) to display a pulsing AI reading state while Gemini processes the document on page load.
+20. **Dynamic Re-scan AI Summary Refreshing**:
+    - **Scan-State Binding**: Bound the `isScanning` props of `AISummaryCard` to the parent controller's `scanning` state variable.
+    - **Automatic Recalculation**: When a user triggers "Quét lại" (re-scan), the summary card immediately displays the pulsing loading skeleton and restarts document analysis, ensuring the new summary reflects the latest uploaded file modifications once the scan completes.
 
 ---
 
