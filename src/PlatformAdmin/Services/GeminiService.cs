@@ -27,13 +27,14 @@ namespace PlatformAdmin.Services
             _defaultApiKey = configuration["Gemini:ApiKey"];
             _defaultUseMock = configuration.GetValue<bool>("Gemini:UseMock", true);
         }
-
         private (string? apiKey, bool useMock) GetGeminiConfig()
         {
             try
             {
                 var headerKey = _httpContextAccessor.HttpContext?.Request.Headers["X-Gemini-API-Key"].ToString();
-                if (!string.IsNullOrWhiteSpace(headerKey))
+                if (!string.IsNullOrWhiteSpace(headerKey) && 
+                    headerKey != "YOUR_GEMINI_API_KEY" && 
+                    headerKey != "AIzaSyB9EM5E5KELcbtOKu2BpNX2jLPU2uNbW9g")
                 {
                     return (headerKey.Trim(), false);
                 }
@@ -42,7 +43,13 @@ namespace PlatformAdmin.Services
             {
                 _logger.LogWarning("Failed to read X-Gemini-API-Key header: " + ex.Message);
             }
-            return (_defaultApiKey?.Trim(), string.IsNullOrEmpty(_defaultApiKey) || _defaultUseMock);
+
+            var defaultKey = _defaultApiKey?.Trim();
+            bool isRealKey = !string.IsNullOrEmpty(defaultKey) && 
+                             defaultKey != "YOUR_GEMINI_API_KEY" && 
+                             defaultKey != "AIzaSyB9EM5E5KELcbtOKu2BpNX2jLPU2uNbW9g";
+
+            return (defaultKey, !isRealKey);
         }
 
         public async Task<PreFilterResult> AnalyzePromptAsync(string prompt)
