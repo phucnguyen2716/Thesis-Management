@@ -300,7 +300,6 @@ const AISummaryCard = ({ selected, isScanning }) => {
               <span className="material-symbols-outlined text-teal-300 text-2xl animate-pulse">auto_awesome</span>
             </div>
             <div className="text-left">
-
               <h3 className="text-sm font-black uppercase tracking-[0.2em] text-teal-300">Tóm tắt phân tích bằng Gemini AI</h3>
               <p className="text-[10px] text-white/50 uppercase mt-0.5 tracking-wider">Báo cáo tổng hợp chất lượng đồ án tự động</p>
             </div>
@@ -311,65 +310,25 @@ const AISummaryCard = ({ selected, isScanning }) => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-          {/* Cột trái: Overview, Tools & Đề xuất */}
-          <div className="md:col-span-6 space-y-4">
-            <div className="space-y-1.5 text-left">
+          {/* Cột 1: Tóm tắt nội dung */}
+          <div className="md:col-span-7 space-y-4">
+            <div className="space-y-2 text-left">
               <span className="text-[10px] font-black uppercase tracking-wider text-teal-400">Tóm tắt nội dung (Đồ án là gì)</span>
               <p className="text-xs text-white/85 leading-relaxed font-medium">
                 {summaryData.overview}
               </p>
             </div>
-            
-            <div className="space-y-1.5 text-left">
+          </div>
+
+          {/* Cột 2: Công cụ & Chức năng */}
+          <div className="md:col-span-5 space-y-4 border-t md:border-t-0 md:border-l border-white/10 pt-4 md:pt-0 md:pl-6">
+            <div className="space-y-2 text-left">
               <span className="text-[10px] font-black uppercase tracking-wider text-sky-400">Công cụ &amp; Chức năng</span>
-              <ul className="space-y-1 pl-1">
+              <ul className="space-y-1.5 pl-1">
                 {summaryData.tools && summaryData.tools.map((tool, idx) => (
                   <li key={idx} className="text-xs text-white/80 leading-relaxed flex items-start gap-1.5">
                     <span className="text-sky-400 font-bold shrink-0">▪</span>
                     <span>{tool}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="p-4 rounded-xl bg-teal-500/5 border border-teal-500/10 space-y-1.5 text-left">
-              <span className="text-[10px] font-black uppercase tracking-wider text-yellow-400 flex items-center gap-1">
-                <span className="material-symbols-outlined text-xs">recommend</span>
-                Khuyến nghị của AI
-              </span>
-              <p className="text-xs text-white/90 font-semibold leading-relaxed">
-                {summaryData.recommendation}
-              </p>
-            </div>
-          </div>
-
-          {/* Cột phải: Ưu điểm & Điểm yếu */}
-          <div className="md:col-span-6 space-y-4">
-            <div className="space-y-2">
-              <span className="text-[10px] font-black uppercase tracking-wider text-emerald-400 flex items-center gap-1">
-                <span className="material-symbols-outlined text-xs text-emerald-400">check_circle</span>
-                Ưu điểm &amp; Điểm cộng học thuật
-              </span>
-              <ul className="space-y-1.5 pl-1.5">
-                {summaryData.strengths && summaryData.strengths.map((str, idx) => (
-                  <li key={idx} className="text-xs text-white/80 leading-relaxed flex items-start gap-2">
-                    <span className="text-emerald-400 font-bold mt-0.5 shrink-0">✓</span>
-                    <span>{str}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="space-y-2">
-              <span className="text-[10px] font-black uppercase tracking-wider text-rose-400 flex items-center gap-1">
-                <span className="material-symbols-outlined text-xs text-rose-400">warning</span>
-                Hạn chế &amp; Điểm cần cải thiện
-              </span>
-              <ul className="space-y-1.5 pl-1.5">
-                {summaryData.weaknesses && summaryData.weaknesses.map((weak, idx) => (
-                  <li key={idx} className="text-xs text-white/80 leading-relaxed flex items-start gap-2">
-                    <span className="text-rose-400 font-bold mt-0.5 shrink-0">!</span>
-                    <span>{weak}</span>
                   </li>
                 ))}
               </ul>
@@ -380,6 +339,7 @@ const AISummaryCard = ({ selected, isScanning }) => {
     </div>
   );
 };
+
 
 const LecturerControllerPage = () => {
   const { id: paramId } = useParams();

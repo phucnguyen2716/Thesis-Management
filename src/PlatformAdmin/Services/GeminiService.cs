@@ -787,13 +787,10 @@ namespace PlatformAdmin.Services
                     $"Analyze the graduation thesis with the title: \"{title}\".\n" +
                     $"Read the description/abstract: \"{description}\".\n" +
                     (pdfBytes != null ? "A PDF copy of the thesis content has been provided as an attachment.\n" : "") +
-                    $"Provide a detailed, high-quality, professional summary analysis of the thesis in Vietnamese.\n\n" +
+                    $"Provide a concise, high-quality, professional summary of the thesis in Vietnamese.\n\n" +
                     $"You MUST extract the following information:\n" +
-                    $"1. Overview (Tóm tắt nội dung: What the project is about)\n" +
-                    $"2. Tools (Công cụ & Chức năng: List of programming languages, tools, frameworks, and core features used in this project)\n" +
-                    $"3. Strengths (Ưu điểm & Điểm cộng học thuật: A list of academic or technical strengths, e.g. clean code, good database, secure transactions)\n" +
-                    $"4. Weaknesses (Hạn chế & Điểm cần cải thiện: A list of typical limitations or challenges that can be improved)\n" +
-                    $"5. Recommendation (Khuyến nghị của AI: A friendly grade recommendation range and scientific archiving advice)\n\n" +
+                    $"1. Overview (Tóm tắt nội dung: What the project is about, its main objective, and core workflow)\n" +
+                    $"2. Tools (Công cụ & Chức năng: List of programming languages, tools, databases, frameworks, and key features used in this project)\n\n" +
                     $"Return a JSON output with the exact schema:\n" +
                     $"{{\n" +
                     $"  \"overview\": \"Tóm tắt nội dung đề tài...\",\n" +
@@ -801,17 +798,9 @@ namespace PlatformAdmin.Services
                     $"    \"Ngôn ngữ lập trình chính: Python / JavaScript\",\n" +
                     $"    \"Framework phát triển: React.js / Node.js\",\n" +
                     $"    \"Chức năng chính: Quản lý sách, tìm kiếm Elasticsearch\"\n" +
-                    $"  ],\n" +
-                    $"  \"strengths\": [\n" +
-                    $"    \"Cơ sở dữ liệu thiết kế chuẩn 3NF\",\n" +
-                    $"    \"Tính ứng dụng thực tiễn cao\"\n" +
-                    $"  ],\n" +
-                    $"  \"weaknesses\": [\n" +
-                    $"    \"Chưa tích hợp phân quyền nâng cao\",\n" +
-                    $"    \"Hiệu năng truy vấn lớn cần cải thiện\"\n" +
-                    $"  ],\n" +
-                    $"  \"recommendation\": \"Khuyên dùng mức điểm: 8.0 - 8.5.\"\n" +
+                    $"  ]\n" +
                     $"}}";
+
 
                 object requestBody;
                 if (pdfBytes != null)
