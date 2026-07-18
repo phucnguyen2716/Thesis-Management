@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { geminiService } from '../../services/api';
 
 /* ─── helpers ─── */
@@ -235,13 +236,161 @@ Trả lời bằng tiếng Việt, ngắn gọn và chuyên nghiệp.
     }
   };
 
-  const parseResult = (text) => {
+  const renderAnalyzedText = (text) => {
     if (!text) return null;
-    return text.split('\n').filter(l => l.trim()).map((line, i) => {
-      const isBold = line.startsWith('**') || line.match(/^\d+\./);
+
+    // Split the text into lines first
+    const lines = text.split('\n');
+
+    return lines.map((line, lineIndex) => {
+      const trimmed = line.trim();
+      if (!trimmed) return null;
+
+      // Check if it's a heading or a list item
+      const isHeading = trimmed.startsWith('#') || trimmed.match(/^\d+\./) || (trimmed.startsWith('**') && trimmed.endsWith('**'));
+      const isListItem = trimmed.startsWith('-') || trimmed.startsWith('*');
+
+      // Clean the line content (remove markdown symbols at start/end)
+      let cleanLine = trimmed;
+      if (cleanLine.startsWith('**') && cleanLine.endsWith('**')) {
+        cleanLine = cleanLine.substring(2, cleanLine.length - 2);
+      } else {
+        cleanLine = cleanLine.replace(/^\#+\s+/, '').replace(/^\d+\.\s+/, '').replace(/^[\-\*]\s+/, '');
+      }
+
+      // Inside each line, we want to parse the [THESIS_CARD] tags
+      const tokenRegex = /(\[THESIS_CARD:id=[^|]+\|title=[^|]+\|student=[^\]]+\]|\[[^\]]+\]\([^)]+\))/g;
+      const parts = cleanLine.split(tokenRegex);
+
+      const parsedLineContent = parts.map((part, partIndex) => {
+        if (!part) return null;
+
+        // 1. Check if it's a THESIS_CARD
+        if (part.startsWith('[THESIS_CARD:')) {
+          const cardRegex = /\[THESIS_CARD:id=([^|]+)\|title=([^|]+)\|student=([^\]]+)\]/;
+          const match = cardRegex.exec(part);
+          if (match) {
+            const cardId = match[1];
+            const cardTitle = match[2];
+            const cardStudent = match[3];
+
+            return (
+              <div 
+                key={`card-${cardId}-${partIndex}`} 
+                className="my-3 flex gap-2.5 sm:gap-3.5 p-2.5 sm:p-3.5 bg-slate-900/60 backdrop-blur rounded-2xl border border-slate-800/80 hover:border-slate-700/80 shadow-md transition-all group max-w-full text-white"
+              >
+                {/* Left: Beautiful CSS book cover (vertical rectangle) */}
+                <div className="w-[60px] h-[85px] shrink-0 rounded-lg bg-gradient-to-br from-teal-700 to-emerald-950 p-1.5 flex flex-col justify-between text-white relative shadow-sm border border-teal-500/20 overflow-hidden select-none">
+                  {/* Book spine shadow */}
+                  <div className="absolute top-0 left-0 bottom-0 w-1 bg-gradient-to-r from-black/30 to-transparent" />
+                  {/* Gold trim lines */}
+                  <div className="absolute inset-1 border border-teal-500/20 rounded-md pointer-events-none" />
+                  
+                  <div className="flex justify-between items-start z-10">
+                    <span className="text-[7px] font-black tracking-widest text-teal-300 opacity-80 uppercase leading-none">UEF</span>
+                    <span className="material-symbols-outlined text-[10px] text-teal-300">school</span>
+                  </div>
+                  
+                  <div className="flex flex-col items-center justify-center flex-1 my-1 z-10 text-center">
+                    <span className="text-[8px] font-black text-teal-300 leading-none">ID</span>
+                    <span className="text-[12px] font-black leading-none mt-0.5 tracking-tight text-white">{cardId}</span>
+                  </div>
+                  
+                  <div className="text-center z-10">
+                    <p className="text-[5px] font-black uppercase tracking-[0.1em] text-teal-400/80 leading-none">Thesis</p>
+                  </div>
+                </div>
+
+                {/* Right: Details & Nav links */}
+                <div className="flex-1 min-w-0 flex flex-col justify-between text-left">
+                  <div>
+                    <h4 className="text-[11px] md:text-[12px] font-extrabold text-slate-100 line-clamp-2 leading-tight group-hover:text-teal-400 transition-colors" title={cardTitle}>
+                      {cardTitle}
+                    </h4>
+                    <div className="flex items-center gap-1.5 mt-1.5 text-slate-400">
+                      <span className="material-symbols-outlined text-[12px] shrink-0">person</span>
+                      <span className="text-[9.5px] md:text-[10px] font-bold truncate">{cardStudent}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5 mt-2 pt-2 border-t border-slate-800">
+                    <Link 
+                      to={`/theses/${cardId}`} 
+                      className="flex items-center gap-1.5 text-[9.5px] font-black uppercase tracking-wider text-teal-400 hover:text-teal-300 hover:underline transition-colors"
+                    >
+                      <span className="material-symbols-outlined text-[12px] shrink-0">info</span>
+                      Chi tiết đề tài
+                    </Link>
+                    <Link 
+                      to={`/theses/${cardId}/flipbook`} 
+                      className="flex items-center gap-1.5 text-[9.5px] font-black uppercase tracking-wider text-teal-400 hover:text-teal-300 hover:underline transition-colors"
+                    >
+                      <span className="material-symbols-outlined text-[12px] shrink-0">menu_book</span>
+                      Đọc sách 3D
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            );
+          }
+        }
+
+        // 2. Check if it's a standard markdown link
+        if (part.startsWith('[')) {
+          const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/;
+          const match = linkRegex.exec(part);
+          if (match) {
+            const label = match[1];
+            const url = match[2];
+            return (
+              <a 
+                key={`link-${partIndex}`}
+                href={url} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="underline font-black text-teal-400 hover:text-teal-300 transition-colors"
+              >
+                {label}
+              </a>
+            );
+          }
+        }
+
+        // 3. Regular text segment: we support inline bold **bold**
+        const boldRegex = /\*\*([^*]+)\*\*/g;
+        const subParts = part.split(boldRegex);
+        return subParts.map((subPart, subIdx) => {
+          if (subIdx % 2 === 1) {
+            return <strong key={subIdx} className="font-extrabold text-teal-300">{subPart}</strong>;
+          }
+          return subPart;
+        });
+      });
+
+      // Now return the rendered paragraph/heading/list item with correct high-contrast text color!
+      if (isHeading) {
+        return (
+          <h4 key={lineIndex} className="text-xs font-black text-teal-300 mt-4 mb-2 flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 bg-teal-400 rounded-full" />
+            {parsedLineContent}
+          </h4>
+        );
+      }
+
+      if (isListItem) {
+        return (
+          <div key={lineIndex} className="flex items-start gap-2 ml-3 my-1">
+            <span className="text-teal-500 text-xs shrink-0">•</span>
+            <p className="text-[11px] leading-relaxed text-slate-200 text-left">
+              {parsedLineContent}
+            </p>
+          </div>
+        );
+      }
+
       return (
-        <p key={i} className={`text-xs leading-relaxed ${isBold ? 'font-bold text-teal-900 mt-3' : 'text-slate-700 ml-3'}`}>
-          {line.replace(/\*\*/g, '')}
+        <p key={lineIndex} className="text-[11px] leading-relaxed text-slate-200 text-left my-1.5 ml-2">
+          {parsedLineContent}
         </p>
       );
     });
@@ -298,7 +447,7 @@ Trả lời bằng tiếng Việt, ngắn gọn và chuyên nghiệp.
         {/* Result */}
         {result && (
           <div className="bg-white/5 backdrop-blur border border-white/10 rounded-xl p-4 space-y-1 max-h-72 overflow-y-auto">
-            {parseResult(result)}
+            {renderAnalyzedText(result)}
           </div>
         )}
 
