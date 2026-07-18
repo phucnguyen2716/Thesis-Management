@@ -536,7 +536,7 @@ const AdminThesesPage = () => {
       }
 
       const list = JSON.parse(localStorage.getItem('lecturer_plagiarism_requests') || '[]');
-      const updatedList = list.map(r => r.id === request.id ? { ...r, isProcessed: true } : r);
+      const updatedList = list.map(r => r.id === request.id ? { ...r, isProcessed: true, decision: decision } : r);
       localStorage.setItem('lecturer_plagiarism_requests', JSON.stringify(updatedList));
       
       showToastMessage('success', `Đã xử lý yêu cầu đạo văn thành công (Kết quả: ${decision === 'Approved' ? 'Thông qua' : decision === 'Revision' ? 'Sửa đổi' : 'Hủy bỏ'})!`);

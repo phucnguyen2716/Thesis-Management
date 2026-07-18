@@ -649,6 +649,29 @@ const PlagiarismAnalysisBento = ({ submission, zoom = 100, onZoomIn, onZoomOut }
       return {};
     }
   });
+
+  const loadRequests = () => {
+    try {
+      const list = JSON.parse(localStorage.getItem('lecturer_plagiarism_requests') || '[]');
+      const mapping = {};
+      list.forEach(r => {
+        mapping[r.submissionId] = r;
+      });
+      setSubmittedRequests(mapping);
+    } catch {
+      // ignore
+    }
+  };
+
+  React.useEffect(() => {
+    window.addEventListener('admin-content-updated', loadRequests);
+    window.addEventListener('storage', loadRequests);
+    return () => {
+      window.removeEventListener('admin-content-updated', loadRequests);
+      window.removeEventListener('storage', loadRequests);
+    };
+  }, []);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedCase, setSelectedCase] = useState('ignore');
   const [customNote, setCustomNote] = useState('');
@@ -728,31 +751,93 @@ const PlagiarismAnalysisBento = ({ submission, zoom = 100, onZoomIn, onZoomOut }
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-2.5">
-                <span
-                  className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[9px] sm:text-[10px] font-bold whitespace-nowrap ${statusBadgeClass(submission.status)}`}
-                >
-                  <span className="material-symbols-outlined" style={{ fontSize: '12px' }}>verified</span>
-                  <span>{statusCfg.label}</span>
-                </span>
-
-                {/* Send Request to Admin Button */}
-                {(submission.status === 'review' || submission.status === 'flagged') && (
-                  submittedRequests[submission.id] ? (
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider bg-slate-100 border border-slate-200 text-slate-500 shadow-sm">
-                      <span className="material-symbols-outlined text-[12px] text-slate-400 animate-pulse">hourglass_empty</span>
-                      Đang chờ Admin duyệt
-                    </span>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={handleOpenModal}
-                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider bg-orange-600 hover:bg-orange-700 text-white shadow-sm transition-all active:scale-95 cursor-pointer"
+                {(() => {
+                  const req = submittedRequests[submission.id];
+                  if (req && req.isProcessed && req.decision === 'Approved') {
+                    return (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[9px] sm:text-[10px] font-bold whitespace-nowrap bg-emerald-600 text-white shadow-sm border border-emerald-500">
+                        <span className="material-symbols-outlined" style={{ fontSize: '12.5px' }}>verified</span>
+                        <span>ĐÃ ĐẶC CÁCH PHÊ DUYỆT (PUBLISHED)</span>
+                      </span>
+                    );
+                  }
+                  if (req && req.isProcessed && req.decision === 'Revision') {
+                    return (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[9px] sm:text-[10px] font-bold whitespace-nowrap bg-orange-500 text-white shadow-sm border border-orange-400">
+                        <span className="material-symbols-outlined" style={{ fontSize: '12.5px' }}>edit_note</span>
+                        <span>ADMIN YÊU CẦU SỬA ĐỔI</span>
+                      </span>
+                    );
+                  }
+                  if (req && req.isProcessed && req.decision === 'Rejected') {
+                    return (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[9px] sm:text-[10px] font-bold whitespace-nowrap bg-rose-600 text-white shadow-sm border border-rose-500">
+                        <span className="material-symbols-outlined" style={{ fontSize: '12.5px' }}>cancel</span>
+                        <span>ADMIN TỪ CHỐI / HỦY BỎ</span>
+                      </span>
+                    );
+                  }
+                  return (
+                    <span
+                      className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[9px] sm:text-[10px] font-bold whitespace-nowrap ${statusBadgeClass(submission.status)}`}
                     >
-                      <span className="material-symbols-outlined text-[12px]">admin_panel_settings</span>
-                      Gửi yêu cầu Admin
-                    </button>
-                  )
-                )}
+                      <span className="material-symbols-outlined" style={{ fontSize: '12px' }}>verified</span>
+                      <span>{statusCfg.label}</span>
+                    </span>
+                  );
+                })()}
+
+                {/* Send Request to Admin / Processed Status Badge */}
+                {(() => {
+                  const req = submittedRequests[submission.id];
+                  if (req) {
+                    if (!req.isProcessed) {
+                      return (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider bg-slate-100 border border-slate-200 text-slate-500 shadow-sm">
+                          <span className="material-symbols-outlined text-[12px] text-slate-400 animate-pulse">hourglass_empty</span>
+                          Đang chờ Admin duyệt
+                        </span>
+                      );
+                    } else {
+                      if (req.decision === 'Approved') {
+                        return (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider bg-emerald-50 border border-emerald-100 text-emerald-700 shadow-sm">
+                            <span className="material-symbols-outlined text-[12px] text-emerald-500">check_circle</span>
+                            Yêu cầu đã được Admin phê duyệt (Đặc cách xuất bản)
+                          </span>
+                        );
+                      } else if (req.decision === 'Revision') {
+                        return (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider bg-orange-50 border border-orange-100 text-orange-700 shadow-sm animate-pulse">
+                            <span className="material-symbols-outlined text-[12px] text-orange-500">warning</span>
+                            Yêu cầu sửa đổi đề tài từ Admin
+                          </span>
+                        );
+                      } else {
+                        return (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider bg-rose-50 border border-rose-100 text-rose-700 shadow-sm">
+                            <span className="material-symbols-outlined text-[12px] text-rose-500">cancel</span>
+                            Đã bị từ chối / Không được xuất bản
+                          </span>
+                        );
+                      }
+                    }
+                  }
+
+                  if (submission.status === 'review' || submission.status === 'flagged') {
+                    return (
+                      <button
+                        type="button"
+                        onClick={handleOpenModal}
+                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider bg-orange-600 hover:bg-orange-700 text-white shadow-sm transition-all active:scale-95 cursor-pointer"
+                      >
+                        <span className="material-symbols-outlined text-[12px]">admin_panel_settings</span>
+                        Gửi yêu cầu Admin
+                      </button>
+                    );
+                  }
+                  return null;
+                })()}
               </div>
             </div>
             <div className="grid grid-cols-3 gap-3 sm:gap-6 pt-3 border-t border-slate-100 w-full">
