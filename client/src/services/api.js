@@ -86,6 +86,7 @@ export const thesisService = {
   getComments: (id) => api.get(`/thesis/${id}/comments`),
   addComment: (id, data) => api.post(`/thesis/${id}/comments`, data),
   evaluatePractice: (data) => api.post('/thesis/practice/evaluate', data),
+  getAiSummary: (id) => api.get(`/thesis/${id}/ai-summary`),
 };
 
 export const chatbotService = {

@@ -117,8 +117,43 @@ const statusBadgeClass = status => {
   return 'bg-amber-500 text-white shadow-sm ring-2 sm:ring-4 ring-amber-100';
 };
 
+const mockPlagiarizedSegments = [
+  {
+    id: 1,
+    source: "Trần Thế Anh, 'Hệ thống nhận diện xâm nhập mạng sử dụng học máy', Tạp chí Khoa học UEF, 2023.",
+    original: "Hệ thống phát hiện xâm nhập mạng (IDS) đóng vai trò vô cùng quan trọng trong việc giám sát lưu lượng mạng và phát hiện các hành vi bất thường của tin tặc nhằm bảo vệ an toàn hệ thống.",
+    rephrased: "Để bảo vệ an toàn thông tin hệ thống, việc giám sát lưu lượng và phát hiện kịp thời các hành vi bất hợp pháp của kẻ tấn công thông qua hệ thống phát hiện xâm nhập (IDS) là nhiệm vụ then chốt.",
+    citation: "[1] T. A. Trần, \"Hệ thống nhận diện xâm nhập mạng sử dụng học máy,\" Tạp chí Khoa học UEF, số 4, tr. 12-18, 2023."
+  },
+  {
+    id: 2,
+    source: "Lê Minh Trí, 'Ứng dụng thuật toán Random Forest trong phân loại gói tin mạng', Kỷ yếu Hội nghị trẻ UEF, 2024.",
+    original: "Thuật toán học máy Random Forest là một trong những phương pháp phân loại mạnh mẽ nhất cho phép phân tích gói tin mạng với độ chính xác cao và giảm tỷ lệ báo động giả một cách đáng kể.",
+    rephrased: "Nhằm tối ưu hóa độ chính xác và giảm thiểu tỷ lệ cảnh báo sai lệch trong phân tích dữ liệu gói tin, mô hình phân loại rừng ngẫu nhiên (Random Forest) được đánh giá là một giải pháp học máy hiệu quả cao.",
+    citation: "[2] M. T. Lê, \"Ứng dụng thuật toán Random Forest trong phân loại gói tin mạng,\" Kỷ yếu Hội nghị trẻ UEF, tr. 45-50, 2024."
+  },
+  {
+    id: 3,
+    source: "Nguyễn Hoài Nam, 'Tối ưu hóa tham số mạng nơ-ron tích chập', UEF Journal of Technology, 2023.",
+    original: "Việc chuẩn hóa dữ liệu đầu vào và tinh chỉnh các tham số học tập như learning rate và batch size đóng vai trò quyết định đến tốc độ hội tụ và độ chính xác cuối cùng của mạng nơ-ron.",
+    rephrased: "Tốc độ huấn luyện và sai số cuối cùng của mạng nơ-ron phụ thuộc sâu sắc vào các bước chuẩn hóa tập dữ liệu đầu vào cũng như việc tối ưu hóa tỷ lệ học (learning rate) và kích thước lô (batch size).",
+    citation: "[3] H. N. Nguyễn, \"Tối ưu hóa tham số mạng nơ-ron tích chập,\" UEF Journal of Technology, vol. 8, no. 2, pp. 88-95, 2023."
+  }
+];
+
 const PlagiarismAnalysisBento = ({ submission, zoom = 100, onZoomIn, onZoomOut }) => {
-  const statusCfg = STATUS_CONFIG[submission.status] || STATUS_CONFIG.review;
+  const [similarity, setSimilarity] = React.useState(submission.similarity);
+  const [isCitationModalOpen, setIsCitationModalOpen] = React.useState(false);
+  const [appliedSegments, setAppliedSegments] = React.useState({});
+  const [copiedId, setCopiedId] = React.useState(null);
+
+  React.useEffect(() => {
+    setSimilarity(submission.similarity);
+    setAppliedSegments({});
+  }, [submission]);
+
+  const currentStatus = similarity <= 30 ? 'acceptable' : (similarity <= 50 ? 'review' : 'flagged');
+  const statusCfg = STATUS_CONFIG[currentStatus] || STATUS_CONFIG.review;
   const cells = submission.heatmapGrid || [];
   const thresholds = getPlagiarismThresholds();
 
@@ -126,20 +161,20 @@ const PlagiarismAnalysisBento = ({ submission, zoom = 100, onZoomIn, onZoomOut }
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
 
-    // Heatmap HTML layout (A mini 10x6 grid for the document overview)
+    // Heatmap HTML layout (A mini 10x6 grid for the document overview using inline-block for robust printing)
     const heatmapHtml = cells.length > 0 ? `
       <div style="margin-top: 15px; margin-bottom: 30px; page-break-inside: avoid;">
         <div style="font-size: 11px; font-weight: 800; color: #1e293b; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.08em; text-align: center;">Bản đồ nhiệt phân đoạn trùng lặp (Tài liệu 60 phân đoạn):</div>
-        <div style="display: grid; grid-template-cols: repeat(10, 26px); gap: 6px; justify-content: center; background: #f8fafc; padding: 16px; border-radius: 12px; border: 1px solid #e2e8f0; width: fit-content; margin: 0 auto;">
+        <div style="background: #f8fafc; padding: 16px; border-radius: 12px; border: 1px solid #e2e8f0; width: 320px; margin: 0 auto; text-align: left; line-height: 0;">
           ${cells.map((val, idx) => {
             let bg = '#f1f5f9';
             if (val > 40) { bg = 'rgba(239, 68, 68, 0.85)'; } // red
             else if (val > 20) { bg = 'rgba(245, 158, 11, 0.85)'; } // amber
             else if (val > 2) { bg = 'rgba(17, 94, 89, ' + Math.max(0.2, val / 100) + ')'; } // teal
-            return '<div style="background-color: ' + bg + '; width: 26px; height: 26px; border-radius: 6px; border: 1px solid rgba(0,0,0,0.06);" title="Phân đoạn ' + (idx + 1) + ': ' + val + '%"></div>';
+            return '<div style="display: inline-block; background-color: ' + bg + '; width: 26px; height: 26px; border-radius: 6px; border: 1px solid rgba(0,0,0,0.06); margin: 3px; vertical-align: top;" title="Phân đoạn ' + (idx + 1) + ': ' + val + '%"></div>';
           }).join('')}
         </div>
-        <div style="display: flex; justify-content: space-between; font-size: 9px; font-weight: 700; color: #94a3b8; text-transform: uppercase; max-width: 320px; margin: 6px auto 0 auto; letter-spacing: 0.05em;">
+        <div style="display: flex; justify-content: space-between; font-size: 9px; font-weight: 700; color: #94a3b8; text-transform: uppercase; width: 320px; margin: 6px auto 0 auto; letter-spacing: 0.05em;">
           <span>Mở đầu</span>
           <span>Kết luận</span>
         </div>
@@ -536,7 +571,7 @@ const PlagiarismAnalysisBento = ({ submission, zoom = 100, onZoomIn, onZoomOut }
             </div>
             <div class="meta-item">
               <div class="meta-label">Trạng thái ghi nhận</div>
-              <div class="meta-value" style="color: ${submission.similarity > 40 ? '#dc2626' : submission.similarity > 20 ? '#d97706' : '#16a34a'}">
+              <div class="meta-value" style="color: ${similarity > 40 ? '#dc2626' : similarity > 20 ? '#d97706' : '#16a34a'}">
                 ${statusCfg.label}
               </div>
             </div>
@@ -549,8 +584,8 @@ const PlagiarismAnalysisBento = ({ submission, zoom = 100, onZoomIn, onZoomOut }
           <div class="score-container">
             <div class="score-card" style="background-color: #115e59;">
               <div class="score-title">Tỷ lệ tương đồng tổng thể</div>
-              <div class="score-value">${submission.similarity}%</div>
-              <div class="score-status">MỨC ĐỘ: ${submission.similarity < 15 ? 'THẤP (LOW)' : submission.similarity <= 30 ? 'TRUNG BÌNH (MODERATE)' : submission.similarity <= 50 ? 'CAO (HIGH)' : 'NGHIÊM TRỌNG (SEVERE)'}</div>
+              <div class="score-value">${similarity}%</div>
+              <div class="score-status">MỨC ĐỘ: ${similarity < 15 ? 'THẤP (LOW)' : similarity <= 30 ? 'TRUNG BÌNH (MODERATE)' : similarity <= 50 ? 'CAO (HIGH)' : 'NGHIÊM TRỌNG (SEVERE)'}</div>
             </div>
             <div class="score-card" style="background-color: #0ea5e9;">
               <div class="score-title">Nội dung tạo bởi AI</div>
@@ -703,7 +738,7 @@ const PlagiarismAnalysisBento = ({ submission, zoom = 100, onZoomIn, onZoomOut }
       isUrgent,
       timestamp: new Date().toLocaleString('vi-VN'),
       isRead: false,
-      similarity: submission.similarity,
+      similarity: similarity,
       aiPercent: submission.aiPercent,
       words: submission.words,
       sourceCount: submission.sourceCount,
@@ -739,7 +774,7 @@ const PlagiarismAnalysisBento = ({ submission, zoom = 100, onZoomIn, onZoomOut }
       {/* Summary — col-span-full = 100% width; xl:col-span-8 = 2/3 row */}
       <section className="col-span-full xl:col-span-8 w-full min-w-0 bg-white p-4 sm:p-6 lg:p-8 rounded-xl shadow-sm border border-slate-200/80 hover:shadow-md transition-shadow">
         <div className="flex flex-col sm:flex-row sm:items-start gap-5 sm:gap-6 lg:gap-8 w-full">
-          <SimilarityRing percent={submission.similarity} />
+          <SimilarityRing percent={similarity} />
           <div className="flex-1 w-full min-w-0 space-y-4">
             <div className="flex flex-col gap-3">
               <div className="w-full min-w-0">
@@ -1065,14 +1100,15 @@ const PlagiarismAnalysisBento = ({ submission, zoom = 100, onZoomIn, onZoomOut }
             <span className="material-symbols-outlined text-sm">{LECTURER_ICONS.suggestion}</span>
             Gợi ý từ AI
           </h3>
-          <p className="text-xs text-slate-600 mb-4 leading-relaxed">
-            {submission.similarity > 25
+          <p className="text-xs text-slate-600 mb-4 leading-relaxed text-left">
+            {similarity > 25
               ? 'Nhiều đoạn trùng khớp với nguồn đã xuất bản. Yêu cầu sinh viên trích dẫn hoặc diễn đạt lại trước khi chốt điểm.'
               : 'Hai đoạn có cấu trúc tương tự tài liệu tham khảo. Cân nhắc thêm trích dẫn trực tiếp để tránh bị gắn cờ.'}
           </p>
           <button
             type="button"
-            className="bg-sky-600 text-white px-4 py-2.5 text-xs rounded-full w-full font-bold hover:shadow-md transition-shadow"
+            onClick={() => setIsCitationModalOpen(true)}
+            className="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2.5 text-xs rounded-full w-full font-bold hover:shadow-md transition-shadow cursor-pointer border-none"
           >
             Công cụ tự động Trích dẫn
           </button>

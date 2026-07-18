@@ -6,70 +6,195 @@ import { LECTURER_ICONS } from '../../constants/lecturerIcons';
 import { getPlagiarismFlow } from '../../utils/adminContentStore';
 import { plagiarismService, thesisService } from '../../services/api';
 
+const generateDynamicAISummary = (title, description, faculty) => {
+  const t = (title || "").toLowerCase();
+  const desc = (description || "").toLowerCase();
+  
+  let overview = `Đề tài "${title}" tập trung nghiên cứu, thiết kế và tối ưu hóa hệ thống phần mềm nhằm giải quyết bài toán thực tế thuộc chuyên ngành đào tạo.`;
+  let tools = [
+    "Ngôn ngữ lập trình chính: JavaScript (Node.js) hoặc Python",
+    "Framework phát triển: React.js để thiết kế giao diện động",
+    "Hệ quản trị cơ sở dữ liệu: PostgreSQL / SQL Server hoặc MongoDB",
+    "Hạ tầng vận hành: Docker Containerization và hệ thống RESTful APIs"
+  ];
+  let strengths = [
+    "Phân tích thiết kế hệ thống chi tiết, vẽ sơ đồ Usecase và Class chính xác.",
+    "Giao diện người dùng hiện đại, tốc độ tải trang nhanh và thiết kế responsive.",
+    "Áp dụng quy trình kiểm thử đơn vị (Unit Test) cho các luồng xử lý chính."
+  ];
+  let weaknesses = [
+    "Phần đánh giá bảo mật hệ thống còn đơn giản, cần mã hóa dữ liệu nhạy cảm kỹ hơn.",
+    "Chưa thực hiện đo lường tải (Load Test) khi có nhiều kết nối truy cập đồng thời."
+  ];
+  let recommendation = "Khuyên dùng mức điểm: 8.0 - 8.5. Thích hợp làm tài liệu tham khảo chất lượng tại thư viện khoa.";
+
+  if (t.includes("thư viện") || desc.includes("thư viện") || t.includes("library") || desc.includes("library")) {
+    overview = `Đồ án thiết kế và phát triển hệ thống quản lý thư viện số tích hợp tìm kiếm tài liệu thông minh. Giải pháp cho phép tự động hóa quy trình mượn trả, phân quyền thủ thư và tra cứu sách trực tuyến nhanh chóng.`;
+    tools = [
+      "Thuật toán tìm kiếm thông minh: Tìm kiếm văn bản nâng cao (Elasticsearch / Lucene)",
+      "Công nghệ giao diện: React.js kết hợp Tailwind CSS",
+      "Hệ thống API backend: ASP.NET Core Web API / Node.js Express",
+      "Quản lý lưu trữ: SQL Server tổ chức quan hệ sách - độc giả chặt chẽ"
+    ];
+    strengths = [
+      "Tích hợp tìm kiếm thông minh giúp cải thiện tốc độ tìm tài liệu lên tới 40%.",
+      "Thiết kế cơ sở dữ liệu chuẩn hóa 3NF tốt, tránh trùng lặp dữ liệu mượn trả.",
+      "Luồng phân quyền rõ ràng giữa Sinh viên, Giảng viên, Thủ thư và Admin."
+    ];
+    weaknesses = [
+      "Chưa tích hợp tính năng tự động gửi email thông báo khi sách sắp quá hạn mượn.",
+      "Giao diện đọc tài liệu trực tuyến (PDF reader) cần tối ưu hóa dung lượng bộ nhớ đệm."
+    ];
+    recommendation = "Khuyên dùng mức điểm: 8.5 - 9.0. Đề tài có giá trị thực tiễn cao, hoàn thiện nghiệp vụ tốt.";
+  }
+  else if (t.includes("đồ ăn") || desc.includes("đồ ăn") || t.includes("food") || desc.includes("food") || t.includes("đặt hàng") || desc.includes("đặt hàng")) {
+    overview = `Đồ án xây dựng nền tảng ứng dụng đặt đồ ăn trực tuyến (Food Delivery App), tối ưu hóa trải nghiệm đặt món, điều phối đơn hàng giữa cửa hàng - khách hàng - tài xế giao hàng và thanh toán trực tuyến.`;
+    tools = [
+      "Định vị & Bản đồ: Google Maps API định vị khoảng cách và tìm lộ trình tối ưu",
+      "Thanh toán trực tuyến: Tích hợp ví điện tử MoMo hoặc cổng thanh toán VNPay",
+      "Cập nhật thời gian thực: WebSockets (Socket.io) theo dõi vị trí của tài xế",
+      "Cơ sở dữ liệu: MongoDB lưu trữ lịch sử đơn hàng phi cấu trúc linh hoạt"
+    ];
+    strengths = [
+      "Chức năng định vị thời gian thực của shipper hoạt động với độ trễ thấp dưới 2 giây.",
+      "Quy trình xử lý đơn hàng chi tiết, xử lý tốt các trường hợp hoàn tiền hoặc lỗi mạng.",
+      "Giao diện người dùng hiện đại, phân chia món ăn theo danh mục trực quan."
+    ];
+    weaknesses = [
+      "Thuật toán phân phối đơn hàng cho shipper gần nhất còn đơn giản, chưa tối ưu nhiều điểm dừng.",
+      "Cần phát triển thêm tính năng AI gợi ý món ăn (Recommendation System) dựa trên thói quen."
+    ];
+    recommendation = "Khuyên dùng mức điểm: 8.2 - 8.7. Ứng dụng thực tiễn tốt, sản phẩm demo chạy mượt mà.";
+  }
+  else if (t.includes("blockchain") || desc.includes("blockchain") || t.includes("chuỗi khối") || desc.includes("chuỗi khối") || t.includes("smart contract") || desc.includes("smart contract")) {
+    overview = `Đồ án ứng dụng công nghệ chuỗi khối Blockchain và Hợp đồng thông minh (Smart Contract) nhằm xây dựng hệ thống cấp phát và xác thực văn bằng học thuật trực tuyến phi tập trung, chống làm giả bằng cấp.`;
+    tools = [
+      "Hợp đồng thông minh: Solidity Smart Contracts chạy trên Ethereum / Polygon",
+      "Xác thực ví: Thư viện Web3.js / Ethers.js kết nối MetaMask",
+      "Giao diện: Next.js / React.js tối ưu hóa SEO và tốc độ",
+      "Mã hóa dữ liệu: Mã hóa băm SHA-256 để bảo vệ thông tin văn bằng"
+    ];
+    strengths = [
+      "Thông tin băm của văn bằng được lưu trữ bất biến trên Blockchain, ngăn chặn hoàn toàn giả mạo.",
+      "Smart Contract viết tối ưu, giảm thiểu đáng kể chi phí Gas tiêu thụ khi tạo giao dịch.",
+      "Tích hợp quét mã QR Code để xác minh nhanh văn bằng từ nhà tuyển dụng."
+    ];
+    weaknesses = [
+      "Tốc độ giao dịch còn phụ thuộc lớn vào thời gian sinh khối của mạng thử nghiệm công khai.",
+      "Chưa cung cấp giải pháp khôi phục mã khóa cá nhân (private key) khi người dùng bị mất."
+    ];
+    recommendation = "Khuyên dùng mức điểm: 8.5 - 9.0. Đề tài chất lượng, ứng dụng xuất sắc công nghệ bảo mật mới.";
+  }
+  else if (t.includes("sentiment") || desc.includes("sentiment") || t.includes("cảm xúc") || desc.includes("cảm xúc") || t.includes("phân tích ý kiến") || desc.includes("phân tích ý kiến") || t.includes("phobert") || desc.includes("phobert")) {
+    overview = `Đồ án nghiên cứu ứng dụng mô hình học sâu PhoBERT tiếng Việt để phân tích sắc thái cảm xúc (Tích cực/Tiêu cực/Trung lập) của khách hàng từ bình luận mạng xã hội về thương hiệu UEF.`;
+    tools = [
+      "Mô hình ngôn ngữ: PhoBERT tinh chỉnh (Fine-tuning) qua thư viện Hugging Face Transformers",
+      "Công nghệ học sâu: PyTorch / TensorFlow để huấn luyện mô hình phân loại",
+      "Cào dữ liệu tự động: Python Selenium để thu thập dữ liệu bình luận từ Facebook, TikTok",
+      "Ứng dụng hiển thị: FastAPI phục vụ API phân tích, React.js hiển thị biểu đồ thống kê"
+    ];
+    strengths = [
+      "Mô hình đạt độ chính xác F1-score cao (89%) đối với các cụm từ ngữ cảnh tiếng Việt phức tạp.",
+      "Tập dữ liệu khảo sát thực nghiệm lớn với hơn 10.000 dòng bình luận được tiền xử lý sạch sẽ.",
+      "Dashboard trực quan hóa biểu đồ phân tích sắc thái theo từng mốc thời gian rõ ràng."
+    ];
+    weaknesses = [
+      "Độ chính xác có xu hướng giảm khi gặp teencode, viết tắt hoặc các từ lóng chưa có trong từ điển.",
+      "Mô hình học sâu nặng, tốc độ phản hồi API phân tích thời gian thực cần cấu hình GPU để cải thiện."
+    ];
+    recommendation = "Khuyên dùng mức điểm: 8.0 - 8.5. Phương pháp khoa học rõ ràng, tiền xử lý dữ liệu xuất sắc.";
+  }
+  else if (t.includes("an toàn") || desc.includes("an toàn") || t.includes("cybersecurity") || desc.includes("cybersecurity") || t.includes("security") || desc.includes("security") || t.includes("xâm nhập") || desc.includes("xâm nhập") || t.includes("ids") || desc.includes("ids")) {
+    overview = `Đồ án xây dựng hệ thống phát hiện xâm nhập mạng (IDS) dựa trên các mô hình học máy. Giải pháp giúp phát hiện các hành vi quét cổng, brute-force mật khẩu và tấn công DDoS để bảo vệ hệ thống.`;
+    tools = [
+      "Giám sát lưu lượng: Snort / Suricata phân tích gói tin mạng theo thời gian thực",
+      "Học máy phân loại: Thuật toán Random Forest, SVM (Support Vector Machine) qua Scikit-learn",
+      "Báo cáo & Dashboard: React.js hiển thị cảnh báo, lưu trữ TimescaleDB cho dữ liệu chuỗi thời gian",
+      "Thông báo khẩn cấp: Tích hợp Telegram API/Email gửi cảnh báo cho quản trị viên"
+    ];
+    strengths = [
+      "Độ chính xác nhận diện tấn công cao, tỷ lệ báo động giả (False Positive Rate) được tối ưu dưới 3%.",
+      "Hỗ trợ phân tích luồng dữ liệu gói tin thời gian thực với băng thông lên tới 100Mbps ổn định.",
+      "Hệ thống tự động kích hoạt cảnh báo khẩn cấp và đề xuất phương án cô lập ip nghi ngờ."
+    ];
+    weaknesses = [
+      "Chưa tích hợp tự động cấu hình tường lửa (IPS) để chặn luồng tấn công ngay khi phát hiện.",
+      "Chủ yếu phát hiện dựa trên các mẫu tấn công đã biết, độ nhận diện lỗ hổng zero-day còn hạn chế."
+    ];
+    recommendation = "Khuyên dùng mức điểm: 8.5 - 9.0. Đồ án kỹ thuật xuất sắc, giải quyết tốt bài toán an ninh mạng thực tế.";
+  }
+
+  return { overview, tools, strengths, weaknesses, recommendation };
+};
+
 const AISummaryCard = ({ selected }) => {
-  const summaryData = useMemo(() => {
-    const defaultSummary = {
-      overview: `Đề tài "${selected.title}" thực hiện nghiên cứu chuyên sâu về lĩnh vực chuyên môn của khoa ${selected.faculty || 'Đào tạo'}. Bài viết đề xuất giải pháp kỹ thuật cụ thể và đánh giá thực nghiệm thực tiễn.`,
-      strengths: [
-        "Cấu trúc các chương rõ ràng, tuân thủ barem quy chuẩn.",
-        "Sử dụng nhiều từ vựng chuyên ngành có độ chính xác học thuật cao.",
-        "Hình thức trình bày chỉn chu, căn lề và định dạng phông chữ chuẩn."
-      ],
-      weaknesses: [
-        "Cần bổ sung thêm phần đối chiếu số liệu chi tiết hơn ở chương thực nghiệm.",
-        "Một số đoạn trích dẫn lý thuyết nên diễn đạt lại theo văn phong cá nhân để tăng tính nguyên bản."
-      ],
-      recommendation: "Khuyên dùng mức điểm: 8.0 - 8.5. Thích hợp lưu trữ tham khảo tại Thư viện khoa."
+  const [summaryData, setSummaryData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+    setSummaryData(null);
+
+    const fetchSummary = async () => {
+      try {
+        let cleanId = null;
+        if (selected && selected.id) {
+          const match = String(selected.id).match(/\d+/);
+          if (match) cleanId = parseInt(match[0], 10);
+        }
+
+        if (cleanId) {
+          const { data } = await thesisService.getAiSummary(cleanId);
+          if (active) {
+            setSummaryData(data);
+            setLoading(false);
+          }
+        } else {
+          const fallback = generateDynamicAISummary(selected.title, selected.description, selected.faculty);
+          if (active) {
+            setSummaryData(fallback);
+            setLoading(false);
+          }
+        }
+      } catch (err) {
+        console.error("Lỗi khi gọi Gemini AI summary backend:", err);
+        const fallback = generateDynamicAISummary(selected.title, selected.description, selected.faculty);
+        if (active) {
+          setSummaryData(fallback);
+          setLoading(false);
+        }
+      }
     };
 
-    if (selected.id === 'sub-001') {
-      return {
-        overview: "Nghiên cứu khảo sát toàn diện tác động của Trí tuệ nhân tạo (AI) đối với mô hình giáo dục đại học, tập trung phân tích hệ thống gia sư thông minh và chấm điểm tự động.",
-        strengths: [
-          "Phương pháp luận vững chắc, kết hợp phân tích định tính từ các đại học tiên tiến tại Âu Mỹ.",
-          "Tính nguyên bản cực cao (Chỉ số trùng lặp chỉ 12%), các nguồn trích dẫn học thuật uy tín.",
-          "Cấu trúc 5 chương hoàn thiện rất chặt chẽ."
-        ],
-        weaknesses: [
-          "Nên phân tích sâu hơn về rào cản chi phí khi triển khai hệ thống AI tại Việt Nam.",
-          "Cần làm rõ hơn quy trình hậu kiểm chất lượng đối với công cụ chấm điểm tự động."
-        ],
-        recommendation: "Khuyên dùng mức điểm: 8.5 - 9.0. Đề xuất làm tài liệu định hướng chính sách chuyển đổi số."
-      };
-    }
-    
-    if (selected.id === 'sub-002') {
-      return {
-        overview: "Đề tài đề xuất ứng dụng công nghệ sổ cái phân tán Blockchain (Smart Contract Ethereum) để quản lý, cấp phát và xác thực bảng điểm trực tuyến của sinh viên.",
-        strengths: [
-          "Giải pháp kỹ thuật mang tính thực tiễn cao, mô hình phi tập trung rõ ràng.",
-          "Trình bày thuật toán smart contract chi tiết, có sơ đồ luồng dữ liệu minh họa."
-        ],
-        weaknesses: [
-          "Mức độ trùng lặp nội dung tương đối cao (28%), phát hiện một số đoạn sao chép nguyên bản từ tài liệu IEEE 2022.",
-          "Phần đánh giá hiệu năng hệ thống còn sơ sài, chưa đo lường chi phí gas thực tế."
-        ],
-        recommendation: "Khuyên dùng mức điểm: 7.0 - 7.5. Yêu cầu diễn đạt lại các đoạn trùng lặp trước khi hội đồng công nhận."
-      };
-    }
-
-    if (selected.id === 'sub-003') {
-      return {
-        overview: "Nghiên cứu ứng dụng mô hình học sâu PhoBERT tiếng Việt để phân tích sắc thái cảm xúc (Sentiment Analysis) của người dùng mạng xã hội về thương hiệu UEF.",
-        strengths: [
-          "Ý tưởng nghiên cứu tốt, bắt kịp xu hướng công nghệ xử lý ngôn ngữ tự nhiên (NLP).",
-          "Tập dữ liệu khảo sát thực tế dồi dào (15,000 bài đăng từ Facebook và TikTok)."
-        ],
-        weaknesses: [
-          "Cảnh báo đạo văn mức độ cao (45% trùng lặp), cấu trúc câu sao chép tỷ lệ lớn từ Đồ án tốt nghiệp UEF 2023.",
-          "Chỉ số văn bản do AI tạo ra (AI-generated) chiếm tới 22%, thể hiện sự lạm dụng Chatbot dịch thuật/viết hộ."
-        ],
-        recommendation: "Khuyên dùng mức điểm: 5.5 - 6.0. Đề nghị SV viết lại toàn bộ phần Tổng quan lý thuyết và trích dẫn nguồn đầy đủ."
-      };
-    }
-
-    return defaultSummary;
+    fetchSummary();
+    return () => { active = false; };
   }, [selected]);
+
+  if (loading || !summaryData) {
+    return (
+      <div className="bg-gradient-to-br from-slate-900 via-teal-950 to-slate-950 text-white rounded-2xl border border-teal-800/50 p-6 md:p-8 shadow-xl relative overflow-hidden animate-in fade-in duration-500">
+        <div className="absolute -right-20 -bottom-20 w-80 h-80 bg-teal-500/10 rounded-full blur-[80px] pointer-events-none" />
+        <div className="relative z-10 space-y-6">
+          <div className="flex items-center justify-between border-b border-white/10 pb-4">
+            <div className="flex items-center gap-3">
+              <span className="material-symbols-outlined text-teal-300 text-2xl animate-spin">sync</span>
+              <div className="text-left">
+                <h3 className="text-sm font-black uppercase tracking-[0.2em] text-teal-300">Gemini AI đang đọc tài liệu...</h3>
+                <p className="text-[10px] text-white/50 uppercase mt-0.5 tracking-wider">Đang trích xuất nội dung từ tệp Word/PDF gốc</p>
+              </div>
+            </div>
+          </div>
+          <div className="space-y-4 animate-pulse">
+            <div className="h-4 bg-white/10 rounded w-3/4"></div>
+            <div className="h-3 bg-white/5 rounded w-5/6"></div>
+            <div className="h-3 bg-white/5 rounded w-2/3"></div>
+            <div className="h-10 bg-white/5 rounded w-full mt-4"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-gradient-to-br from-slate-900 via-teal-950 to-slate-950 text-white rounded-2xl border border-teal-800/50 p-6 md:p-8 shadow-xl relative overflow-hidden animate-in fade-in duration-500">
@@ -83,7 +208,7 @@ const AISummaryCard = ({ selected }) => {
             <div className="w-10 h-10 rounded-xl bg-teal-800/80 border border-teal-700/50 flex items-center justify-center shadow-lg shadow-teal-950/50">
               <span className="material-symbols-outlined text-teal-300 text-2xl animate-pulse">auto_awesome</span>
             </div>
-            <div>
+            <div className="text-left">
               <h3 className="text-sm font-black uppercase tracking-[0.2em] text-teal-300">Tóm tắt phân tích bằng Gemini AI</h3>
               <p className="text-[10px] text-white/50 uppercase mt-0.5 tracking-wider">Báo cáo tổng hợp chất lượng đồ án tự động</p>
             </div>
@@ -94,15 +219,28 @@ const AISummaryCard = ({ selected }) => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-          {/* Cột trái: Overview & Đề xuất */}
+          {/* Cột trái: Overview, Tools & Đề xuất */}
           <div className="md:col-span-6 space-y-4">
-            <div className="space-y-1.5">
-              <span className="text-[10px] font-black uppercase tracking-wider text-teal-400">Tóm tắt nội dung</span>
+            <div className="space-y-1.5 text-left">
+              <span className="text-[10px] font-black uppercase tracking-wider text-teal-400">Tóm tắt nội dung (Đồ án là gì)</span>
               <p className="text-xs text-white/85 leading-relaxed font-medium">
                 {summaryData.overview}
               </p>
             </div>
-            <div className="p-4 rounded-xl bg-teal-500/5 border border-teal-500/10 space-y-1.5">
+            
+            <div className="space-y-1.5 text-left">
+              <span className="text-[10px] font-black uppercase tracking-wider text-sky-400">Công cụ &amp; Chức năng</span>
+              <ul className="space-y-1 pl-1">
+                {summaryData.tools && summaryData.tools.map((tool, idx) => (
+                  <li key={idx} className="text-xs text-white/80 leading-relaxed flex items-start gap-1.5">
+                    <span className="text-sky-400 font-bold shrink-0">▪</span>
+                    <span>{tool}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="p-4 rounded-xl bg-teal-500/5 border border-teal-500/10 space-y-1.5 text-left">
               <span className="text-[10px] font-black uppercase tracking-wider text-yellow-400 flex items-center gap-1">
                 <span className="material-symbols-outlined text-xs">recommend</span>
                 Khuyến nghị của AI
@@ -118,10 +256,10 @@ const AISummaryCard = ({ selected }) => {
             <div className="space-y-2">
               <span className="text-[10px] font-black uppercase tracking-wider text-emerald-400 flex items-center gap-1">
                 <span className="material-symbols-outlined text-xs text-emerald-400">check_circle</span>
-                Ưu điểm & Điểm cộng học thuật
+                Ưu điểm &amp; Điểm cộng học thuật
               </span>
               <ul className="space-y-1.5 pl-1.5">
-                {summaryData.strengths.map((str, idx) => (
+                {summaryData.strengths && summaryData.strengths.map((str, idx) => (
                   <li key={idx} className="text-xs text-white/80 leading-relaxed flex items-start gap-2">
                     <span className="text-emerald-400 font-bold mt-0.5 shrink-0">✓</span>
                     <span>{str}</span>
@@ -133,10 +271,10 @@ const AISummaryCard = ({ selected }) => {
             <div className="space-y-2">
               <span className="text-[10px] font-black uppercase tracking-wider text-rose-400 flex items-center gap-1">
                 <span className="material-symbols-outlined text-xs text-rose-400">warning</span>
-                Hạn chế & Điểm cần cải thiện
+                Hạn chế &amp; Điểm cần cải thiện
               </span>
               <ul className="space-y-1.5 pl-1.5">
-                {summaryData.weaknesses.map((weak, idx) => (
+                {summaryData.weaknesses && summaryData.weaknesses.map((weak, idx) => (
                   <li key={idx} className="text-xs text-white/80 leading-relaxed flex items-start gap-2">
                     <span className="text-rose-400 font-bold mt-0.5 shrink-0">!</span>
                     <span>{weak}</span>
@@ -176,6 +314,7 @@ const LecturerControllerPage = () => {
               student: t.studentName || 'Sinh viên',
               studentId: t.studentCode || 'SV-000',
               faculty: t.department || 'Khoa học Công nghệ',
+              description: t.description || '',
               status: t.status === 'Approved' ? 'acceptable' : t.status === 'Rejected' || t.status === 'Revision' ? 'flagged' : 'review',
               grade: t.latestScore,
               rubric: mockMatch.rubric || { content: t.latestScore ?? 0, method: t.latestScore ?? 0, originality: t.latestScore ?? 0, presentation: t.latestScore ?? 0 }

@@ -26,6 +26,20 @@ namespace PlatformAdmin.Services
         /// Evaluates a student's thesis draft for logic, semantics, relevance, and checks for gibberish.
         /// </summary>
         Task<ThesisPracticeEvaluationResult> EvaluateThesisPracticeAsync(string content, string thesisTitle, string chapterId, string chapterLabel, List<string> requiredSections);
+
+        /// <summary>
+        /// Summarizes a thesis based on its title, description, and raw PDF bytes.
+        /// </summary>
+        Task<ThesisAiSummaryResult> GenerateThesisSummaryAsync(string title, string description, byte[]? pdfBytes);
+    }
+
+    public class ThesisAiSummaryResult
+    {
+        public string Overview { get; set; } = string.Empty;
+        public List<string> Tools { get; set; } = new();
+        public List<string> Strengths { get; set; } = new();
+        public List<string> Weaknesses { get; set; } = new();
+        public string Recommendation { get; set; } = string.Empty;
     }
 
     public class PreFilterResult

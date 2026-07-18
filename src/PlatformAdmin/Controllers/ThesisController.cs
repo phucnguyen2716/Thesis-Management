@@ -244,4 +244,43 @@ public class ThesisController : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("{id}/ai-summary")]
+    [ApiResponse(typeof(ThesisAiSummaryResult), StatusCodes.Status200OK)]
+    [ApiResponse(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ThesisAiSummaryResult>> GetAiSummary(int id, [FromServices] IGeminiService geminiService)
+    {
+        var thesis = await _db.Theses.FirstOrDefaultAsync(t => t.Id == id);
+        if (thesis == null)
+            return NotFound("Thesis not found");
+
+        byte[]? pdfBytes = null;
+        if (!string.IsNullOrEmpty(thesis.FilePath))
+        {
+            try
+            {
+                string cleanPath = thesis.FilePath
+                    .Replace("http://localhost:5145", "")
+                    .Replace("https://ethesis-backend-api.onrender.com", "")
+                    .TrimStart('/');
+                string absolutePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", cleanPath);
+                if (System.IO.File.Exists(absolutePath))
+                {
+                    pdfBytes = await System.IO.File.ReadAllBytesAsync(absolutePath);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error reading thesis file for AI summary: {ex.Message}");
+            }
+        }
+
+        var result = await geminiService.GenerateThesisSummaryAsync(
+            thesis.Title,
+            thesis.Description ?? "",
+            pdfBytes
+        );
+
+        return Ok(result);
+    }
+
 }
