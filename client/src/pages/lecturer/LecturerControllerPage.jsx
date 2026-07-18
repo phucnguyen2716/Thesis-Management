@@ -131,8 +131,9 @@ const SUMMARY_CACHE_KEY = (id) => `gemini_summary_${id}`;
 
 const AISummaryCard = ({ selected, isScanning }) => {
   const [summaryData, setSummaryData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [fromCache, setFromCache] = useState(false);
+  const [isTriggered, setIsTriggered] = useState(false);
   const [retryTrigger, setRetryTrigger] = useState(0);
 
   const handleRetry = () => {
@@ -146,17 +147,54 @@ const AISummaryCard = ({ selected, isScanning }) => {
     setRetryTrigger(prev => prev + 1);
   };
 
+  // Check cache immediately when selection changes
   useEffect(() => {
-    if (isScanning) {
-      setLoading(true);
+    if (!selected || isScanning) {
       setSummaryData(null);
+      setIsTriggered(false);
+      setLoading(false);
       return;
     }
 
+    let cleanId = null;
+    const match = String(selected.id).match(/\d+/);
+    if (match) cleanId = parseInt(match[0], 10);
+
+    if (cleanId) {
+      const cacheKey = SUMMARY_CACHE_KEY(cleanId);
+      const cached = sessionStorage.getItem(cacheKey);
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          const isOldErrorCache = parsed.overview && (
+            parsed.overview.includes("giới hạn tốc độ") ||
+            parsed.overview.includes("429") ||
+            parsed.overview.includes("Lỗi kết nối")
+          );
+
+          if (!isOldErrorCache) {
+            setSummaryData(parsed);
+            setFromCache(true);
+            setIsTriggered(true);
+            setLoading(false);
+            return;
+          }
+        } catch { /* ignore */ }
+      }
+    }
+
+    // Reset trigger state if not in cache so user has to click to generate
+    setSummaryData(null);
+    setIsTriggered(false);
+    setLoading(false);
+  }, [selected, isScanning]);
+
+  // Handle actual API call only when isTriggered is true
+  useEffect(() => {
+    if (!isTriggered || isScanning || summaryData) return;
+
     let active = true;
     setLoading(true);
-    setSummaryData(null);
-    setFromCache(false);
 
     const fetchSummary = async () => {
       try {
@@ -167,37 +205,14 @@ const AISummaryCard = ({ selected, isScanning }) => {
         }
 
         if (cleanId) {
-          // Check sessionStorage cache first — avoid re-calling Gemini API
-          const cacheKey = SUMMARY_CACHE_KEY(cleanId);
-          const cached = sessionStorage.getItem(cacheKey);
-          if (cached) {
-            try {
-              const parsed = JSON.parse(cached);
-              // Ignore old cache containing error text from previous build
-              const isOldErrorCache = parsed.overview && (
-                parsed.overview.includes("giới hạn tốc độ") ||
-                parsed.overview.includes("429") ||
-                parsed.overview.includes("Lỗi kết nối")
-              );
-
-              if (!isOldErrorCache && active) {
-                setSummaryData(parsed);
-                setFromCache(true);
-                setLoading(false);
-                return;
-              }
-            } catch { /* cache corrupted, fetch fresh */ }
-          }
-
-
           const { data } = await thesisService.getAiSummary(cleanId);
           if (active) {
             // Save to sessionStorage for reuse (only if NOT an error)
             if (data && !data.isError && !data.IsError) {
+              const cacheKey = SUMMARY_CACHE_KEY(cleanId);
               try { sessionStorage.setItem(cacheKey, JSON.stringify(data)); } catch { /* storage full */ }
             }
             setSummaryData(data);
-            setFromCache(false);
             setLoading(false);
           }
         } else {
@@ -219,10 +234,40 @@ const AISummaryCard = ({ selected, isScanning }) => {
 
     fetchSummary();
     return () => { active = false; };
-  }, [selected, isScanning, retryTrigger]);
+  }, [isTriggered, selected, isScanning, retryTrigger]);
 
+
+
+  // Placeholder state before generating AI summary
+  if (!isTriggered && !loading) {
+    return (
+      <div className="bg-gradient-to-br from-slate-900 via-teal-950/40 to-slate-950 text-white rounded-2xl border border-teal-900/30 p-6 md:p-8 shadow-xl relative overflow-hidden animate-in fade-in duration-500">
+        <div className="absolute -right-20 -bottom-20 w-80 h-80 bg-teal-500/5 rounded-full blur-[80px] pointer-events-none" />
+        <div className="relative z-10 flex flex-col items-center text-center py-4 space-y-4">
+          <div className="w-14 h-14 rounded-2xl bg-teal-900/40 border border-teal-700/20 flex items-center justify-center shadow-lg shadow-teal-950/50">
+            <span className="material-symbols-outlined text-teal-300 text-3xl animate-pulse">auto_awesome</span>
+          </div>
+          <div className="space-y-1.5 max-w-md">
+            <h3 className="text-sm font-black uppercase tracking-[0.2em] text-teal-300">Tóm tắt phân tích bằng Gemini AI</h3>
+            <p className="text-xs text-white/60 leading-relaxed">
+              Trợ lý AI sẽ đọc tài liệu để viết tóm tắt nội dung dự án, đồng thời tự động trích xuất các công nghệ và chức năng cốt lõi được sử dụng.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsTriggered(true)}
+            className="px-6 py-2.5 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white text-xs font-black rounded-xl transition-all shadow-lg shadow-teal-950/50 flex items-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
+          >
+            <span className="material-symbols-outlined text-sm">auto_awesome</span>
+            Xem tóm tắt AI
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (loading || !summaryData) {
+
     return (
       <div className="bg-gradient-to-br from-slate-900 via-teal-950 to-slate-950 text-white rounded-2xl border border-teal-800/50 p-6 md:p-8 shadow-xl relative overflow-hidden animate-in fade-in duration-500">
         <div className="absolute -right-20 -bottom-20 w-80 h-80 bg-teal-500/10 rounded-full blur-[80px] pointer-events-none" />
