@@ -4,7 +4,7 @@ import { SUBMISSIONS, STATUS_CONFIG } from '../../data/lecturerMockData';
 import PlagiarismAnalysisBento from '../../components/lecturer/PlagiarismAnalysisBento';
 import { LECTURER_ICONS } from '../../constants/lecturerIcons';
 import { getPlagiarismFlow } from '../../utils/adminContentStore';
-import { plagiarismService, thesisService } from '../../services/api';
+import { plagiarismService, thesisService, resolveFileUrl } from '../../services/api';
 
 const generateDynamicAISummary = (title, description, faculty) => {
   const t = (title || "").toLowerCase();
@@ -442,6 +442,109 @@ const AISummaryCard = ({ selected, isScanning }) => {
 };
 
 
+const ThesisFilesCard = ({ selected }) => {
+  const filesList = useMemo(() => {
+    const list = [];
+    if (selected.submissions && selected.submissions.length > 0) {
+      return selected.submissions;
+    }
+    if (selected.filePath) {
+      const fileName = selected.filePath.split('/').pop() || "TaiLieuDoAn.pdf";
+      list.push({
+        id: 'primary',
+        fileName: fileName,
+        filePath: selected.filePath,
+        fileSize: 2451000,
+        submittedAt: selected.submittedAt || selected.createdAt || new Date().toISOString()
+      });
+    }
+    return list;
+  }, [selected]);
+
+  if (filesList.length === 0) {
+    return (
+      <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+        <h3 className="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2 uppercase tracking-wide border-b border-slate-100 pb-3">
+          <span className="material-symbols-outlined text-teal-800">folder_open</span>
+          Tài liệu đính kèm
+        </h3>
+        <p className="text-xs text-slate-400 italic text-center py-4">Sinh viên chưa tải lên tài liệu nào cho đồ án này.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+      <h3 className="text-sm font-bold text-slate-900 mb-4 flex items-center justify-between uppercase tracking-wide border-b border-slate-100 pb-3">
+        <div className="flex items-center gap-2">
+          <span className="material-symbols-outlined text-teal-800">folder_open</span>
+          Tài liệu đính kèm ({filesList.length})
+        </div>
+        <span className="text-[10px] text-slate-400 font-bold lowercase">Tác vụ chấm đề cương</span>
+      </h3>
+      
+      <div className="space-y-3">
+        {filesList.map((file, idx) => {
+          const fileUrl = resolveFileUrl(file.filePath);
+          const sizeKb = Math.round(file.fileSize / 1024);
+          const isPdf = file.fileName.toLowerCase().endsWith('.pdf');
+          const isWord = file.fileName.toLowerCase().endsWith('.docx') || file.fileName.toLowerCase().endsWith('.doc');
+          
+          return (
+            <div key={file.id || idx} className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-xl border border-slate-100 bg-slate-50 hover:bg-slate-100/50 hover:border-slate-200 transition-all gap-4">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm ${
+                  isPdf ? 'bg-red-50 text-red-600 border border-red-100' :
+                  isWord ? 'bg-blue-50 text-blue-600 border border-blue-100' :
+                  'bg-teal-50 text-teal-600 border border-teal-100'
+                }`}>
+                  <span className="material-symbols-outlined text-2xl font-semibold">
+                    {isPdf ? 'picture_as_pdf' : isWord ? 'description' : 'draft'}
+                  </span>
+                </div>
+                <div className="min-w-0 text-left">
+                  <p className="text-xs font-bold text-slate-800 truncate" title={file.fileName}>
+                    {file.fileName}
+                  </p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-[10px] font-black text-slate-400">
+                      {sizeKb > 1024 ? `${(sizeKb / 1024).toFixed(1)} MB` : `${sizeKb} KB`}
+                    </span>
+                    <span className="text-slate-300">•</span>
+                    <span className="text-[10px] font-semibold text-slate-400">
+                      {new Date(file.submittedAt).toLocaleDateString('vi-VN')} {new Date(file.submittedAt).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'})}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+                <a
+                  href={fileUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3.5 py-2 bg-white hover:bg-teal-50 border border-slate-200 hover:border-teal-300 text-slate-700 hover:text-teal-800 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all shadow-sm flex items-center gap-1.5 active:scale-95"
+                >
+                  <span className="material-symbols-outlined text-[13px]">open_in_new</span>
+                  Xem file
+                </a>
+                <a
+                  href={fileUrl}
+                  download={file.fileName}
+                  className="px-3.5 py-2 bg-teal-800 hover:bg-teal-900 text-white text-[10px] font-black uppercase tracking-wider rounded-xl transition-all shadow-sm flex items-center gap-1.5 active:scale-95"
+                >
+                  <span className="material-symbols-outlined text-[13px]">download</span>
+                  Tải về
+                </a>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
 
 const LecturerControllerPage = () => {
   const { id: paramId } = useParams();
@@ -471,7 +574,9 @@ const LecturerControllerPage = () => {
               description: t.description || '',
               status: t.status === 'Approved' ? 'acceptable' : t.status === 'Rejected' || t.status === 'Revision' ? 'flagged' : 'review',
               grade: t.latestScore,
-              rubric: mockMatch.rubric || { content: t.latestScore ?? 0, method: t.latestScore ?? 0, originality: t.latestScore ?? 0, presentation: t.latestScore ?? 0 }
+              rubric: mockMatch.rubric || { content: t.latestScore ?? 0, method: t.latestScore ?? 0, originality: t.latestScore ?? 0, presentation: t.latestScore ?? 0 },
+              submissions: t.submissions || [],
+              filePath: t.filePath || mockMatch.filePath
             };
           });
 
@@ -1025,6 +1130,8 @@ const LecturerControllerPage = () => {
 
         <div className="flex-1 w-full min-w-0 space-y-4 sm:space-y-6">
           <AISummaryCard selected={selected} isScanning={scanning} />
+          
+          <ThesisFilesCard selected={selected} />
           
           <PlagiarismAnalysisBento
             submission={selected}
