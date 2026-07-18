@@ -31,7 +31,7 @@ public class ThesisService : IThesisService
         .Include(t => t.Reviews)
         .Include(t => t.Submissions);
 
-    private static ThesisDto Map(Thesis t) => new(
+    private static ThesisDto Map(Thesis t, double? plagiarismSimilarity = null) => new(
         t.Id, t.Title, t.Description, t.Status, t.FilePath,
         t.CreatedAt, t.UpdatedAt, t.SubmittedAt, t.ApprovedAt,
         t.StudentId, t.Student.FullName, t.Student.StudentId,
@@ -44,7 +44,8 @@ public class ThesisService : IThesisService
         t.SubjectCode,
         t.Category,
         t.Batch,
-        t.Submissions?.Select(s => new ThesisSubmissionDto(s.Id, s.FileName, s.FilePath, s.FileSize, s.SubmittedAt)).ToList()
+        t.Submissions?.Select(s => new ThesisSubmissionDto(s.Id, s.FileName, s.FilePath, s.FileSize, s.SubmittedAt)).ToList(),
+        plagiarismSimilarity
     );
 
     public async Task<ThesisListResponse> GetAllAsync(int page, int pageSize, string? status, string? search, int? studentId, int? advisorId, string? category = null, int? batch = null)
@@ -73,13 +74,36 @@ public class ThesisService : IThesisService
         var items = await q.OrderByDescending(t => t.CreatedAt)
             .Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
 
-        return new ThesisListResponse(items.Select(Map), total, page, pageSize);
+        var thesisIds = items.Select(t => t.Id).ToList();
+        var plagiarismDict = await _db.PlagiarismReports
+            .Where(r => thesisIds.Contains(r.ThesisId))
+            .GroupBy(r => r.ThesisId)
+            .Select(g => new { 
+                ThesisId = g.Key, 
+                Similarity = (double?)g.OrderByDescending(r => r.CheckedAt).Select(r => r.SimilarityPercentage).FirstOrDefault() 
+            })
+            .ToDictionaryAsync(x => x.ThesisId, x => x.Similarity);
+
+        var dtos = items.Select(t => {
+            plagiarismDict.TryGetValue(t.Id, out var sim);
+            return Map(t, sim);
+        }).ToList();
+
+        return new ThesisListResponse(dtos, total, page, pageSize);
     }
 
     public async Task<ThesisDto?> GetByIdAsync(int id)
     {
         var t = await BaseQuery().FirstOrDefaultAsync(t => t.Id == id);
-        return t is null ? null : Map(t);
+        if (t == null) return null;
+
+        var sim = await _db.PlagiarismReports
+            .Where(r => r.ThesisId == id)
+            .OrderByDescending(r => r.CheckedAt)
+            .Select(r => (double?)r.SimilarityPercentage)
+            .FirstOrDefaultAsync();
+
+        return Map(t, sim);
     }
 
     public async Task<ThesisDto> CreateAsync(int studentId, CreateThesisRequest request)

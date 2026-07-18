@@ -31,7 +31,8 @@ public record ThesisDto(
     string? SubjectCode = null,
     string Category = "Project",
     int Batch = 1,
-    IEnumerable<ThesisSubmissionDto>? Submissions = null
+    IEnumerable<ThesisSubmissionDto>? Submissions = null,
+    double? PlagiarismSimilarity = null
 );
 
 public record CreateThesisRequest(

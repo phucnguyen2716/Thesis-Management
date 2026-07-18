@@ -762,17 +762,49 @@ const AdminThesesPage = () => {
                         <span className="text-slate-500 text-xs italic">Chưa chỉ định</span>
                       )}
                     </td>
-                    <td className="p-4 w-[12%] min-w-[100px]">
-                      <span className={`inline-flex items-center gap-1.5 text-[9px] font-extrabold uppercase px-2.5 py-1 rounded-full ${STATUS_BADGES[t.status] || 'bg-slate-700/20 text-slate-400 border border-slate-700/30'}`}>
-                        <span className={`w-1 h-1 rounded-full ${
-                          t.status === 'Approved' ? 'bg-emerald-400' :
-                          t.status === 'Rejected' ? 'bg-red-400' :
-                          t.status === 'Revision' ? 'bg-orange-400' :
-                          t.status === 'Submitted' ? 'bg-purple-400' :
-                          t.status === 'InProgress' ? 'bg-blue-400' : 'bg-yellow-400'
-                        }`} />
-                        {t.status}
-                      </span>
+                    <td className="p-4 w-[12%] min-w-[130px]">
+                      <div className="flex flex-col gap-1.5 items-start">
+                        {/* Status Badge */}
+                        <span className={`inline-flex items-center gap-1.5 text-[9px] font-extrabold uppercase px-2.5 py-1 rounded-full ${STATUS_BADGES[t.status] || 'bg-slate-700/20 text-slate-400 border border-slate-700/30'}`}>
+                          <span className={`w-1 h-1 rounded-full ${
+                            t.status === 'Approved' ? 'bg-emerald-400' :
+                            t.status === 'Rejected' ? 'bg-red-400' :
+                            t.status === 'Revision' ? 'bg-orange-400' :
+                            t.status === 'Submitted' ? 'bg-purple-400' :
+                            t.status === 'InProgress' ? 'bg-blue-400' : 'bg-yellow-400'
+                          }`} />
+                          {t.status}
+                        </span>
+
+                        {/* Plagiarism Badge */}
+                        {t.plagiarismSimilarity !== undefined && t.plagiarismSimilarity !== null ? (
+                          <span className={`inline-flex items-center gap-1 text-[9.5px] font-extrabold px-1.5 py-0.5 rounded border uppercase ${
+                            t.plagiarismSimilarity >= 50 
+                              ? 'bg-red-500/10 text-red-400 border-red-500/20' 
+                              : t.plagiarismSimilarity >= 25 
+                                ? 'bg-amber-500/10 text-amber-400 border-amber-500/25' 
+                                : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/25'
+                          }`}>
+                            <span className="material-symbols-outlined text-[11px] shrink-0">radar</span>
+                            Đạo văn: {t.plagiarismSimilarity}%
+                          </span>
+                        ) : (
+                          t.status === 'UnderReview' ? (
+                            <span className="inline-flex items-center gap-1 text-[9.5px] font-extrabold px-1.5 py-0.5 rounded border bg-blue-500/10 text-blue-400 border-blue-500/20 animate-pulse uppercase">
+                              <span className="material-symbols-outlined text-[11px] shrink-0">sync</span>
+                              Đang quét...
+                            </span>
+                          ) : null
+                        )}
+
+                        {/* Review Score Badge */}
+                        {t.reviewCount > 0 && (
+                          <span className="inline-flex items-center gap-1 text-[9.5px] font-extrabold px-1.5 py-0.5 rounded border bg-amber-500/10 text-amber-400 border-amber-500/25 uppercase">
+                            <span className="material-symbols-outlined text-[11px] shrink-0">rate_review</span>
+                            Điểm: {t.latestScore !== null && t.latestScore !== undefined ? t.latestScore : '—'} ({t.reviewCount} GV)
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="p-4 text-right space-x-1.5 whitespace-nowrap w-[10%] min-w-[160px]">
                       <button type="button" onClick={() => openReviewsModal(t)} title="Ý kiến GV & Phê duyệt"
