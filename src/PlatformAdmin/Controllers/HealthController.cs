@@ -64,6 +64,20 @@ public class HealthController : ControllerBase
                 thesesQueryException = ex;
             }
 
+            var plagiarismReportIds = new List<int>();
+            try
+            {
+                plagiarismReportIds = await _db.PlagiarismReports
+                    .Select(r => r.ThesisId)
+                    .Distinct()
+                    .Take(10)
+                    .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error querying PlagiarismReports thesis IDs: {ex.Message}");
+            }
+
             return Ok(new
             {
                 healthy = plagiarismQueryException == null && thesesQueryException == null,
@@ -76,7 +90,8 @@ public class HealthController : ControllerBase
                 plagiarismReports = new {
                     count = plagiarismReportsCount,
                     error = plagiarismQueryException?.Message,
-                    fullError = plagiarismQueryException?.ToString()
+                    fullError = plagiarismQueryException?.ToString(),
+                    ids = plagiarismReportIds
                 }
             });
         }
