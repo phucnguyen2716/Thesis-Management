@@ -697,7 +697,7 @@ const AdminThesesPage = () => {
             <button
               type="button"
               onClick={() => setShowRequestsModal(true)}
-              className="px-4 py-2 rounded-lg bg-orange-650 hover:bg-orange-550 text-white text-xs font-black uppercase transition-all flex items-center gap-1.5 animate-pulse cursor-pointer border-none"
+              className="px-4 py-2 rounded-lg bg-orange-600 hover:bg-orange-500 text-white text-xs font-black uppercase transition-all flex items-center gap-1.5 animate-pulse cursor-pointer border-none"
             >
               <span className="material-symbols-outlined text-[16px]">notifications_active</span>
               Yêu cầu Đạo văn ({plagiarismRequests.length})
@@ -869,6 +869,27 @@ const AdminThesesPage = () => {
                             </span>
                           ) : null
                         )}
+
+                        {/* Plagiarism Request Pending Badge */}
+                        {(() => {
+                          const list = JSON.parse(localStorage.getItem('lecturer_plagiarism_requests') || '[]');
+                          const req = list.find(r => !r.isProcessed && (r.submissionId === t.id || r.title === t.title));
+                          if (req) {
+                            return (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setShowRequestsModal(true);
+                                }}
+                                className="inline-flex items-center gap-1 text-[9.5px] font-black px-1.5 py-0.5 rounded border bg-orange-600 hover:bg-orange-500 text-white border-orange-500 animate-pulse uppercase cursor-pointer"
+                              >
+                                <span className="material-symbols-outlined text-[11px] shrink-0">notifications_active</span>
+                                Chờ duyệt đạo văn
+                              </button>
+                            );
+                          }
+                          return null;
+                        })()}
 
                         {/* Review Score Badge */}
                         {t.reviewCount > 0 && (
@@ -1362,6 +1383,77 @@ const AdminThesesPage = () => {
                   <p className="font-bold text-slate-200 mt-0.5">{selectedThesisForReviews.advisorName || '—'}</p>
                 </div>
               </div>
+
+              {/* Plagiarism Request Notice inside Reviews Modal */}
+              {(() => {
+                const list = JSON.parse(localStorage.getItem('lecturer_plagiarism_requests') || '[]');
+                const req = list.find(r => !r.isProcessed && (r.submissionId === selectedThesisForReviews.id || r.title === selectedThesisForReviews.title));
+                if (req) {
+                  return (
+                    <div className="p-4 rounded-xl bg-orange-950/20 border border-orange-500/30 text-xs space-y-3">
+                      <div className="flex justify-between items-start gap-3">
+                        <div className="flex items-center gap-1.5 text-orange-400 font-bold uppercase tracking-wider text-[10px]">
+                          <span className="material-symbols-outlined text-sm animate-pulse">notifications_active</span>
+                          Yêu cầu giải trình đạo văn đang chờ duyệt
+                        </div>
+                        {req.isUrgent && (
+                          <span className="px-1.5 py-0.5 rounded bg-red-500/20 border border-red-500/30 text-red-400 text-[8px] font-black uppercase tracking-widest animate-pulse">
+                            Khẩn cấp
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-2 bg-slate-950/30 p-2.5 rounded-lg border border-slate-800 text-[10px]">
+                        <div>
+                          <span className="text-slate-500 uppercase font-semibold">Tỷ lệ trùng lặp:</span>
+                          <span className="text-red-400 font-bold ml-1">{req.similarity}%</span>
+                        </div>
+                        <div>
+                          <span className="text-slate-500 uppercase font-semibold">AI tạo:</span>
+                          <span className="text-sky-400 font-bold ml-1">{req.aiPercent}%</span>
+                        </div>
+                        <div>
+                          <span className="text-slate-500 uppercase font-semibold">Tình huống:</span>
+                          <span className="text-amber-400 font-bold ml-1">
+                            {req.caseType === 'ignore' ? 'Đặc cách bỏ qua' : req.caseType === 'deep' ? 'Đối chiếu sâu' : 'Kỷ luật/Hủy'}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="p-2.5 rounded-lg bg-slate-950/15 border border-slate-850/50">
+                        <span className="text-slate-500 font-semibold block text-[9px] uppercase">Lý do giải trình của Giảng viên:</span>
+                        <p className="text-xs text-slate-300 italic mt-0.5">"{req.customNote || 'Không có ghi chú.'}"</p>
+                      </div>
+
+                      <div className="flex gap-2 justify-end pt-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setReviewsVisible(false);
+                            handleProcessRequest(req, 'Approved');
+                          }}
+                          className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-slate-950 text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1 border-none cursor-pointer"
+                        >
+                          <span className="material-symbols-outlined text-xs">check_circle</span>
+                          Duyệt thông qua
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setReviewsVisible(false);
+                            handleProcessRequest(req, 'Revision');
+                          }}
+                          className="px-3 py-1.5 rounded-lg bg-orange-500 hover:bg-orange-400 text-slate-950 text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1 border-none cursor-pointer"
+                        >
+                          <span className="material-symbols-outlined text-xs">edit_note</span>
+                          Yêu cầu sửa đổi
+                        </button>
+                      </div>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
 
               {/* List of Lecturer Reviews */}
               <div className="space-y-3">
