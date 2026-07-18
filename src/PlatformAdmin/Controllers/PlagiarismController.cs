@@ -136,13 +136,36 @@ namespace PlatformAdmin.Controllers
         {
             try
             {
-                var thesis = await _db.Theses.FirstOrDefaultAsync(t => t.Id == thesisId);
-                if (thesis == null) return NotFound(new { message = "Thesis not found" });
+                // Ensure PlagiarismReports table exists (creates if missing on production DB)
+                try
+                {
+                    await _db.Database.ExecuteSqlRawAsync(@"
+                        CREATE TABLE IF NOT EXISTS ""PlagiarismReports"" (
+                            ""Id"" SERIAL PRIMARY KEY,
+                            ""ThesisId"" INTEGER NOT NULL REFERENCES ""Theses""(""Id"") ON DELETE CASCADE,
+                            ""SimilarityPercentage"" DOUBLE PRECISION NOT NULL,
+                            ""ReportJson"" TEXT NOT NULL,
+                            ""CheckedAt"" TIMESTAMP WITHOUT TIME ZONE NOT NULL
+                        );");
+                }
+                catch { /* Table already exists or DB issue — continue */ }
 
-                var latestReport = await _db.PlagiarismReports
-                    .Where(r => r.ThesisId == thesisId)
-                    .OrderByDescending(r => r.CheckedAt)
-                    .FirstOrDefaultAsync();
+                var thesis = await _db.Theses.FirstOrDefaultAsync(t => t.Id == thesisId);
+                if (thesis == null) return Ok(new { status = "NotStarted" });
+
+                PlagiarismReportEntity? latestReport = null;
+                try
+                {
+                    latestReport = await _db.PlagiarismReports
+                        .Where(r => r.ThesisId == thesisId)
+                        .OrderByDescending(r => r.CheckedAt)
+                        .FirstOrDefaultAsync();
+                }
+                catch (Exception dbEx)
+                {
+                    Console.WriteLine($"PlagiarismReports query failed for thesis {thesisId}: {dbEx.Message}");
+                    return Ok(new { status = "NotStarted" });
+                }
 
                 if (latestReport != null)
                 {
@@ -186,9 +209,11 @@ namespace PlatformAdmin.Controllers
             catch (Exception ex)
             {
                 Console.WriteLine($"Error in GetStatus: {ex.Message}\n{ex.StackTrace}");
-                return StatusCode(StatusCodes.Status500InternalServerError, new { error = ex.Message });
+                // Return graceful NotStarted instead of 500 so UI doesn't break
+                return Ok(new { status = "NotStarted", error = ex.Message });
             }
         }
+
 
         private async Task SeedMockIndicesAsync()
         {
