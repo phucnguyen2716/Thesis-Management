@@ -32,6 +32,8 @@ We have implemented the following sets of changes:
     - **Decision State Storage**: Updated the request processing pipeline to save the exact decision (`Approved`, `Revision`, `Rejected`) inside the request objects saved in local storage.
     - **Plagiarism Status Override**: Updated `PlagiarismAnalysisBento.jsx` to dynamically override the plagiarism warning badge. If the Admin has confirmed an exemption request (`Approved`), the red `CẢNH BÁO ĐẠO VĂN` status badge is overridden with a green **`ĐÃ ĐẶC CÁCH PHÊ DUYỆT (PUBLISHED)`** badge, and the action button displays **`Yêu cầu đã được Admin phê duyệt (Đặc cách xuất bản)`** in green.
     - **Cross-Role Sync Listener**: Configured a React `useEffect` inside `PlagiarismAnalysisBento.jsx` listening to browser storage and content update events to trigger immediate, refresh-free re-renders when the Admin processes a request.
+16. **API PUT Path Resolution / String ID Bug Fix**:
+    - **Extracting Numeric ID**: Corrected the `handleProcessRequest` handler in `AdminThesesPage.jsx` to extract the correct numeric database ID (e.g. `219`) from string identifiers like `"sub-219"` or when finding it inside the active list, resolving the HTTP 404 Not Found error during the approval update request.
 
 ---
 
