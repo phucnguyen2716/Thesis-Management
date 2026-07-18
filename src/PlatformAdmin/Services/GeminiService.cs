@@ -985,26 +985,26 @@ namespace PlatformAdmin.Services
             }
             else
             {
-                result.Overview = $"Đề tài \"{title}\" tập trung nghiên cứu, thiết kế và xây dựng giải pháp cổng thông tin điện tử phục vụ quản lý đào tạo và chuyển đổi số quy trình nghiệp vụ hành chính công.";
+                result.Overview = $"Đề tài \"{title}\" tập trung nghiên cứu, thiết kế và phát triển Cổng thông tin eThesis phục vụ quản lý đồ án tốt nghiệp, tích hợp tính năng kiểm duyệt đạo văn và hỗ trợ phản hồi học thuật tự động.";
                 result.Tools = new List<string>
                 {
-                    "Công cụ & Chức năng: Quản lý cơ sở dữ liệu quan hệ, Phân quyền người dùng RBAC, Báo cáo thống kê trực quan",
-                    "Frontend: React.js với giao diện Responsive thích ứng thiết bị di động",
-                    "Backend: ASP.NET Core / Node.js Express với RESTful APIs kết nối an toàn",
-                    "Cơ sở dữ liệu: SQL Server / PostgreSQL lưu trữ thông tin nghiệp vụ và nhật ký hệ thống"
+                    "Quản lý & Phân quyền: Phân quyền vai trò (Admin, Giảng viên, Sinh viên) qua JWT Token",
+                    "Hệ thống kiểm duyệt: Quét trùng lặp văn bản tự động và báo cáo bản đồ nhiệt trực quan",
+                    "Công nghệ phát triển: React.js (Frontend), ASP.NET Core (Backend), PostgreSQL (Database)",
+                    "Hạ tầng vận hành: Triển khai Docker và tích hợp Hangfire quản lý hàng đợi tác vụ nền"
                 };
                 result.Strengths = new List<string>
                 {
-                    "Phân tích thiết kế hệ thống chi tiết, sơ đồ Usecase và Class Diagram vẽ chuẩn xác kỹ thuật.",
-                    "Giao diện tối giản, tốc độ tải trang nhanh, tuân thủ các quy tắc bảo mật xác thực JSON Web Token (JWT).",
-                    "Quy trình triển khai thử nghiệm chạy mượt mà trên môi trường ảo hóa Docker."
+                    "Giải quyết triệt để bài toán quản lý và lưu trữ khóa luận tập trung cho các khoa đào tạo.",
+                    "Giao diện quản lý hiện đại, tích hợp công cụ PDF Reader và xem xét điểm số trực quan.",
+                    "Hệ thống phân tích và chấm điểm cấu trúc chương mục tự động hoạt động ổn định."
                 };
                 result.Weaknesses = new List<string>
                 {
-                    "Mức độ đột phá về mặt công nghệ chưa cao, chủ yếu tập trung vào luồng nghiệp vụ CRUD thông thường.",
-                    "Cần bổ sung thêm phần đánh giá kiểm thử tải (Load Test) để chứng minh độ ổn định khi nhiều kết nối đồng thời."
+                    "Quá trình xử lý tệp dung lượng lớn đồng thời cần tối ưu hóa tài nguyên phần cứng server.",
+                    "Cần bổ sung thêm cơ chế mã hóa nội dung tài liệu để tăng cường tính bảo mật bản quyền."
                 };
-                result.Recommendation = "Khuyên dùng mức điểm: 7.5 - 8.0. Đồ án đáp ứng đầy đủ tiêu chuẩn đầu ra của ngành Kỹ thuật Phần mềm.";
+                result.Recommendation = "Khuyên dùng mức điểm: 8.0 - 8.5. Đề tài hoàn thiện tốt, đáp ứng đầy đủ tiêu chuẩn phần mềm quản lý đào tạo.";
             }
 
             return result;

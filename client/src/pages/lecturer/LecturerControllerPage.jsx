@@ -10,23 +10,23 @@ const generateDynamicAISummary = (title, description, faculty) => {
   const t = (title || "").toLowerCase();
   const desc = (description || "").toLowerCase();
   
-  let overview = `Đề tài "${title}" tập trung nghiên cứu, thiết kế và tối ưu hóa hệ thống phần mềm nhằm giải quyết bài toán thực tế thuộc chuyên ngành đào tạo.`;
+  let overview = `Đề tài "${title}" tập trung nghiên cứu, thiết kế và phát triển Cổng thông tin eThesis phục vụ quản lý đồ án tốt nghiệp, tích hợp tính năng kiểm duyệt đạo văn và hỗ trợ phản hồi học thuật tự động.`;
   let tools = [
-    "Ngôn ngữ lập trình chính: JavaScript (Node.js) hoặc Python",
-    "Framework phát triển: React.js để thiết kế giao diện động",
-    "Hệ quản trị cơ sở dữ liệu: PostgreSQL / SQL Server hoặc MongoDB",
-    "Hạ tầng vận hành: Docker Containerization và hệ thống RESTful APIs"
+    "Quản lý & Phân quyền: Phân quyền vai trò (Admin, Giảng viên, Sinh viên) qua JWT Token",
+    "Hệ thống kiểm duyệt: Quét trùng lặp văn bản tự động và báo cáo bản đồ nhiệt trực quan",
+    "Công nghệ phát triển: React.js (Frontend), ASP.NET Core (Backend), PostgreSQL (Database)",
+    "Hạ tầng vận hành: Triển khai Docker và tích hợp Hangfire quản lý hàng đợi tác vụ nền"
   ];
   let strengths = [
-    "Phân tích thiết kế hệ thống chi tiết, vẽ sơ đồ Usecase và Class chính xác.",
-    "Giao diện người dùng hiện đại, tốc độ tải trang nhanh và thiết kế responsive.",
-    "Áp dụng quy trình kiểm thử đơn vị (Unit Test) cho các luồng xử lý chính."
+    "Giải quyết triệt để bài toán quản lý và lưu trữ khóa luận tập trung cho các khoa đào tạo.",
+    "Giao diện quản lý hiện đại, tích hợp công cụ PDF Reader và xem xét điểm số trực quan.",
+    "Hệ thống phân tích và chấm điểm cấu trúc chương mục tự động hoạt động ổn định."
   ];
   let weaknesses = [
-    "Phần đánh giá bảo mật hệ thống còn đơn giản, cần mã hóa dữ liệu nhạy cảm kỹ hơn.",
-    "Chưa thực hiện đo lường tải (Load Test) khi có nhiều kết nối truy cập đồng thời."
+    "Quá trình xử lý tệp dung lượng lớn đồng thời cần tối ưu hóa tài nguyên phần cứng server.",
+    "Cần bổ sung thêm cơ chế mã hóa nội dung tài liệu để tăng cường tính bảo mật bản quyền."
   ];
-  let recommendation = "Khuyên dùng mức điểm: 8.0 - 8.5. Thích hợp làm tài liệu tham khảo chất lượng tại thư viện khoa.";
+  let recommendation = "Khuyên dùng mức điểm: 8.0 - 8.5. Đề tài hoàn thiện tốt, đáp ứng đầy đủ tiêu chuẩn phần mềm quản lý đào tạo.";
 
   if (t.includes("thư viện") || desc.includes("thư viện") || t.includes("library") || desc.includes("library")) {
     overview = `Đồ án thiết kế và phát triển hệ thống quản lý thư viện số tích hợp tìm kiếm tài liệu thông minh. Giải pháp cho phép tự động hóa quy trình mượn trả, phân quyền thủ thư và tra cứu sách trực tuyến nhanh chóng.`;
