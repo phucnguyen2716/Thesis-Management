@@ -1,9 +1,12 @@
-# Walkthrough - Enhanced Chatbot Search & Document Previews
+# Walkthrough - Enhanced Chatbot Search, Document Previews & Admin Approval Panel
 
 We have implemented the following sets of changes:
 1. Updated the chatbot's internal search algorithm to support searching by advisor name, major, and subject, making it easier for students to find specific graduation projects.
 2. Fixed a critical bug in the 3D Flipbook viewer where trying to open Office files (like `.docx`) resulted in DearFlip cross-origin errors, and implemented a safe, exception-free directory traversal search for mock Google Drive files.
 3. Fixed missing table schema bugs in production database (PostgreSQL on Render) by making migration scripts robust and introducing fallback table creations for `ThesisSubmissions` and `ThesisReviews` on startup.
+4. Removed the Gemini API Key UI input field from the Admin portal header as requested.
+5. Implemented an **"Ý kiến GV" (Lecturer Reviews)** button and modal in the Admin's Thesis Management list. Admins can now view a detailed review history (Lecturer Name, Score, Comments/Feedback, Decision Status) and download student submission documents.
+6. Added a **direct approval status manager** dropdown in both the new reviews modal and the Edit modal, allowing Admins to review lecturer recommendations and instantly update/approve the thesis status.
 
 ---
 
@@ -48,6 +51,22 @@ We have implemented the following sets of changes:
 #### [Program.cs](file:///c:/Users/nguye/Desktop/Thesis-Management/src/PlatformAdmin/Program.cs)
 - **Robust Exception Handling**: Wrapped each individual SQL migration command in a separate `try-catch` block. This prevents any single failed migration step (such as adding an already-existing column or modifying a missing optional table) from blocking subsequent database migrations.
 - **Fallback Table Creations**: Added explicit `CREATE TABLE IF NOT EXISTS` commands for `"ThesisSubmissions"` and `"ThesisReviews"` tables in the production PostgreSQL startup flow, ensuring they exist dynamically even when `EnsureCreated()` is skipped on an already-existing DB instance.
+
+---
+
+## 4. Admin Portal Improvements (Gemini Key & Lecturer Requests Verification)
+
+### Frontend (Client)
+
+#### [AdminThesesPage.jsx](file:///c:/Users/nguye/Desktop/Thesis-Management/client/src/pages/admin/AdminThesesPage.jsx)
+- **Gemini Key input removed**: Deleted the Gemini API Key input field from the header layout.
+- **Lecturer Reviews ("Ý kiến GV") Modal**:
+  - Added an "Ý kiến GV" action button for each thesis.
+  - Opens a modal that fetches all evaluations (`thesisService.getReviews`) and displays detailed lecturer names, scores, timestamps, decisions (Approved, Rejected, Revision), and textual comments/feedback.
+  - Lists student submissions within the modal, complete with download buttons.
+- **Direct Status Approval dropdown**:
+  - Added a "Trạng thái đề tài" select dropdown inside the reviews modal and the standard Edit modal.
+  - Admins can instantly override or confirm the thesis status (Pending, InProgress, Submitted, Approved, Rejected, Revision) with a single click.
 
 ---
 

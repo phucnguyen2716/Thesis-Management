@@ -172,16 +172,12 @@ const AdminThesesPage = () => {
 
   const [selectedThesisForScan, setSelectedThesisForScan] = useState(null);
   const [scanVisible, setScanVisible] = useState(false);
-  const [apiKey, setApiKey] = useState(localStorage.getItem('gemini_api_key') || '');
-  const handleApiKeyChange = (e) => {
-    const val = e.target.value.trim();
-    setApiKey(val);
-    if (val) {
-      localStorage.setItem('gemini_api_key', val);
-    } else {
-      localStorage.removeItem('gemini_api_key');
-    }
-  };
+  const [reviewsVisible, setReviewsVisible] = useState(false);
+  const [selectedThesisForReviews, setSelectedThesisForReviews] = useState(null);
+  const [thesisReviews, setThesisReviews] = useState([]);
+  const [loadingReviews, setLoadingReviews] = useState(false);
+  const [updateStatusVal, setUpdateStatusVal] = useState('');
+  const [updatingStatus, setUpdatingStatus] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [scanResult, setScanResult] = useState(null);
   const [scanProgress, setScanProgress] = useState(0);
@@ -387,6 +383,53 @@ const AdminThesesPage = () => {
     }
   };
 
+  const openReviewsModal = async (thesis) => {
+    setSelectedThesisForReviews(thesis);
+    setUpdateStatusVal(thesis.status || 'Pending');
+    setThesisReviews([]);
+    setReviewsVisible(true);
+    setLoadingReviews(true);
+    try {
+      const res = await thesisService.getReviews(thesis.id);
+      setThesisReviews(res.data || []);
+    } catch (err) {
+      console.error('Error loading reviews:', err);
+      showToastMessage('error', 'Không thể tải ý kiến đánh giá từ giảng viên.');
+    } finally {
+      setLoadingReviews(false);
+    }
+  };
+
+  const handleUpdateStatus = async () => {
+    if (!selectedThesisForReviews) return;
+    setUpdatingStatus(true);
+    try {
+      const payload = {
+        title:       selectedThesisForReviews.title,
+        description: selectedThesisForReviews.description,
+        major:       selectedThesisForReviews.major,
+        subject:     selectedThesisForReviews.subject,
+        subjectCode: selectedThesisForReviews.subjectCode,
+        category:    selectedThesisForReviews.category,
+        studentId:   selectedThesisForReviews.studentId,
+        advisorId:   selectedThesisForReviews.advisorId,
+        status:      updateStatusVal,
+        batch:       selectedThesisForReviews.batch || 1,
+        filePath:    selectedThesisForReviews.filePath,
+      };
+      await thesisService.update(selectedThesisForReviews.id, payload);
+      showToastMessage('success', 'Cập nhật trạng thái đề tài thành công!');
+      // Update local state
+      setTheses(prev => prev.map(t => t.id === selectedThesisForReviews.id ? { ...t, status: updateStatusVal } : t));
+      setSelectedThesisForReviews(prev => ({ ...prev, status: updateStatusVal }));
+    } catch (err) {
+      console.error('Error updating status:', err);
+      showToastMessage('error', 'Lỗi khi cập nhật trạng thái: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
+
   const students = useMemo(() => Array.isArray(users) ? users.filter(u => u.role === 'Student') : [], [users]);
   const advisors = useMemo(() => Array.isArray(users) ? users.filter(u => u.role === 'Advisor') : [], [users]);
 
@@ -554,19 +597,6 @@ const AdminThesesPage = () => {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <div className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-800 border border-slate-700 rounded-lg text-slate-300">
-            <span className="material-symbols-outlined text-[14px]">key</span>
-            <input
-              type="password"
-              value={apiKey}
-              onChange={handleApiKeyChange}
-              placeholder="Gemini API Key..."
-              className="bg-transparent border-none outline-none text-[10px] font-mono w-40 focus:ring-0 placeholder:text-slate-500"
-            />
-            {apiKey && (
-              <span className="text-[8px] font-black text-emerald-400 bg-emerald-950/20 px-1.5 py-0.25 rounded border border-emerald-800 uppercase">Sử dụng API riêng</span>
-            )}
-          </div>
           <button
             type="button"
             onClick={handleOpenCreate}
@@ -682,6 +712,10 @@ const AdminThesesPage = () => {
                       </span>
                     </td>
                     <td className="p-4 text-right space-x-1 whitespace-nowrap">
+                      <button type="button" onClick={() => openReviewsModal(t)}
+                        className="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 transition-colors">
+                        Ý kiến GV
+                      </button>
                       <button type="button" onClick={() => openPlagiarismModal(t)}
                         className="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase bg-teal-900/60 hover:bg-teal-800/60 text-teal-300 transition-colors">
                         Đạo văn
@@ -900,6 +934,22 @@ const AdminThesesPage = () => {
                 </label>
               </div>
 
+              {/* Trạng thái đề tài */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500">
+                  Trạng thái đề tài
+                  <select value={form.status} onChange={e => setFormField('status', e.target.value)}
+                    className="mt-1.5 w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-amber-500">
+                    <option value="Pending">Pending (Chờ duyệt)</option>
+                    <option value="InProgress">InProgress (Đang thực hiện)</option>
+                    <option value="Submitted">Submitted (Đã nộp báo cáo)</option>
+                    <option value="Approved">Approved (Đã thông qua)</option>
+                    <option value="Rejected">Rejected (Bị từ chối)</option>
+                    <option value="Revision">Revision (Yêu cầu chỉnh sửa)</option>
+                  </select>
+                </label>
+              </div>
+
               {/* Học phần — CHỈ HIỆN VỚI ĐỒ ÁN */}
               {isProject && (
                 <div className="rounded-xl border border-slate-700/50 bg-slate-800/30 p-4 space-y-3">
@@ -1112,6 +1162,166 @@ const AdminThesesPage = () => {
               </div>
             </div>
             <p className="text-[9px] text-slate-500 font-medium">Hệ thống đang chạy các thuật toán BM25, N-Gram, TF-IDF + Cosine, Rule-Based.</p>
+          </div>
+        </div>
+      )}
+
+      {reviewsVisible && selectedThesisForReviews && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs">
+          <div className="w-full max-w-2xl rounded-2xl bg-slate-900 border border-slate-800 p-6 space-y-4 max-h-[90vh] overflow-y-auto text-left shadow-2xl">
+            <div className="flex justify-between items-center pb-2 border-b border-slate-800">
+              <div>
+                <h2 className="text-base font-black uppercase tracking-wider text-amber-400">
+                  Ý kiến đánh giá & Trạng thái phê duyệt
+                </h2>
+                <p className="text-[11px] text-slate-400 mt-0.5">
+                  Đề tài: {selectedThesisForReviews.title}
+                </p>
+              </div>
+              <button type="button" onClick={() => { setReviewsVisible(false); setSelectedThesisForReviews(null); }}
+                className="material-symbols-outlined text-slate-400 hover:text-white">close</button>
+            </div>
+
+            <div className="space-y-4">
+              {/* Thesis Info summary */}
+              <div className="grid grid-cols-2 gap-4 p-3 rounded-xl bg-slate-950/40 border border-slate-800 text-xs">
+                <div>
+                  <span className="text-slate-500 font-semibold uppercase tracking-wider text-[9px]">Sinh viên thực hiện:</span>
+                  <p className="font-bold text-slate-200 mt-0.5">{selectedThesisForReviews.studentName} ({selectedThesisForReviews.studentCode || '—'})</p>
+                </div>
+                <div>
+                  <span className="text-slate-500 font-semibold uppercase tracking-wider text-[9px]">Giảng viên hướng dẫn:</span>
+                  <p className="font-bold text-slate-200 mt-0.5">{selectedThesisForReviews.advisorName || '—'}</p>
+                </div>
+              </div>
+
+              {/* List of Lecturer Reviews */}
+              <div className="space-y-3">
+                <p className="text-[10px] font-black uppercase tracking-wider text-slate-500 flex items-center gap-1">
+                  <span className="material-symbols-outlined text-xs">rate_review</span>
+                  Ý kiến đánh giá từ Giảng viên ({thesisReviews.length})
+                </p>
+
+                {loadingReviews ? (
+                  <div className="py-8 text-center text-xs text-slate-400 flex flex-col items-center justify-center gap-2">
+                    <div className="w-5 h-5 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+                    <span>Đang tải đánh giá từ database...</span>
+                  </div>
+                ) : thesisReviews.length > 0 ? (
+                  <div className="space-y-3 max-h-60 overflow-y-auto pr-1">
+                    {thesisReviews.map((rev) => (
+                      <div key={rev.id} className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-3">
+                        <div className="flex justify-between items-start gap-2">
+                          <div>
+                            <p className="text-xs font-bold text-slate-200">{rev.reviewerName}</p>
+                            <p className="text-[9px] text-slate-500 mt-0.5">
+                              Đã đánh giá: {new Date(rev.reviewedAt).toLocaleString('vi-VN')}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className={`text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full ${
+                              rev.decision === 'Approved' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
+                              rev.decision === 'Rejected' ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
+                              'bg-orange-500/20 text-orange-400 border border-orange-500/30'
+                            }`}>
+                              {rev.decision}
+                            </span>
+                            {rev.score !== null && (
+                              <span className="text-xs font-black text-amber-400 bg-amber-950/20 px-2 py-0.5 rounded border border-amber-800">
+                                {rev.score} / 10
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {rev.comments ? (
+                          <div className="text-xs text-slate-300 bg-slate-900/60 p-3 rounded-lg border border-slate-850/60 leading-relaxed whitespace-pre-line">
+                            {rev.comments}
+                          </div>
+                        ) : (
+                          <p className="text-xs text-slate-500 italic">Không có nhận xét bằng văn bản.</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 border-dashed text-center text-xs text-slate-500">
+                    Chưa có đánh giá hoặc ý kiến phản hồi nào được ghi nhận cho đề tài này.
+                  </div>
+                )}
+              </div>
+
+              {/* Submissions Section */}
+              {selectedThesisForReviews.submissions && selectedThesisForReviews.submissions.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-[10px] font-black uppercase tracking-wider text-slate-500 flex items-center gap-1">
+                    <span className="material-symbols-outlined text-xs">drafts</span>
+                    Tài liệu đính kèm ({selectedThesisForReviews.submissions.length})
+                  </p>
+                  <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
+                    {selectedThesisForReviews.submissions.map((sub, idx) => (
+                      <div key={sub.id || idx} className="p-2.5 rounded-xl bg-slate-950 border border-slate-850 flex items-center justify-between gap-3">
+                        <div className="min-w-0 flex items-center gap-2">
+                          <span className="material-symbols-outlined text-sm text-slate-400">description</span>
+                          <p className="text-xs font-semibold text-slate-300 truncate max-w-[300px]">{sub.fileName}</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleDownload(sub.filePath, sub.fileName)}
+                          className="px-2.5 py-1 rounded-lg text-[9px] font-black uppercase bg-slate-800 hover:bg-slate-700 text-slate-200 flex items-center gap-1 transition-colors border-none cursor-pointer"
+                        >
+                          Tải về
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Admin decision/status update */}
+              <div className="pt-4 border-t border-slate-800 space-y-3">
+                <p className="text-[10px] font-black uppercase tracking-wider text-amber-400 flex items-center gap-1">
+                  <span className="material-symbols-outlined text-xs">gavel</span>
+                  Cập nhật trạng thái phê duyệt (Admin)
+                </p>
+
+                <div className="flex gap-3">
+                  <div className="flex-1">
+                    <select
+                      value={updateStatusVal}
+                      onChange={(e) => setUpdateStatusVal(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-amber-500"
+                    >
+                      <option value="Pending">Pending (Chờ duyệt)</option>
+                      <option value="InProgress">InProgress (Đang thực hiện)</option>
+                      <option value="Submitted">Submitted (Đã nộp báo cáo)</option>
+                      <option value="Approved">Approved (Đã thông qua)</option>
+                      <option value="Rejected">Rejected (Bị từ chối)</option>
+                      <option value="Revision">Revision (Yêu cầu chỉnh sửa)</option>
+                    </select>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleUpdateStatus}
+                    disabled={updatingStatus}
+                    className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black uppercase rounded-xl transition-all disabled:opacity-60 flex items-center justify-center gap-1"
+                  >
+                    {updatingStatus && <div className="w-3 h-3 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />}
+                    Cập nhật
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-3 border-t border-slate-800">
+              <button
+                type="button"
+                onClick={() => { setReviewsVisible(false); setSelectedThesisForReviews(null); }}
+                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold uppercase rounded-lg transition-colors border-none cursor-pointer"
+              >
+                Đóng
+              </button>
+            </div>
           </div>
         </div>
       )}
