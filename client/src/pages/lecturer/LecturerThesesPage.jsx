@@ -33,22 +33,27 @@ const LecturerThesesPage = () => {
             };
           });
 
-          // Fetch plagiarism reports in parallel
-          const itemsWithPlag = await Promise.all(dbItems.map(async item => {
-            const numericId = parseInt(item.id.replace('sub-', ''), 10);
-            try {
-              const res = await plagiarismService.getStatus(numericId);
-              if (res.data && res.data.status === 'Completed' && res.data.report) {
-                return {
-                  ...item,
-                  similarity: Math.round(res.data.report.similarityPercentage)
-                };
+          // Fetch plagiarism reports in small batches to avoid overwhelming the server
+          const BATCH_SIZE = 5;
+          const itemsWithPlag = [...dbItems];
+          for (let i = 0; i < dbItems.length; i += BATCH_SIZE) {
+            const batch = dbItems.slice(i, i + BATCH_SIZE);
+            await Promise.all(batch.map(async (item, batchIdx) => {
+              const globalIdx = i + batchIdx;
+              const numericId = parseInt(item.id.replace('sub-', ''), 10);
+              try {
+                const res = await plagiarismService.getStatus(numericId);
+                if (res.data && res.data.status === 'Completed' && res.data.report) {
+                  itemsWithPlag[globalIdx] = {
+                    ...item,
+                    similarity: Math.round(res.data.report.similarityPercentage)
+                  };
+                }
+              } catch (err) {
+                // Silently ignore status fetch errors — thesis still shows without similarity
               }
-            } catch (err) {
-              console.error(`Lỗi khi lấy đạo văn cho ID ${numericId}:`, err);
-            }
-            return item;
-          }));
+            }));
+          }
 
           setSubmissions(itemsWithPlag);
         }
