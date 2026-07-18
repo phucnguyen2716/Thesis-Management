@@ -1,6 +1,8 @@
 using System.Net.Sockets;
 using Microsoft.AspNetCore.Mvc;
 using RabbitMQ.Client;
+using PlatformAdmin.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace PlatformAdmin.Controllers;
 
@@ -11,12 +13,14 @@ public class HealthController : ControllerBase
     private readonly IConfiguration _configuration;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<HealthController> _logger;
+    private readonly AppDbContext _db;
 
-    public HealthController(IConfiguration configuration, IHttpClientFactory httpClientFactory, ILogger<HealthController> logger)
+    public HealthController(IConfiguration configuration, IHttpClientFactory httpClientFactory, ILogger<HealthController> logger, AppDbContext db)
     {
         _configuration = configuration;
         _httpClientFactory = httpClientFactory;
         _logger = logger;
+        _db = db;
     }
 
     [HttpGet]
@@ -26,6 +30,61 @@ public class HealthController : ControllerBase
         service = "eThesis PlatformAdmin",
         timestamp = DateTime.UtcNow
     });
+
+    [HttpGet("db-diagnostics")]
+    public async Task<IActionResult> GetDbDiagnostics()
+    {
+        try
+        {
+            var canConnect = await _db.Database.CanConnectAsync();
+            if (!canConnect)
+            {
+                return Ok(new { healthy = false, status = "Cannot connect to database" });
+            }
+
+            var plagiarismReportsCount = -1;
+            Exception? plagiarismQueryException = null;
+            try
+            {
+                plagiarismReportsCount = await _db.PlagiarismReports.CountAsync();
+            }
+            catch (Exception ex)
+            {
+                plagiarismQueryException = ex;
+            }
+
+            var thesesCount = -1;
+            Exception? thesesQueryException = null;
+            try
+            {
+                thesesCount = await _db.Theses.CountAsync();
+            }
+            catch (Exception ex)
+            {
+                thesesQueryException = ex;
+            }
+
+            return Ok(new
+            {
+                healthy = plagiarismQueryException == null && thesesQueryException == null,
+                canConnect,
+                theses = new {
+                    count = thesesCount,
+                    error = plagiarismQueryException == null ? thesesQueryException?.Message : null,
+                    fullError = thesesQueryException?.ToString()
+                },
+                plagiarismReports = new {
+                    count = plagiarismReportsCount,
+                    error = plagiarismQueryException?.Message,
+                    fullError = plagiarismQueryException?.ToString()
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = ex.Message, fullError = ex.ToString() });
+        }
+    }
 
     /// <summary>Dependency health: Elasticsearch + RabbitMQ</summary>
     [HttpGet("dependencies")]
