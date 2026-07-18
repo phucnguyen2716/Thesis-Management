@@ -10,6 +10,10 @@ We have implemented the following sets of changes:
 7. **Redesigned and optimized the Admin Thesis Table Layout**: Improved spacing, alignment, and appearance of all columns by introducing user cards for students, profile icons for advisors, status dots in badges, and compact/outline action buttons.
 8. **Fixed File Downloads on Production**: Replaced hardcoded `localhost:5145` paths in the download functions with the `resolveFileUrl` helper. This dynamically resolves paths to the active Render backend on production, fixing the download button failures.
 9. **Simplified Review Database Queries**: Removed redundant `.Include()` statements in the review query inside `ReviewService.cs` that can sometimes cause slow query compilation in EF Core with complex projections.
+10. **Redesigned and Repainted the Gemini AI Analysis Panel**:
+    - **High-contrast text coloring**: Fixed the text legibility issues by changing the low-contrast dark teal/slate text to high-contrast white and teal-300 colors suitable for dark-themed backdrops.
+    - **Markdown and List Rendering**: Enabled clean parsing of headings, bold text, and bullet list markers returned from the Gemini AI model.
+    - **Interactive Thesis Card Parsing**: Integrated support for parsing raw `[THESIS_CARD:id=...|title=...|student=...]` tags into interactive, gorgeous glassmorphic book card widgets directly inside the AI analysis response container.
 
 ---
 
@@ -82,6 +86,17 @@ We have implemented the following sets of changes:
 - **Vibrant Status Badges**: Added color-coded status indicator dots inside the status pill badges (e.g. green dot for Approved, orange dot for Revision, blue dot for InProgress) for better readability.
 - **Student Profile Cards**: Added a circular student initials avatar next to the name and formatted the Student Code as a clean sub-label.
 - **Advisor Indicators**: Rendered a person profile icon next to the advisor name to distinguish roles visually.
+
+---
+
+## 6. Gemini AI Analysis Redesign
+
+### Frontend (Client)
+
+#### [PlagiarismScanResultPanel.jsx](file:///c:/Users/nguye/Desktop/Thesis-Management/client/src/components/lecturer/PlagiarismScanResultPanel.jsx)
+- **High-contrast Colors**: Implemented high-contrast text color mappings (teal-300 for headings, slate-200/white for body copy) so they show up beautifully on the dark teal backdrop.
+- **List and Heading Styles**: Styled lists and markdown headings dynamically to align structured suggestions nicely.
+- **Thesis Card Integration**: Re-used the book cover design component to automatically map raw `[THESIS_CARD]` tags to interactive, linkable book cover cards.
 
 ---
 
