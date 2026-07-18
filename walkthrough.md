@@ -20,6 +20,11 @@ We have implemented the following sets of changes:
 12. **Plagiarism Scans & Lecturer Review Scores Displayed Directly in Admin List**:
     - **Optimized DTO Extension**: Added a `PlagiarismSimilarity` property to `ThesisDto`. The backend `ThesisService` performs a single, highly efficient grouped query lookup to retrieve the latest plagiarism results for all listed items in one roundtrip.
     - **Inline Badges**: Added a visual vertical list of metrics directly under the Status column inside the Admin table. Admins can now see at a glance if a plagiarism report is completed (e.g. `Đạo văn: 15%` with color-coded warning backgrounds), currently scanning (`Đang quét...`), or not scanned yet, alongside reviewer scores (e.g. `Điểm: 8.5 (1 GV)`).
+13. **Plagiarism Review Requests Panel for Admins & Resilient Startup**:
+    - **Pulsing Request Notification Bell**: Added an orange pulsing notification badge to the Admin portal header displaying the number of pending plagiarism scan review requests submitted by lecturers.
+    - **Yêu cầu Đạo văn Modal**: Clicking the notification displays a beautiful details panel showing the thesis title, student name, requesting lecturer name, matching percentages, urgency level, and the lecturer's custom explanation reason (e.g. "NguyenHoangPhuc báo cáo trích dẫn đúng nguồn...").
+    - **Action Handling**: Added direct buttons in the modal for the Admin to immediately: "Duyệt thông qua" (sets status to Approved), "Yêu cầu sửa đổi" (sets status to Revision), or "Từ chối / Hủy" (sets status to Rejected), instantly updating the DB and notifying the lecturer.
+    - **Startup Retry Loop & Safe Hangfire**: Configured a 12-attempt (36s) connection retry loop in `Program.cs` on startup to handle sleeping database warmups on Render free instance limits, and wrapped Hangfire's dashboard setup in a try-catch block to completely prevent container start failures.
 
 ---
 
