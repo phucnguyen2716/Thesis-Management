@@ -335,7 +335,7 @@ public class ThesisService : IThesisService
             "ai" => "Trí tuệ nhân tạo",
             "networking" or "computer-networks" => "Mạng máy tính",
             "is" or "information-systems" or "systems" => "Hệ thống thông tin DN",
-            "security" or "cybersecurity" => "An toàn không gian mạng",
+            "security" or "cybersecurity" or "information-security" or "cyber-security" => "An toàn không gian mạng",
             "software-engineering" => "Công nghệ phần mềm",
             "programming" => "Kỹ thuật lập trình",
             _ => majorKey

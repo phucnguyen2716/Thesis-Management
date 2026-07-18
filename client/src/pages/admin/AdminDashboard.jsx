@@ -28,7 +28,9 @@ const tooltipStyle = {
 };
 
 const CustomXAxisTick = ({ x, y, payload }) => {
-  const value = payload.value;
+  let value = payload.value || '';
+  // Clean up display by replacing dashes with spaces for presentation
+  value = value.replace(/-/g, ' ');
   const words = value.split(' ');
   const splitIdx = Math.ceil(words.length / 2);
   const line1 = words.slice(0, splitIdx).join(' ');

@@ -233,7 +233,10 @@ namespace PlatformAdmin.Services
                 { "is", "Hệ thống thông tin" },
                 { "systems", "Hệ thống thông tin" },
                 { "information-systems", "Hệ thống thông tin" },
-                { "security", "An toàn thông tin" }
+                { "security", "An toàn thông tin" },
+                { "information-security", "An toàn thông tin" },
+                { "cyber-security", "An toàn thông tin" },
+                { "cybersecurity", "An toàn thông tin" }
             };
 
             var deptStatsMap = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
