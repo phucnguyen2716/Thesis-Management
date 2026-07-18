@@ -25,6 +25,9 @@ We have implemented the following sets of changes:
     - **Yêu cầu Đạo văn Modal**: Clicking the notification displays a beautiful details panel showing the thesis title, student name, requesting lecturer name, matching percentages, urgency level, and the lecturer's custom explanation reason (e.g. "NguyenHoangPhuc báo cáo trích dẫn đúng nguồn...").
     - **Action Handling**: Added direct buttons in the modal for the Admin to immediately: "Duyệt thông qua" (sets status to Approved), "Yêu cầu sửa đổi" (sets status to Revision), or "Từ chối / Hủy" (sets status to Rejected), instantly updating the DB and notifying the lecturer.
     - **Startup Retry Loop & Safe Hangfire**: Configured a 12-attempt (36s) connection retry loop in `Program.cs` on startup to handle sleeping database warmups on Render free instance limits, and wrapped Hangfire's dashboard setup in a try-catch block to completely prevent container start failures.
+14. **Dashboard Stats Major/Department Mappings & Text Wrapping**:
+    - **Translation Mapping**: Added mapping for `information-security`, `cyber-security`, and `cybersecurity` to `"An toàn thông tin"` (in `AdminService.cs`) and `"An toàn không gian mạng"` (in `ThesisService.cs`). This prevents raw English hyphenated keys from leaking into the statistics dashboard.
+    - **Hyphen-to-Space Text Wrapping**: Added a frontend parsing regex rule to the `CustomXAxisTick` inside `AdminDashboard.jsx` that replaces dashes with spaces before splitting, ensuring any unmapped slugs wrap nicely across two lines instead of overflowing and overlapping with adjacent labels.
 
 ---
 
