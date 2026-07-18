@@ -515,8 +515,26 @@ const AdminThesesPage = () => {
 
   const handleProcessRequest = async (request, decision) => {
     try {
-      const thesis = theses.find(t => t.id === request.submissionId || t.title === request.title);
-      const thesisId = thesis ? thesis.id : request.submissionId;
+      let thesisId = null;
+      const thesis = theses.find(t => 
+        t.title.toLowerCase().trim() === request.title.toLowerCase().trim() ||
+        t.id === request.submissionId ||
+        `sub-${t.id}` === request.submissionId
+      );
+      
+      if (thesis) {
+        thesisId = thesis.id;
+      } else {
+        const rawId = request.submissionId;
+        if (typeof rawId === 'string') {
+          const match = rawId.match(/\d+/);
+          if (match) {
+            thesisId = parseInt(match[0], 10);
+          }
+        } else if (typeof rawId === 'number') {
+          thesisId = rawId;
+        }
+      }
 
       if (thesisId) {
         const payload = {
