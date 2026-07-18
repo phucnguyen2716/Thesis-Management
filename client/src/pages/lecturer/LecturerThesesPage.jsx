@@ -32,34 +32,46 @@ const LecturerThesesPage = () => {
               exemplaryScore: t.latestScore ? Math.round(t.latestScore * 10) : mockMatch.exemplaryScore
             };
           });
+          // Set initial items immediately to remove loading screen instantly
+          setSubmissions(dbItems);
+          setLoading(false);
 
-          // Fetch plagiarism reports in small batches to avoid overwhelming the server
+          // Fetch plagiarism reports in the background in small batches
           const BATCH_SIZE = 5;
-          const itemsWithPlag = [...dbItems];
-          for (let i = 0; i < dbItems.length; i += BATCH_SIZE) {
-            const batch = dbItems.slice(i, i + BATCH_SIZE);
-            await Promise.all(batch.map(async (item, batchIdx) => {
-              const globalIdx = i + batchIdx;
-              const numericId = parseInt(item.id.replace('sub-', ''), 10);
-              try {
-                const res = await plagiarismService.getStatus(numericId);
-                if (res.data && res.data.status === 'Completed' && res.data.report) {
-                  itemsWithPlag[globalIdx] = {
-                    ...item,
-                    similarity: Math.round(res.data.report.similarityPercentage)
-                  };
+          
+          // Run background task asynchronously without blocking
+          (async () => {
+            const updatedItems = [...dbItems];
+            for (let i = 0; i < dbItems.length; i += BATCH_SIZE) {
+              const batch = dbItems.slice(i, i + BATCH_SIZE);
+              
+              let hasChanges = false;
+              await Promise.all(batch.map(async (item, batchIdx) => {
+                const globalIdx = i + batchIdx;
+                const numericId = parseInt(item.id.replace('sub-', ''), 10);
+                try {
+                  const res = await plagiarismService.getStatus(numericId);
+                  if (res.data && res.data.status === 'Completed' && res.data.report) {
+                    updatedItems[globalIdx] = {
+                      ...item,
+                      similarity: Math.round(res.data.report.similarityPercentage)
+                    };
+                    hasChanges = true;
+                  }
+                } catch (err) {
+                  // Ignore error, fallback to initial item
                 }
-              } catch (err) {
-                // Silently ignore status fetch errors — thesis still shows without similarity
-              }
-            }));
-          }
+              }));
 
-          setSubmissions(itemsWithPlag);
+              // Batch update state to avoid unnecessary re-renders
+              if (hasChanges) {
+                setSubmissions([...updatedItems]);
+              }
+            }
+          })();
         }
       } catch (error) {
         console.error("Lỗi khi tải danh sách đồ án từ DB:", error);
-      } finally {
         setLoading(false);
       }
     };
