@@ -49,6 +49,8 @@ We have implemented the following sets of changes:
     - **eThesis Project Fallback**: Refactored the default fallback templates in both frontend and backend simulators. Now, when a generic title (such as a student name like `"NguyenHoangPhuc"`) is processed without an active Gemini API key, the card output is populated with details mapping the **eThesis Graduation Thesis Portal Management Platform**, detailing its specific user role modules, Hangfire queue managers, and PostgreSQL data store configurations rather than a generic text block.
 22. **Automatic API Key Detection & Mock Overrides**:
     - **Header & Config Validation**: Configured the backend configurations reader (`GetGeminiConfig()`) to verify incoming HTTP request headers and default server settings. If a real, non-placeholder API key is detected, mock mode is instantly bypassed (`useMock = false`) and the application performs direct network calls to Google's official Gemini endpoint. This avoids forced local simulations when credentials are configured on Render dashboard environment variables.
+23. **Render Startup Port-Scan Timeout Resolution**:
+    - **Deferred Background Sync**: Postponed the startup seeder task to execute after 30 seconds instead of 3 seconds. Also, completely removed the synchronous `syncJob.SyncAllAsync()` invocation from the boot loop. This ensures Kestrel binds to port 80 instantly without CPU starvation from LibreOffice file conversions during container initialization, allowing Render's port probes to verify service health immediately.
 
 ---
 
