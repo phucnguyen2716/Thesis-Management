@@ -26,11 +26,39 @@ namespace PlatformAdmin.Services
         {
             _logger = logger;
             _httpClient = httpClient;
-            _apiKey = configuration["Cloudinary:ApiKey"] ?? "944838729127146";
-            _cloudName = configuration["Cloudinary:CloudName"] ?? "uef_social_media";
-            _apiSecret = configuration["Cloudinary:ApiSecret"] ?? "";
             
-            _useMock = string.IsNullOrEmpty(_apiKey) || string.IsNullOrEmpty(_apiSecret) || configuration.GetValue<bool>("Cloudinary:UseMock", true);
+            var configKey = configuration["Cloudinary:ApiKey"]?.Trim();
+            var configSecret = configuration["Cloudinary:ApiSecret"]?.Trim();
+            var configName = configuration["Cloudinary:CloudName"]?.Trim();
+
+            // Support environment variables
+            if (string.IsNullOrWhiteSpace(configKey) || configKey == "YOUR_CLOUDINARY_API_KEY")
+            {
+                configKey = Environment.GetEnvironmentVariable("CLOUDINARY_API_KEY")?.Trim() 
+                            ?? Environment.GetEnvironmentVariable("Cloudinary__ApiKey")?.Trim();
+            }
+            if (string.IsNullOrWhiteSpace(configSecret) || configSecret == "YOUR_CLOUDINARY_API_SECRET")
+            {
+                configSecret = Environment.GetEnvironmentVariable("CLOUDINARY_API_SECRET")?.Trim()
+                            ?? Environment.GetEnvironmentVariable("Cloudinary__ApiSecret")?.Trim();
+            }
+            if (string.IsNullOrWhiteSpace(configName) || configName == "uef_social_media")
+            {
+                configName = Environment.GetEnvironmentVariable("CLOUDINARY_CLOUD_NAME")?.Trim()
+                            ?? Environment.GetEnvironmentVariable("Cloudinary__CloudName")?.Trim()
+                            ?? "uef_social_media";
+            }
+
+            _apiKey = configKey ?? "";
+            _apiSecret = configSecret ?? "";
+            _cloudName = configName ?? "uef_social_media";
+
+            bool isDummyKey = string.IsNullOrEmpty(_apiKey) || 
+                              _apiKey == "YOUR_CLOUDINARY_API_KEY" || 
+                              string.IsNullOrEmpty(_apiSecret) || 
+                              _apiSecret == "YOUR_CLOUDINARY_API_SECRET";
+
+            _useMock = isDummyKey || configuration.GetValue<bool>("Cloudinary:UseMock", true);
 
             if (!_useMock)
             {
@@ -51,6 +79,7 @@ namespace PlatformAdmin.Services
                 _logger.LogInformation("PlatformAdmin Cloudinary Service initialized in Mock mode. API Key: '{Key}'", _apiKey);
             }
         }
+
 
         public async Task<CloudinaryUploadResult> UploadImageAsync(string fileName, byte[] fileBytes, string? folder = null)
         {
