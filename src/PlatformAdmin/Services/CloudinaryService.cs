@@ -62,7 +62,7 @@ namespace PlatformAdmin.Services
                               string.IsNullOrEmpty(_apiSecret) || 
                               _apiSecret == "YOUR_CLOUDINARY_API_SECRET";
 
-            _useMock = isDummyKey || configuration.GetValue<bool>("Cloudinary:UseMock", true);
+            _useMock = isDummyKey || configuration.GetValue<bool>("Cloudinary:UseMock", isDummyKey);
 
             if (!_useMock)
             {
@@ -177,8 +177,8 @@ namespace PlatformAdmin.Services
                 };
             }
 
-            // If it's already a Cloudinary URL, don't re-upload
-            if (imageUrl.Contains("res.cloudinary.com"))
+            // If it's already a Cloudinary URL and belongs to the current account, don't re-upload
+            if (imageUrl.Contains("res.cloudinary.com") && imageUrl.Contains($"/{_cloudName}/", StringComparison.OrdinalIgnoreCase))
             {
                 return new CloudinaryUploadResult
                 {
