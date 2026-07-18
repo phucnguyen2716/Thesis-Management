@@ -984,17 +984,25 @@ const PlagiarismAnalysisBento = ({ submission, zoom = 100, onZoomIn, onZoomOut }
                 <h4 className="text-xs font-bold text-slate-800 mb-2">So sánh nguồn trùng lặp</h4>
                 <p className="text-xs text-slate-700 break-words">{activeMatch.sourceTitle}</p>
                 <p className="text-xs text-slate-500 mt-1 break-words">{activeMatch.sourceMeta}</p>
-                {activeMatch.url && (
-                  <a
-                    href={activeMatch.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-sky-600 text-xs flex items-center gap-1 mt-3 hover:underline font-medium"
-                  >
-                    Xem tài liệu gốc
-                    <span className="material-symbols-outlined text-xs">open_in_new</span>
-                  </a>
-                )}
+                {activeMatch.url && (() => {
+                  const rawUrl = activeMatch.url;
+                  const isSearchPage = rawUrl.includes('/search?') || rawUrl.includes('?q=') ||
+                    rawUrl.includes('#gsc.tab=') || rawUrl.includes('google.com/search');
+                  const cleanMatchUrl = isSearchPage
+                    ? `https://scholar.google.com/scholar?q=${encodeURIComponent((activeMatch.sourceTitle || '').substring(0, 120))}`
+                    : rawUrl;
+                  return (
+                    <a
+                      href={cleanMatchUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-sky-600 text-xs flex items-center gap-1 mt-3 hover:underline font-medium"
+                    >
+                      {isSearchPage ? '🔍 Tìm trên Google Scholar' : 'Xem tài liệu gốc'}
+                      <span className="material-symbols-outlined text-xs">open_in_new</span>
+                    </a>
+                  );
+                })()}
               </div>
             </div>
           </div>
@@ -1014,14 +1022,32 @@ const PlagiarismAnalysisBento = ({ submission, zoom = 100, onZoomIn, onZoomOut }
                 return !isLocal;
               })
               .map((src, i) => {
-              const linkUrl = src.url;
-              const linkLabel = src.url;
+              // Helper: detect and fix search-page URLs
+              const sanitizeSourceUrl = (rawUrl, srcTitle) => {
+                if (!rawUrl || rawUrl === '#' || rawUrl === '—') return null;
+                const isSearchPage =
+                  rawUrl.includes('/search?') ||
+                  rawUrl.includes('?q=') ||
+                  rawUrl.includes('#gsc.tab=') ||
+                  rawUrl.includes('google.com/search') ||
+                  rawUrl.includes('bing.com/search') ||
+                  rawUrl.includes('yahoo.com/search');
+                if (isSearchPage) {
+                  // Replace with Google Scholar search for the actual title
+                  const q = encodeURIComponent((srcTitle || 'plagiarism source').substring(0, 120));
+                  return `https://scholar.google.com/scholar?q=${q}`;
+                }
+                return rawUrl;
+              };
+
+              const sourceName = src.name || src.title || (matches.find(m => (m.url || m.sourceUrl || '') === src.url)?.sourceTitle) || 'Nguồn Web';
+              const linkUrl = sanitizeSourceUrl(src.url, sourceName);
+              const isScholarFallback = linkUrl && linkUrl.includes('scholar.google.com');
               const cleanUrl = (u) => u ? u.replace(/\/$/, '').toLowerCase() : '';
               const sourceMatches = matches.filter(m => {
                 const mUrl = m.url || m.sourceUrl || '';
-                return cleanUrl(mUrl) === cleanUrl(linkUrl);
+                return cleanUrl(mUrl) === cleanUrl(src.url);
               });
-              const sourceName = src.name || src.title || (sourceMatches.length > 0 ? sourceMatches[0].sourceTitle : '') || 'Nguồn Web';
 
               return (
                 <div
@@ -1034,23 +1060,25 @@ const PlagiarismAnalysisBento = ({ submission, zoom = 100, onZoomIn, onZoomOut }
                     </div>
                     <div className="min-w-0 flex-1">
                       {sourceName && (
-                        <h4 className="text-xs font-black text-slate-800 mb-0.5 line-clamp-1" title={sourceName}>
+                        <h4 className="text-xs font-black text-slate-800 mb-0.5 line-clamp-2" title={sourceName}>
                           {sourceName}
                         </h4>
                       )}
-                      {src.url && src.url !== '#' && src.url !== '—' ? (
+                      {linkUrl ? (
                         <a
                           href={linkUrl}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-[11px] font-bold text-[#0284c7] hover:text-[#0369a1] hover:underline flex items-center gap-1 break-all"
-                          title={linkLabel}
+                          title={linkUrl}
                         >
-                          <span className="break-all">{linkLabel}</span>
+                          <span className="break-all">
+                            {isScholarFallback ? '🔍 Tìm kiếm trên Google Scholar' : linkUrl}
+                          </span>
                           <span className="material-symbols-outlined text-xs shrink-0 text-[#0284c7]">open_in_new</span>
                         </a>
                       ) : (
-                        <p className="text-[11px] font-bold text-slate-800 break-all" title={src.url || '—'}>{src.url || '—'}</p>
+                        <p className="text-[11px] text-slate-400 italic">Không có link nguồn</p>
                       )}
                     </div>
                   </div>
