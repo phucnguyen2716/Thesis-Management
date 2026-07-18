@@ -231,6 +231,26 @@ public class ThesisService : IThesisService
     public async Task<ThesisDto> ApproveAsync(int id)
     {
         var thesis = await _db.Theses.FindAsync(id) ?? throw new KeyNotFoundException();
+
+        // Check latest plagiarism report similarity percentage.
+        // If similarity is >= 40.0%, mark thesis as Rejected due to plagiarism and prevent publishing.
+        var latestReport = await _db.PlagiarismReports
+            .Where(r => r.ThesisId == id)
+            .OrderByDescending(r => r.CheckedAt)
+            .FirstOrDefaultAsync();
+
+        if (latestReport != null && latestReport.SimilarityPercentage >= 40.0)
+        {
+            thesis.Status = "Rejected";
+            thesis.RejectReason = $"Đề tài bị phát hiện trùng lặp/đạo văn vượt mức cho phép ({latestReport.SimilarityPercentage:F1}% >= 40%). Không thể phê duyệt và xuất bản.";
+            thesis.UpdatedAt = DateTime.UtcNow;
+            await _db.SaveChangesAsync();
+
+            await DispatchNotificationAsync(thesis.StudentId, "Đề tài không thể duyệt (Trùng lặp cao)", $"Đề tài {thesis.Title} của bạn bị từ chối phê duyệt do phát hiện tỷ lệ trùng lặp {latestReport.SimilarityPercentage:F1}%. [link:/theses/{thesis.Id}]");
+
+            throw new InvalidOperationException($"Đề tài bị phát hiện trùng lặp/đạo văn vượt mức cho phép ({latestReport.SimilarityPercentage:F1}% >= 40%). Không thể phê duyệt.");
+        }
+
         thesis.Status = "Approved";
         thesis.ApprovedAt = DateTime.UtcNow;
         thesis.UpdatedAt = DateTime.UtcNow;

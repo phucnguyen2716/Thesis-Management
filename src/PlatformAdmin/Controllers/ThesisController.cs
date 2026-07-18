@@ -149,8 +149,15 @@ public class ThesisController : ControllerBase
     [ApiResponse(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ThesisDto>> Approve(int id)
     {
-        var result = await _thesisService.ApproveAsync(id);
-        return Ok(result);
+        try
+        {
+            var result = await _thesisService.ApproveAsync(id);
+            return Ok(result);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     [HttpPost("{id:int}/reject")]
@@ -261,8 +268,20 @@ public class ThesisController : ControllerBase
                 string cleanPath = thesis.FilePath
                     .Replace("http://localhost:5145", "")
                     .Replace("https://ethesis-backend-api.onrender.com", "")
-                    .TrimStart('/');
-                string absolutePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", cleanPath);
+                    .TrimStart('/')
+                    .Replace('\\', '/');
+
+                string absolutePath;
+                if (cleanPath.StartsWith("temporary_pdf/", StringComparison.OrdinalIgnoreCase) || 
+                    cleanPath.StartsWith("uploads/", StringComparison.OrdinalIgnoreCase))
+                {
+                    absolutePath = Path.Combine(Directory.GetCurrentDirectory(), cleanPath);
+                }
+                else
+                {
+                    absolutePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", cleanPath);
+                }
+
                 if (System.IO.File.Exists(absolutePath))
                 {
                     pdfBytes = await System.IO.File.ReadAllBytesAsync(absolutePath);

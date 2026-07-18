@@ -45,6 +45,11 @@ namespace PlatformAdmin.Services
             }
 
             var defaultKey = _defaultApiKey?.Trim();
+            if (string.IsNullOrWhiteSpace(defaultKey) || defaultKey == "YOUR_GEMINI_API_KEY")
+            {
+                defaultKey = Environment.GetEnvironmentVariable("GEMINI_API_KEY")?.Trim();
+            }
+
             bool isRealKey = !string.IsNullOrEmpty(defaultKey) && 
                              defaultKey != "YOUR_GEMINI_API_KEY" && 
                              defaultKey != "AIzaSyB9EM5E5KELcbtOKu2BpNX2jLPU2uNbW9g";

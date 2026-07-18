@@ -161,17 +161,16 @@ const PlagiarismAnalysisBento = ({ submission, zoom = 100, onZoomIn, onZoomOut }
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
 
-    // Heatmap HTML layout (A mini 10x6 grid for the document overview using inline-block for robust printing)
     const heatmapHtml = cells.length > 0 ? `
       <div style="margin-top: 15px; margin-bottom: 30px; page-break-inside: avoid;">
         <div style="font-size: 11px; font-weight: 800; color: #1e293b; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.08em; text-align: center;">Bản đồ nhiệt phân đoạn trùng lặp (Tài liệu 60 phân đoạn):</div>
-        <div style="background: #f8fafc; padding: 16px; border-radius: 12px; border: 1px solid #e2e8f0; width: 320px; margin: 0 auto; text-align: left; line-height: 0;">
+        <div style="background: #f8fafc; padding: 16px; border-radius: 12px; border: 1px solid #e2e8f0; width: 320px; margin: 0 auto; display: grid; grid-template-columns: repeat(10, 1fr); gap: 6px; box-sizing: border-box;">
           ${cells.map((val, idx) => {
             let bg = '#f1f5f9';
             if (val > 40) { bg = 'rgba(239, 68, 68, 0.85)'; } // red
             else if (val > 20) { bg = 'rgba(245, 158, 11, 0.85)'; } // amber
             else if (val > 2) { bg = 'rgba(17, 94, 89, ' + Math.max(0.2, val / 100) + ')'; } // teal
-            return '<div style="display: inline-block; background-color: ' + bg + '; width: 26px; height: 26px; border-radius: 6px; border: 1px solid rgba(0,0,0,0.06); margin: 3px; vertical-align: top;" title="Phân đoạn ' + (idx + 1) + ': ' + val + '%"></div>';
+            return '<div style="background-color: ' + bg + '; aspect-ratio: 1; border-radius: 6px; border: 1px solid rgba(0,0,0,0.06);" title="Phân đoạn ' + (idx + 1) + ': ' + val + '%"></div>';
           }).join('')}
         </div>
         <div style="display: flex; justify-content: space-between; font-size: 9px; font-weight: 700; color: #94a3b8; text-transform: uppercase; width: 320px; margin: 6px auto 0 auto; letter-spacing: 0.05em;">
@@ -648,7 +647,7 @@ const PlagiarismAnalysisBento = ({ submission, zoom = 100, onZoomIn, onZoomOut }
         label: m.label || `Nguồn #${idx + 1}`,
         excerpt: m.studentExcerpt || m.text || '',
         sourceTitle: m.sourceName || m.sourceTitle || 'Web source',
-        sourceMeta: m.detectedBy ? m.detectedBy.join(', ') : 'Nguồn Internet',
+        sourceMeta: m.detectedBy ? (Array.isArray(m.detectedBy) ? m.detectedBy.join(', ') : m.detectedBy) : 'Nguồn Internet',
         url: m.sourceUrl || m.url || '#',
         percent: m.similarity || 0,
       }));

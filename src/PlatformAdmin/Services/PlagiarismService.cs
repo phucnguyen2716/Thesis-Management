@@ -161,7 +161,7 @@ namespace PlatformAdmin.Services
             string? geminiApiKey = !string.IsNullOrWhiteSpace(overrideApiKey) ? overrideApiKey : GetGeminiApiKey();
             PlagiarismReport? report = null;
 
-            bool useGemini = !string.IsNullOrEmpty(geminiApiKey) && geminiApiKey != "AIzaSyB9EM5E5KELcbtOKu2BpNX2jLPU2uNbW9g" && thesis.Category != "Topic" && thesis.Category != "Thesis";
+            bool useGemini = !string.IsNullOrEmpty(geminiApiKey) && geminiApiKey != "AIzaSyB9EM5E5KELcbtOKu2BpNX2jLPU2uNbW9g";
 
             if (useGemini)
             {
@@ -517,7 +517,13 @@ namespace PlatformAdmin.Services
             {
                 _logger.LogWarning("Failed to read X-Gemini-API-Key header in PlagiarismService: " + ex.Message);
             }
-            return _configuration["Gemini:ApiKey"]?.Trim();
+            
+            var key = _configuration["Gemini:ApiKey"]?.Trim();
+            if (string.IsNullOrWhiteSpace(key) || key == "YOUR_GEMINI_API_KEY")
+            {
+                key = Environment.GetEnvironmentVariable("GEMINI_API_KEY")?.Trim();
+            }
+            return key;
         }
 
         private async Task<PlagiarismReport?> CheckPlagiarismWithGeminiAsync(

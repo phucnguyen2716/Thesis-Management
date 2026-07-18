@@ -111,10 +111,25 @@ namespace PlatformAdmin.Controllers
             return Accepted(new { queued = true, message = "Plagiarism scan has been queued." });
         }
 
+        [HttpGet("test-db")]
+        public async Task<IActionResult> TestDb()
+        {
+            try
+            {
+                var reportsCount = await _db.PlagiarismReports.CountAsync();
+                return Ok(new { success = true, count = reportsCount });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { success = false, message = ex.Message, stackTrace = ex.StackTrace, innerException = ex.InnerException?.Message });
+            }
+        }
+
         /// <summary>
         /// Get the status of an asynchronous plagiarism check and the report if completed.
         /// </summary>
         [HttpGet("status/{thesisId}")]
+        [HttpGet("{thesisId}/status")]
         [ApiResponse(typeof(object), StatusCodes.Status200OK)]
         [ApiResponse(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetStatus(int thesisId)
