@@ -14,6 +14,9 @@ We have implemented the following sets of changes:
     - **High-contrast text coloring**: Fixed the text legibility issues by changing the low-contrast dark teal/slate text to high-contrast white and teal-300 colors suitable for dark-themed backdrops.
     - **Markdown and List Rendering**: Enabled clean parsing of headings, bold text, and bullet list markers returned from the Gemini AI model.
     - **Interactive Thesis Card Parsing**: Integrated support for parsing raw `[THESIS_CARD:id=...|title=...|student=...]` tags into interactive, gorgeous glassmorphic book card widgets directly inside the AI analysis response container.
+11. **Graceful Fallbacks for Mock Google Drive Files**:
+    - **Intercepting Mock View URLs**: Updated `FlipbookPage.jsx` to intercept mock Google Drive URLs or cases where background conversion fails due to missing access. Instead of rendering a broken iframe showing Google Drive's "not found" page, it automatically loads the local sample document `/Document Detail.pdf` and renders a warning banner informing the user.
+    - **Intercepting Mock Download URLs**: Updated the file downloading function in `AdminThesesPage.jsx`, `LookupPage.jsx`, and `ThesisDetail.jsx` to intercept mock Drive links and download the local sample document under the correct file name, avoiding the Google Drive error pages.
 
 ---
 
