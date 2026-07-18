@@ -173,14 +173,22 @@ const AISummaryCard = ({ selected, isScanning }) => {
           if (cached) {
             try {
               const parsed = JSON.parse(cached);
-              if (active) {
+              // Ignore old cache containing error text from previous build
+              const isOldErrorCache = parsed.overview && (
+                parsed.overview.includes("giới hạn tốc độ") ||
+                parsed.overview.includes("429") ||
+                parsed.overview.includes("Lỗi kết nối")
+              );
+
+              if (!isOldErrorCache && active) {
                 setSummaryData(parsed);
                 setFromCache(true);
                 setLoading(false);
+                return;
               }
-              return;
             } catch { /* cache corrupted, fetch fresh */ }
           }
+
 
           const { data } = await thesisService.getAiSummary(cleanId);
           if (active) {
