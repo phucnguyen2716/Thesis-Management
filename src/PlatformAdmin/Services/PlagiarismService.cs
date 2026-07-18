@@ -544,54 +544,44 @@ namespace PlatformAdmin.Services
             var candidateUrls = GenerateCandidateUrls(docText);
             string candidateListString = string.Join("\n", candidateUrls.Select(url => $"- {url}"));
 
-            string systemPrompt = $@"You are an academic plagiarism source detection system.
+            string systemPrompt = $@"You are an expert academic plagiarism detection AI, similar to Turnitin.
 
-Analyze the provided thesis content and identify the most likely online sources that contain similar or matching information.
+Analyze the provided thesis content (title + abstract/body) and find REAL online sources that contain highly similar or matching text.
 
-Candidate Results:
+CRITICAL RULES — you MUST follow these:
+1. Use the Google Search tool to find matching pages BEFORE responding.
+2. Every 'url' field MUST be a direct link to a REAL specific article/page (e.g. 'https://en.wikipedia.org/wiki/Machine_learning'). NEVER use search result URLs (e.g. geeksforgeeks.org/search?q=... or google.com/search?q=...). If you cannot find the exact article URL, use Google Scholar: 'https://scholar.google.com/scholar?q=...'.
+3. Every 'title' field MUST be the FULL, REAL title of the source article/paper (at least 5 words). Do NOT use single words or partial phrases as titles.
+4. The 'matchedText' field must be an actual sentence or phrase (at least 10 words) from the thesis content that appears similar to the source.
+5. The 'sourceExcerpt' must be an actual sentence or passage from the source page that matches.
+6. Deduplicate: do NOT return two sources with the same 'matchedText'.
+7. Return at most 8 sources. If confidence < 10, skip that source.
+8. If no reliable matching source can be found, return an empty sources array.
+9. Output ONLY a valid JSON object — no markdown, no explanation.
+
+Candidate reference URLs to check first:
 {candidateListString}
 
-Requirements:
-
-1. Search for publicly available sources related to the content.
-2. Prioritize checking the Candidate Results listed above. Compare the thesis content against these candidate links to check where the content is repeated.
-3. In addition to Candidate Results, you may use live Google Search tool to find exact matching pages on Wikipedia, GeeksforGeeks, and other academic/IT documentation.
-4. Prefer:
-   * Wikipedia pages
-   * GeeksforGeeks articles (for IT topics)
-   * Academic papers and university repositories
-   * Official technical documentation
-5. Act exactly like Turnitin: identify the exact matching sentence or paragraph (matchedText) from the thesis content and extract the corresponding matching sentence or paragraph (sourceExcerpt) from the source webpage.
-6. Return specific page URLs whenever possible.
-7. Avoid homepage URLs unless no specific page can be identified.
-8. Do not generate obviously invalid URLs.
-9. Rank results from most likely to least likely.
-10. Return a confidence score from 0 to 100.
-11. Return at most 10 sources.
-12. If no reliable source can be identified, return an empty list.
-13. Output ONLY valid JSON.
-
-Response format:
-
+JSON response format:
 {{
-""sources"": [
-{{
-""rank"": 1,
-""title"": """",
-""url"": """",
-""sourceType"": """",
-""confidence"": 0,
-""reason"": """",
-""matchedText"": """",
-""sourceExcerpt"": """"
-}}
-]
+  ""sources"": [
+    {{
+      ""rank"": 1,
+      ""title"": ""Full Article Title Here"",
+      ""url"": ""https://specific-article-page.com/article-slug"",
+      ""sourceType"": ""Wikipedia | GeeksforGeeks | ResearchGate | IEEE | arXiv | University | Other"",
+      ""confidence"": 75,
+      ""reason"": ""Why this source matches the thesis content"",
+      ""matchedText"": ""Exact sentence or phrase from the thesis that matches this source"",
+      ""sourceExcerpt"": ""Corresponding sentence or passage from the source page""
+    }}
+  ]
 }}";
 
-            string userContent = $@"Thesis Content to analyze:
-"""""" => 
-{textToAnalyze}
-""""""";
+            string userContent = $@"Thesis Title: {title}
+
+Thesis Content:
+{textToAnalyze}";
 
             using var httpClient = new HttpClient();
             httpClient.Timeout = TimeSpan.FromSeconds(60);
@@ -812,66 +802,134 @@ Response format:
                 int startIdx = cleanJson.IndexOf("{");
                 int endIdx = cleanJson.LastIndexOf("}");
                 if (startIdx >= 0 && endIdx >= 0)
-                {
                     cleanJson = cleanJson.Substring(startIdx, endIdx - startIdx + 1);
-                }
             }
 
             var geminiReport = JsonSerializer.Deserialize<UserPlagiarismReportDto>(cleanJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-            if (geminiReport != null)
+            if (geminiReport == null || geminiReport.Sources == null)
+                return null;
+
+            // ── Post-process: clean up bad URLs and bad titles from Gemini ──
+            var validSources = new List<(UserSourceDto source, string cleanUrl)>();
+            var seenMatchedTexts = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var s in geminiReport.Sources)
             {
-                var sources = geminiReport.Sources.Select(s => new PlagiarismSourceDetail
-                {
-                    Id = s.Url,
-                    Title = string.IsNullOrEmpty(s.Title) ? s.Url : s.Title,
-                    StudentName = "Nguồn Internet",
-                    Major = string.IsNullOrEmpty(s.SourceType) ? "Internet Source" : s.SourceType,
-                    MatchingPercentage = s.Confidence
-                }).ToList();
+                if (s.Confidence < 5) continue; // Skip very low confidence
 
-                var matches = geminiReport.Sources.Select(s => new PlagiarismMatchDetail
-                {
-                    Text = string.IsNullOrEmpty(s.MatchedText) 
-                        ? (s.Reason.Length > 120 ? s.Reason.Substring(0, 120) + "..." : s.Reason)
-                        : s.MatchedText,
-                    SourceTitle = string.IsNullOrEmpty(s.Title) ? s.Url : s.Title,
-                    SourceStudent = "Nguồn Internet",
-                    SimilarityScore = s.Confidence,
-                    SourceExcerpt = string.IsNullOrEmpty(s.SourceExcerpt) ? s.Reason : s.SourceExcerpt,
-                    SourceUrl = s.Url,
-                    DetectedBy = new List<string> { "Gemini AI Model", "Web Match" }
-                }).ToList();
+                // Reject single-word / very short titles (Gemini sometimes returns garbage)
+                var srcTitle = (s.Title ?? "").Trim();
+                if (string.IsNullOrWhiteSpace(srcTitle) || srcTitle.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length < 3)
+                    srcTitle = !string.IsNullOrWhiteSpace(s.Reason) ? s.Reason.Split('.')[0].Trim() : title;
 
-                // Compute overall similarity percentage as the max of confidence scores
-                double similarityPercentage = 0.0;
-                if (sources.Any())
+                // Reject/replace search-result URLs
+                string rawUrl = (s.Url ?? "").Trim();
+                bool isSearchUrl = rawUrl.Contains("/search?") || rawUrl.Contains("?q=") 
+                    || rawUrl.Contains("google.com/search") || rawUrl.Contains("bing.com/search")
+                    || string.IsNullOrWhiteSpace(rawUrl) || !rawUrl.StartsWith("http");
+
+                string cleanUrl;
+                if (isSearchUrl)
                 {
-                    similarityPercentage = sources.Max(s => s.MatchingPercentage);
+                    // Generate a Google Scholar search for the real topic instead
+                    string searchQuery = Uri.EscapeDataString(srcTitle.Length > 100 ? srcTitle.Substring(0, 100) : srcTitle);
+                    cleanUrl = $"https://scholar.google.com/scholar?q={searchQuery}";
+                }
+                else
+                {
+                    cleanUrl = rawUrl;
                 }
 
-                var algScores = new Dictionary<string, double>
-                {
-                    ["stringMatch"] = Math.Round(similarityPercentage * 0.7),
-                    ["ngram"] = Math.Round(similarityPercentage * 0.8),
-                    ["tfidf"] = Math.Round(similarityPercentage * 0.95),
-                    ["bm25"] = similarityPercentage,
-                    ["ruleBased"] = Math.Round(similarityPercentage * 0.6)
-                };
+                // Deduplicate by matchedText
+                string matchKey = (s.MatchedText ?? s.Reason ?? "").Trim().ToLowerInvariant();
+                if (matchKey.Length > 30) matchKey = matchKey.Substring(0, 30);
+                if (!string.IsNullOrWhiteSpace(matchKey) && seenMatchedTexts.Contains(matchKey))
+                    continue;
+                if (!string.IsNullOrWhiteSpace(matchKey))
+                    seenMatchedTexts.Add(matchKey);
 
-                return new PlagiarismReport
+                // Build a clean source DTO override
+                validSources.Add((new UserSourceDto
                 {
-                    ThesisId = thesisId,
-                    Title = title,
-                    StudentName = studentName,
-                    SimilarityPercentage = similarityPercentage,
-                    CheckedAt = DateTime.UtcNow,
-                    Sources = sources,
-                    Matches = matches,
-                    BM25Files = bm25Files,
-                    AlgorithmScores = algScores
-                };
+                    Rank = s.Rank,
+                    Title = srcTitle,
+                    Url = cleanUrl,
+                    SourceType = string.IsNullOrEmpty(s.SourceType) ? "Internet Source" : s.SourceType,
+                    Confidence = s.Confidence,
+                    Reason = s.Reason ?? "",
+                    MatchedText = s.MatchedText ?? "",
+                    SourceExcerpt = s.SourceExcerpt ?? ""
+                }, cleanUrl));
             }
-            return null;
+
+            var sources = validSources.Select(x => new PlagiarismSourceDetail
+            {
+                Id = x.cleanUrl,
+                Title = x.source.Title,
+                StudentName = DetermineSourceDomain(x.cleanUrl),
+                Major = x.source.SourceType,
+                MatchingPercentage = x.source.Confidence
+            }).ToList();
+
+            var matches = validSources.Select(x => new PlagiarismMatchDetail
+            {
+                Text = !string.IsNullOrEmpty(x.source.MatchedText) 
+                    ? x.source.MatchedText 
+                    : (x.source.Reason.Length > 150 ? x.source.Reason.Substring(0, 150) + "..." : x.source.Reason),
+                SourceTitle = x.source.Title,
+                SourceStudent = DetermineSourceDomain(x.cleanUrl),
+                SimilarityScore = x.source.Confidence,
+                SourceExcerpt = !string.IsNullOrEmpty(x.source.SourceExcerpt) ? x.source.SourceExcerpt : x.source.Reason,
+                SourceUrl = x.cleanUrl,
+                DetectedBy = new List<string> { "Gemini AI", "Google Search" }
+            }).ToList();
+
+            double similarityPercentage = sources.Any() ? sources.Max(s => s.MatchingPercentage) : 0.0;
+
+            var algScores = new Dictionary<string, double>
+            {
+                ["stringMatch"] = Math.Round(similarityPercentage * 0.7),
+                ["ngram"] = Math.Round(similarityPercentage * 0.8),
+                ["tfidf"] = Math.Round(similarityPercentage * 0.95),
+                ["bm25"] = similarityPercentage,
+                ["ruleBased"] = Math.Round(similarityPercentage * 0.6)
+            };
+
+            return new PlagiarismReport
+            {
+                ThesisId = thesisId,
+                Title = title,
+                StudentName = studentName,
+                SimilarityPercentage = similarityPercentage,
+                CheckedAt = DateTime.UtcNow,
+                Sources = sources,
+                Matches = matches,
+                BM25Files = bm25Files,
+                AlgorithmScores = algScores
+            };
+        }
+
+        /// <summary>Returns a human-readable domain label from a URL.</summary>
+        private static string DetermineSourceDomain(string url)
+        {
+            if (string.IsNullOrWhiteSpace(url)) return "Nguồn Internet";
+            try
+            {
+                var uri = new Uri(url);
+                var host = uri.Host.Replace("www.", "");
+                if (host.Contains("wikipedia")) return "Wikipedia";
+                if (host.Contains("geeksforgeeks")) return "GeeksforGeeks";
+                if (host.Contains("scholar.google")) return "Google Scholar";
+                if (host.Contains("researchgate")) return "ResearchGate";
+                if (host.Contains("ieee")) return "IEEE Xplore";
+                if (host.Contains("arxiv")) return "arXiv";
+                if (host.Contains("github")) return "GitHub";
+                if (host.Contains("medium")) return "Medium";
+                if (host.Contains(".edu")) return "Tài liệu học thuật";
+                if (host.Contains(".ac.")) return "Tài liệu học thuật";
+                return host;
+            }
+            catch { return "Nguồn Internet"; }
         }
 
         private List<string> GenerateCandidateUrls(string text)
