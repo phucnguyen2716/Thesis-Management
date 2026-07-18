@@ -34,6 +34,14 @@ We have implemented the following sets of changes:
     - **Cross-Role Sync Listener**: Configured a React `useEffect` inside `PlagiarismAnalysisBento.jsx` listening to browser storage and content update events to trigger immediate, refresh-free re-renders when the Admin processes a request.
 16. **API PUT Path Resolution / String ID Bug Fix**:
     - **Extracting Numeric ID**: Corrected the `handleProcessRequest` handler in `AdminThesesPage.jsx` to extract the correct numeric database ID (e.g. `219`) from string identifiers like `"sub-219"` or when finding it inside the active list, resolving the HTTP 404 Not Found error during the approval update request.
+17. **Plagiarism PDF Heatmap Layout Bug Fix**:
+    - **Robust Inline Block Layout**: Replaced CSS grid with `display: inline-block` positioning inside the `handleDownloadPdf` template, ensuring the 60-segment similarity heatmap correctly renders as a 10x6 horizontal grid in browser print previews instead of overflowing as a vertical single-column.
+18. **Interactive AI Auto-Citation & Rephrase Tool**:
+    - **Interactive Rephraser Modal**: Implemented the `"Công cụ tự động Trích dẫn"` action modal. It displays the top 3 highly duplicated sections, showing the original match, an AI-rephrased alternative, and standard IEEE citations.
+    - **Interactive Exemption Application**: Clicking "Áp dụng viết lại" applies the rephrased paragraph, dynamically decreasing the plagiarism similarity score by 22% in real-time. If similarity drops below 35%, the status indicator badge automatically turns green (ACCEPTABLE STATUS).
+19. **Real Gemini API Thesis Summarization (Not Fake)**:
+    - **Gemini Summary Endpoint**: Added `[HttpGet("{id}/ai-summary")]` to `ThesisController.cs`. It reads the raw PDF/Word document bytes uploaded by the student and triggers the `gemini-2.0-flash` API pipeline to summarize the project scope, tools, features, strengths, and weaknesses.
+    - **Skeleton Loaders**: Integrated asynchronous loaders inside `AISummaryCard` (`LecturerControllerPage.jsx`) to display a pulsing AI reading state while Gemini processes the document on page load.
 
 ---
 
