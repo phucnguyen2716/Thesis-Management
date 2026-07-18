@@ -101,7 +101,26 @@ const FlipbookPage = () => {
   useEffect(() => {
     const fileParam = searchParams.get('file');
 
+    const isMockDriveUrl = (url) => {
+      if (!url) return false;
+      const lowercaseUrl = url.toLowerCase();
+      return lowercaseUrl.includes("/mock") || 
+             lowercaseUrl.includes("mock-") || 
+             lowercaseUrl.includes("id=mock") ||
+             lowercaseUrl.includes("google.com/file/d/mock");
+    };
+
     const handleGoogleDriveUrl = async (url, baseData) => {
+      if (isMockDriveUrl(url)) {
+        setThesis({
+          ...baseData,
+          pdfUrl: "/Document%20Detail.pdf"
+        });
+        setViewMode('3d');
+        setLoading(false);
+        return;
+      }
+
       setConverting(true);
       try {
         const convertRes = await thesisService.convertDriveFile(resolveFileUrl(url));
@@ -113,13 +132,21 @@ const FlipbookPage = () => {
           });
           setViewMode('3d');
         } else {
-          setThesis({ ...baseData, pdfUrl: url });
-          setViewMode('pdf');
+          setThesis({ 
+            ...baseData, 
+            pdfUrl: "/Document%20Detail.pdf",
+            isFallbackDocument: true
+          });
+          setViewMode('3d');
         }
       } catch (err) {
         console.error("Failed to convert Drive file:", err);
-        setThesis({ ...baseData, pdfUrl: url });
-        setViewMode('pdf');
+        setThesis({ 
+          ...baseData, 
+          pdfUrl: "/Document%20Detail.pdf",
+          isFallbackDocument: true
+        });
+        setViewMode('3d');
       } finally {
         setConverting(false);
         setLoading(false);
@@ -366,6 +393,15 @@ const FlipbookPage = () => {
           </span>
         </div>
       </header>
+
+      {thesis?.isFallbackDocument && (
+        <div className="bg-amber-500/10 border-b border-amber-500/20 px-4 py-2.5 flex items-center justify-between text-amber-400 text-xs font-semibold gap-3 z-10 shrink-0">
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-sm shrink-0">warning</span>
+            <span>Tài liệu gốc trên Google Drive không thể truy cập công khai. Hệ thống đang hiển thị tài liệu mẫu thay thế.</span>
+          </div>
+        </div>
+      )}
 
       {/* Flipbook Container Viewport */}
       <div className="flex-1 w-full bg-[#111115] relative">

@@ -224,6 +224,38 @@ const LookupPage = () => {
   };
 
   const handleDownload = async (filePath, fileName) => {
+    if (!filePath) {
+      showToastMessage('error', 'Đường dẫn tệp tin không hợp lệ.');
+      return;
+    }
+
+    const isMockUrl = filePath.toLowerCase().includes('/mock') || 
+                      filePath.toLowerCase().includes('mock-') || 
+                      filePath.toLowerCase().includes('id=mock') ||
+                      filePath.toLowerCase().includes('google.com/file/d/mock');
+
+    if (isMockUrl) {
+      const mockFileUrl = '/Document%20Detail.pdf';
+      try {
+        const response = await fetch(mockFileUrl);
+        if (!response.ok) throw new Error('Không thể tải tệp tin mẫu');
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName.endsWith('.pdf') ? fileName : `${fileName.split('.')[0]}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+        showToastMessage('success', `Đã tải xuống thành công tài liệu mẫu: ${fileName}!`);
+      } catch (error) {
+        console.error('Lỗi khi tải file mẫu:', error);
+        window.open(mockFileUrl, '_blank');
+      }
+      return;
+    }
+
     if (filePath.startsWith('http')) {
       window.open(filePath, '_blank');
       showToastMessage('success', `Đang mở liên kết: ${fileName}`);
