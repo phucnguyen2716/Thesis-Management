@@ -17,6 +17,10 @@ export const resolveFileUrl = (url) => {
   if (cleanedUrl.startsWith('http://localhost:5145') || cleanedUrl.startsWith('https://localhost:5145')) {
     cleanedUrl = cleanedUrl.replace(/^https?:\/\/localhost:5145/, '');
   }
+  // Check if it's the mock frontend PDF file, which should be served from frontend static path
+  if (cleanedUrl.includes('Document%20Detail.pdf') || cleanedUrl.includes('Document Detail.pdf')) {
+    return cleanedUrl.startsWith('/') ? cleanedUrl : `/${cleanedUrl}`;
+  }
   if (cleanedUrl.startsWith('/')) {
     return `${API_URL}${cleanedUrl}`;
   }
