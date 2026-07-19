@@ -575,6 +575,7 @@ const LecturerControllerPage = () => {
               studentId: t.studentCode || 'SV-000',
               faculty: t.department || 'Khoa học Công nghệ',
               description: t.description || '',
+              studentText: t.description || mockMatch.studentText,
               status: t.status === 'Approved' ? 'acceptable' : t.status === 'Rejected' || t.status === 'Revision' ? 'flagged' : 'review',
               grade: t.latestScore,
               rubric: mockMatch.rubric || { content: t.latestScore ?? 0, method: t.latestScore ?? 0, originality: t.latestScore ?? 0, presentation: t.latestScore ?? 0 },
@@ -609,6 +610,29 @@ const LecturerControllerPage = () => {
         const res = await plagiarismService.getStatus(numericId);
         if (res.data && res.data.status === 'Completed' && res.data.report) {
           const report = res.data.report;
+
+          // Safe map backend report matches to React expected fields
+          if (report.matches) {
+            report.matches = report.matches.map(m => ({
+              similarity: m.similarity ?? m.similarityScore ?? 0,
+              studentExcerpt: m.studentExcerpt ?? m.text ?? '',
+              matchPhrase: m.matchPhrase ?? (m.text ? m.text.split(' ').slice(3, 8).join(' ') : ''),
+              sourceExcerpt: m.sourceExcerpt ?? '',
+              sourceName: m.sourceName ?? m.sourceTitle ?? 'Web source',
+              sourceUrl: m.sourceUrl ?? '#',
+              detectedBy: m.detectedBy ?? ['BM25', 'N-Gram']
+            }));
+          }
+
+          const newMatch = report.matches && report.matches.length > 0 ? {
+            label: 'Nguồn trùng khớp chính',
+            excerpt: report.matches[0].studentExcerpt || report.matches[0].text || '',
+            sourceTitle: report.matches[0].sourceName || report.matches[0].sourceTitle || 'Tài liệu tham khảo',
+            sourceMeta: report.matches[0].detectedBy ? (Array.isArray(report.matches[0].detectedBy) ? report.matches[0].detectedBy.join(', ') : report.matches[0].detectedBy) : 'Nguồn Internet',
+            url: report.matches[0].sourceUrl || '#',
+            percent: report.matches[0].similarity || 0,
+          } : null;
+
           setSubmissions(prev =>
             prev.map(s =>
               s.id === selectedId
@@ -616,7 +640,26 @@ const LecturerControllerPage = () => {
                     ...s,
                     similarity: Math.round(report.similarityPercentage),
                     aiPercent: Math.round(report.algorithmScores?.["AI Detector"] ?? s.aiPercent),
-                    checkedAgo: 'Đã quét (CSDL)'
+                    checkedAgo: 'Đã quét (CSDL)',
+                    studentText: s.description || report.description || s.studentText,
+                    match: newMatch || s.match,
+                    matches: report.matches ? report.matches.map((m, idx) => ({
+                      label: `Nguồn #${idx + 1}`,
+                      excerpt: m.studentExcerpt ?? m.text ?? '',
+                      sourceTitle: m.sourceName ?? m.sourceTitle ?? 'Tài liệu tham khảo',
+                      sourceMeta: m.detectedBy ? (Array.isArray(m.detectedBy) ? m.detectedBy.join(', ') : m.detectedBy) : 'Nguồn Internet',
+                      url: m.sourceUrl ?? m.url ?? '#',
+                      percent: m.similarity ?? m.similarityScore ?? 0,
+                      sourceExcerpt: m.sourceExcerpt ?? '',
+                    })) : [],
+                    sources: report.sources ? report.sources.map((src, idx) => ({
+                      id: idx + 1,
+                      name: src.title ?? src.name ?? 'Nguồn Web',
+                      url: src.id ?? src.url ?? '#',
+                      percent: src.matchingPercentage ?? src.percent ?? 0,
+                      type: 'plagiarism'
+                    })) : [],
+                    sourceCount: report.sources ? report.sources.length : s.sourceCount
                   }
                 : s
             )
