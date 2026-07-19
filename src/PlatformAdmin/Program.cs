@@ -210,6 +210,60 @@ app.UseStaticFiles(new StaticFileOptions
 
 var tempPdfPath = Path.Combine(Directory.GetCurrentDirectory(), builder.Configuration["GoogleDrive:TemporaryPdfLocalPath"] ?? "temporary_pdf");
 if (!Directory.Exists(tempPdfPath)) Directory.CreateDirectory(tempPdfPath);
+
+// Middleware to dynamically generate missing mock files on-the-fly
+app.Use(async (context, next) =>
+{
+    var path = context.Request.Path.Value;
+    if (path != null && path.StartsWith("/temporary_pdf/", StringComparison.OrdinalIgnoreCase))
+    {
+        var relativePath = Uri.UnescapeDataString(path.Substring("/temporary_pdf/".Length).TrimStart('/'));
+        if (!string.IsNullOrEmpty(relativePath))
+        {
+            var tempPdfPathConfig = builder.Configuration["GoogleDrive:TemporaryPdfLocalPath"] ?? "temporary_pdf";
+            var absolutePath = Path.Combine(Directory.GetCurrentDirectory(), tempPdfPathConfig, relativePath);
+            if (!System.IO.File.Exists(absolutePath))
+            {
+                try
+                {
+                    var directoryPath = Path.GetDirectoryName(absolutePath);
+                    if (!string.IsNullOrEmpty(directoryPath) && !Directory.Exists(directoryPath))
+                    {
+                        Directory.CreateDirectory(directoryPath);
+                    }
+
+                    var fileName = Path.GetFileName(relativePath);
+                    byte[] fileBytes;
+
+                    if (fileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+                    {
+                        fileBytes = PlatformAdmin.Services.DriveSampleDataSeeder.BuildSamplePdf(
+                            "Cong nghe thong tin", "Do an tot nghiep", "DATN", "SV2026001", "De tai tot nghiep", fileName);
+                    }
+                    else if (fileName.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase))
+                    {
+                        fileBytes = PlatformAdmin.Services.DriveSampleDataSeeder.BuildSampleXlsx(
+                            "Cong nghe thong tin", "Do an tot nghiep", "DATN", "SV2026001", "De tai tot nghiep", fileName);
+                    }
+                    else
+                    {
+                        fileBytes = PlatformAdmin.Services.DriveSampleDataSeeder.BuildSampleDocx(
+                            "Cong nghe thong tin", "Do an tot nghiep", "DATN", "SV2026001", "De tai tot nghiep", fileName);
+                    }
+
+                    await System.IO.File.WriteAllBytesAsync(absolutePath, fileBytes);
+                    Console.WriteLine($"[MockFileGenerator] Dynamically created file on-the-fly: {fileName} at {absolutePath}");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[MockFileError] Error generating file: {ex.Message}");
+                }
+            }
+        }
+    }
+    await next();
+});
+
 app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(tempPdfPath),
