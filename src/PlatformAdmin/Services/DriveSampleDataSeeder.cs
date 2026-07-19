@@ -591,7 +591,7 @@ public class DriveSampleDataSeeder : IDriveSampleDataSeeder
 
         int uploaded = 0, failed = 0;
 
-        if (force || existing < minDemoFiles)
+        if (!useMock && (force || existing < minDemoFiles))
         {
             // Đảm bảo cấu trúc thư mục học phần tồn tại
             foreach (var major in DriveSampleCatalog.Majors)
@@ -652,7 +652,7 @@ public class DriveSampleDataSeeder : IDriveSampleDataSeeder
         }
 
         // Seed Topic files directly under Chuyên ngành (Major)
-        if (force || topicFilesList.Count < 180)
+        if (!useMock && (force || topicFilesList.Count < 180))
         {
             int majorIndex = -1;
             foreach (var major in DriveSampleCatalog.Majors)
@@ -719,7 +719,7 @@ public class DriveSampleDataSeeder : IDriveSampleDataSeeder
         }
 
         // Seed Thesis files directly under Chuyên ngành (Major)
-        if (force || thesisFilesList.Count < 180)
+        if (!useMock && (force || thesisFilesList.Count < 180))
         {
             int majorIndex = -1;
             foreach (var major in DriveSampleCatalog.Majors)
