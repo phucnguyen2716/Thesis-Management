@@ -485,7 +485,10 @@ const ThesisFilesCard = ({ selected }) => {
       
       <div className="space-y-3">
         {filesList.map((file, idx) => {
-          const fileUrl = resolveFileUrl(file.filePath);
+          let fileUrl = resolveFileUrl(file.filePath);
+          if (file.filePath && file.filePath.includes("drive.google.com") && file.filePath.includes("mock-")) {
+            fileUrl = resolveFileUrl(`/temporary_pdf/mock_files/${file.fileName}`);
+          }
           const sizeKb = Math.round(file.fileSize / 1024);
           const isPdf = file.fileName.toLowerCase().endsWith('.pdf');
           const isWord = file.fileName.toLowerCase().endsWith('.docx') || file.fileName.toLowerCase().endsWith('.doc');
